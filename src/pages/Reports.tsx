@@ -648,8 +648,8 @@ const Reports = () => {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
-          <p className="text-sm text-gray-500 mt-1">View and export reports about your gym</p>
+          <h1 className="text-2xl font-bold text-gray-900">Rapports & Analyses</h1>
+          <p className="text-sm text-gray-500 mt-1">Consultez et exportez des rapports sur votre salle de sport</p>
         </div>
         
         <div className="flex items-center space-x-3">
@@ -658,14 +658,14 @@ const Reports = () => {
               <DialogTrigger asChild>
                 <Button variant="outline">
                   <FileUp className="h-4 w-4 mr-2" />
-                  Import Members
+                  Importer des Membres
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-3xl">
                 <DialogHeader>
-                  <DialogTitle>Import Members</DialogTitle>
+                  <DialogTitle>Importer des Membres</DialogTitle>
                   <DialogDescription>
-                    Upload an Excel or CSV file to import multiple members at once.
+                    Téléchargez un fichier Excel ou CSV pour importer plusieurs membres à la fois.
                   </DialogDescription>
                 </DialogHeader>
                 <ImportMembersForm />
@@ -677,12 +677,12 @@ const Reports = () => {
             {isGenerating ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
-                Generating...
+                Génération en cours...
               </>
             ) : (
               <>
                 <FilePieChart className="h-4 w-4 mr-2" />
-                Generate Report
+                Générer un Rapport
               </>
             )}
           </Button>
@@ -691,12 +691,12 @@ const Reports = () => {
             {isExporting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Exporting...
+                Exportation en cours...
               </>
             ) : (
               <>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
-                Export
+                Exporter
               </>
             )}
           </Button>
@@ -715,7 +715,7 @@ const Reports = () => {
                 onClick={() => setActiveTab('revenue')}
               >
                 <DollarSign className="h-4 w-4 mr-2" />
-                Revenue
+                Revenus
               </button>
               <button
                 type="button"
@@ -725,7 +725,7 @@ const Reports = () => {
                 onClick={() => setActiveTab('members')}
               >
                 <Users className="h-4 w-4 mr-2" />
-                Members
+                Membres
               </button>
               <button
                 type="button"
@@ -735,7 +735,7 @@ const Reports = () => {
                 onClick={() => setActiveTab('attendance')}
               >
                 <Activity className="h-4 w-4 mr-2" />
-                Attendance
+                Présence
               </button>
               <button
                 type="button"
@@ -745,7 +745,7 @@ const Reports = () => {
                 onClick={() => setActiveTab('custom')}
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
-                Custom
+                Personnalisé
               </button>
             </div>
           </div>
@@ -758,17 +758,17 @@ const Reports = () => {
                   <SelectValue placeholder="Monthly" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
+                  <SelectItem value="daily">Quotidien</SelectItem>
+                  <SelectItem value="weekly">Hebdomadaire</SelectItem>
+                  <SelectItem value="monthly">Mensuel</SelectItem>
+                  <SelectItem value="yearly">Annuel</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <Button variant="outline" size="sm" className="flex items-center">
               <Filter className="h-4 w-4 mr-2" />
-              Filters
+              Filtres
             </Button>
           </div>
         </div>
@@ -776,52 +776,52 @@ const Reports = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Total Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-500">Revenu Total</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">$107,200</div>
               <p className="text-xs text-green-600 flex items-center mt-1">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
-                +12.5% from last month
+                +12.5% par rapport au mois dernier
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Active Members</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-500">Membres Actifs</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">547</div>
               <p className="text-xs text-green-600 flex items-center mt-1">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
-                +8.3% from last month
+                +8.3% par rapport au mois dernier
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">New Signups</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-500">Nouvelles Inscriptions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">68</div>
               <p className="text-xs text-green-600 flex items-center mt-1">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
-                +5.2% from last month
+                +5.2% par rapport au mois dernier
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Avg. Revenue Per Member</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-500">Revenu Moyen Par Membre</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">$196</div>
               <p className="text-xs text-green-600 flex items-center mt-1">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
-                +3.8% from last month
+                +3.8% par rapport au mois dernier
               </p>
             </CardContent>
           </Card>
@@ -830,7 +830,7 @@ const Reports = () => {
         {activeTab === 'revenue' && (
           <div className="space-y-6">
             <div className="w-full h-[400px]">
-              <h3 className="text-lg font-medium mb-4">Revenue Trends</h3>
+              <h3 className="text-lg font-medium mb-4">Tendances des Revenus</h3>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenueData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -849,9 +849,9 @@ const Reports = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Revenue by Membership Type</CardTitle>
+                  <CardTitle>Revenus par Type d'Abonnement</CardTitle>
                   <CardDescription>
-                    Distribution of revenue across different membership plans
+                    Distribution des revenus selon les différents forfaits d'abonnement
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="h-[300px]">
@@ -881,9 +881,9 @@ const Reports = () => {
               
               <Card>
                 <CardHeader>
-                  <CardTitle>Revenue Insights</CardTitle>
+                  <CardTitle>Analyse des Revenus</CardTitle>
                   <CardDescription>
-                    Key observations based on current trends
+                    Observations clés basées sur les tendances actuelles
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -893,8 +893,8 @@ const Reports = () => {
                         <ArrowUpRight className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-medium">Increasing Trend</h4>
-                        <p className="text-sm text-gray-500">Revenue has been consistently increasing by 5-10% month over month for the last 6 months.</p>
+                        <h4 className="font-medium">Tendance à la Hausse</h4>
+                        <p className="text-sm text-gray-500">Les revenus ont augmenté régulièrement de 5 à 10% mois après mois au cours des 6 derniers mois.</p>
                       </div>
                     </div>
                     
@@ -903,8 +903,8 @@ const Reports = () => {
                         <Users className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-medium">Annual Memberships</h4>
-                        <p className="text-sm text-gray-500">Annual membership renewals have a 78% retention rate, higher than industry average.</p>
+                        <h4 className="font-medium">Abonnements Annuels</h4>
+                        <p className="text-sm text-gray-500">Les renouvellements d'abonnements annuels ont un taux de rétention de 78%, supérieur à la moyenne du secteur.</p>
                       </div>
                     </div>
                     
@@ -913,8 +913,8 @@ const Reports = () => {
                         <Calendar className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-medium">Seasonal Pattern</h4>
-                        <p className="text-sm text-gray-500">Revenue spikes occur in January and September, aligning with new year resolutions and back-to-school periods.</p>
+                        <h4 className="font-medium">Tendance Saisonnière</h4>
+                        <p className="text-sm text-gray-500">Des pics de revenus se produisent en janvier et septembre, correspondant aux résolutions du nouvel an et aux périodes de rentrée scolaire.</p>
                       </div>
                     </div>
                   </div>
@@ -929,9 +929,9 @@ const Reports = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Membership Distribution</CardTitle>
+                  <CardTitle>Répartition des Abonnements</CardTitle>
                   <CardDescription>
-                    Breakdown of current membership types
+                    Ventilation des types d'abonnements actuels
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="h-[300px]">
@@ -961,9 +961,9 @@ const Reports = () => {
               
               <Card>
                 <CardHeader>
-                  <CardTitle>Member Insights</CardTitle>
+                  <CardTitle>Analyse des Membres</CardTitle>
                   <CardDescription>
-                    Key observations about member behavior
+                    Observations clés sur le comportement des membres
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -973,8 +973,8 @@ const Reports = () => {
                         <Activity className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-medium">Activity Level</h4>
-                        <p className="text-sm text-gray-500">62% of members visit at least twice per week, showing strong engagement.</p>
+                        <h4 className="font-medium">Niveau d'Activité</h4>
+                        <p className="text-sm text-gray-500">62% des membres visitent au moins deux fois par semaine, montrant un fort engagement.</p>
                       </div>
                     </div>
                     
@@ -983,8 +983,8 @@ const Reports = () => {
                         <Calendar className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-medium">Retention Rate</h4>
-                        <p className="text-sm text-gray-500">Monthly membership retention rate is 68%, quarterly is 75%, and annual is 82%.</p>
+                        <h4 className="font-medium">Taux de Rétention</h4>
+                        <p className="text-sm text-gray-500">Le taux de rétention des abonnements mensuels est de 68%, trimestriels 75%, et annuels 82%.</p>
                       </div>
                     </div>
                     
@@ -993,8 +993,8 @@ const Reports = () => {
                         <Users className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-medium">Demographics</h4>
-                        <p className="text-sm text-gray-500">Largest age group is 25-34 (38%), followed by 35-44 (27%) and 18-24 (22%).</p>
+                        <h4 className="font-medium">Démographie</h4>
+                        <p className="text-sm text-gray-500">Le groupe d'âge le plus important est 25-34 ans (38%), suivi par 35-44 ans (27%) et 18-24 ans (22%).</p>
                       </div>
                     </div>
                   </div>
@@ -1004,9 +1004,9 @@ const Reports = () => {
             
             <Card>
               <CardHeader>
-                <CardTitle>Member Growth Trend</CardTitle>
+                <CardTitle>Tendance de Croissance des Membres</CardTitle>
                 <CardDescription>
-                  Net membership growth over time
+                  Croissance nette des abonnements au fil du temps
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
@@ -1028,7 +1028,7 @@ const Reports = () => {
         {activeTab === 'attendance' && (
           <div className="space-y-6">
             <div className="w-full h-[400px]">
-              <h3 className="text-lg font-medium mb-4">Weekly Attendance</h3>
+              <h3 className="text-lg font-medium mb-4">Présence Hebdomadaire</h3>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={attendanceData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -1044,38 +1044,38 @@ const Reports = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-500">Peak Hours</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-500">Heures de Pointe</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">5PM - 7PM</div>
                   <p className="text-xs text-gray-600 mt-1">
-                    Highest traffic period during weekdays
+                    Période de trafic la plus élevée en semaine
                   </p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-500">Avg. Daily Visits</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-500">Visites Quotidiennes Moy.</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">185</div>
                   <p className="text-xs text-green-600 flex items-center mt-1">
                     <ArrowUpRight className="h-3 w-3 mr-1" />
-                    +7.6% from last month
+                    +7.6% par rapport au mois dernier
                   </p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-500">Avg. Visit Duration</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-500">Durée Moy. des Visites</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">74 min</div>
                   <p className="text-xs text-green-600 flex items-center mt-1">
                     <ArrowUpRight className="h-3 w-3 mr-1" />
-                    +3.2% from last month
+                    +3.2% par rapport au mois dernier
                   </p>
                 </CardContent>
               </Card>
@@ -1087,29 +1087,29 @@ const Reports = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Custom Report Builder</CardTitle>
+                <CardTitle>Générateur de Rapports Personnalisés</CardTitle>
                 <CardDescription>
-                  Create custom reports by selecting metrics and date ranges
+                  Créez des rapports personnalisés en sélectionnant des métriques et des plages de dates
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="report-name">Report Name</Label>
+                      <Label htmlFor="report-name">Nom du Rapport</Label>
                       <Input id="report-name" placeholder="Q2 Performance Summary" />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="report-category">Category</Label>
+                      <Label htmlFor="report-category">Catégorie</Label>
                       <Select defaultValue="financial">
                         <SelectTrigger id="report-category">
-                          <SelectValue placeholder="Select category" />
+                          <SelectValue placeholder="Sélectionner une catégorie" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="financial">Financial</SelectItem>
-                          <SelectItem value="membership">Membership</SelectItem>
-                          <SelectItem value="attendance">Attendance</SelectItem>
+                          <SelectItem value="financial">Financier</SelectItem>
+                          <SelectItem value="membership">Abonnements</SelectItem>
+                          <SelectItem value="attendance">Présence</SelectItem>
                           <SelectItem value="performance">Performance</SelectItem>
                         </SelectContent>
                       </Select>
@@ -1118,7 +1118,7 @@ const Reports = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="start-date">Start Date</Label>
+                      <Label htmlFor="start-date">Date de Début</Label>
                       <Input 
                         id="start-date" 
                         type="date" 
@@ -1128,7 +1128,7 @@ const Reports = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="end-date">End Date</Label>
+                      <Label htmlFor="end-date">Date de Fin</Label>
                       <Input 
                         id="end-date" 
                         type="date" 
@@ -1139,27 +1139,27 @@ const Reports = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Metrics to Include</Label>
+                    <Label>Métriques à Inclure</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       <div className="flex items-center space-x-2">
                         <input type="checkbox" id="revenue" className="rounded" defaultChecked />
-                        <label htmlFor="revenue" className="text-sm">Revenue</label>
+                        <label htmlFor="revenue" className="text-sm">Revenus</label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <input type="checkbox" id="members" className="rounded" defaultChecked />
-                        <label htmlFor="members" className="text-sm">Members</label>
+                        <label htmlFor="members" className="text-sm">Membres</label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <input type="checkbox" id="attendance" className="rounded" defaultChecked />
-                        <label htmlFor="attendance" className="text-sm">Attendance</label>
+                        <label htmlFor="attendance" className="text-sm">Présence</label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <input type="checkbox" id="classes" className="rounded" />
-                        <label htmlFor="classes" className="text-sm">Classes</label>
+                        <label htmlFor="classes" className="text-sm">Cours</label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <input type="checkbox" id="staff" className="rounded" />
-                        <label htmlFor="staff" className="text-sm">Staff</label>
+                        <label htmlFor="staff" className="text-sm">Personnel</label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <input type="checkbox" id="expenses" className="rounded" />
