@@ -98,7 +98,7 @@ const ImportMembersForm = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      // Check if file is an Excel file
+      // Check if file is an Excel file or CSV
       if (!selectedFile.name.endsWith('.xlsx') && !selectedFile.name.endsWith('.xls') && !selectedFile.name.endsWith('.csv')) {
         addNotification({
           title: 'Invalid file type',
@@ -110,56 +110,166 @@ const ImportMembersForm = () => {
 
       setFile(selectedFile);
       
-      // Mock preview data (in real app, you would parse the Excel file)
-      const mockPreviewData = [
-        { 
-          firstName: 'John', 
-          lastName: 'Doe', 
-          email: 'john.doe@example.com',
-          phone: '(123) 456-7890',
-          membershipType: 'monthly',
-          startDate: '2023-06-15'
-        },
-        { 
-          firstName: 'Jane', 
-          lastName: 'Smith', 
-          email: 'jane.smith@example.com',
-          phone: '(123) 456-7891',
-          membershipType: 'quarterly',
-          startDate: '2023-05-20'
-        },
-        { 
-          firstName: 'Robert', 
-          lastName: 'Johnson', 
-          email: 'robert.j@example.com',
-          phone: '(123) 456-7892',
-          membershipType: 'annual',
-          startDate: '2023-04-10'
-        }
-      ];
-      
-      setPreviewData(mockPreviewData);
-      setShowPreview(true);
+      // Parse the file based on its type
+      if (selectedFile.name.endsWith('.csv')) {
+        // Parse CSV
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const csvData = event.target?.result as string;
+            const parsedData = parseCSV(csvData);
+            setPreviewData(parsedData);
+            setShowPreview(true);
+          } catch (error) {
+            console.error('Error parsing CSV:', error);
+            addNotification({
+              title: 'Error',
+              message: 'Failed to parse the CSV file',
+              type: 'error'
+            });
+          }
+        };
+        reader.readAsText(selectedFile);
+      } else {
+        // For Excel files, we'd need a library like xlsx
+        // For demo purposes, we'll show mock data
+        const mockPreviewData = [
+          { 
+            firstName: 'John', 
+            lastName: 'Doe', 
+            email: 'john.doe@example.com',
+            phone: '(123) 456-7890',
+            membershipType: 'monthly',
+            startDate: '2023-06-15'
+          },
+          { 
+            firstName: 'Jane', 
+            lastName: 'Smith', 
+            email: 'jane.smith@example.com',
+            phone: '(123) 456-7891',
+            membershipType: 'quarterly',
+            startDate: '2023-05-20'
+          },
+          { 
+            firstName: 'Robert', 
+            lastName: 'Johnson', 
+            email: 'robert.j@example.com',
+            phone: '(123) 456-7892',
+            membershipType: 'annual',
+            startDate: '2023-04-10'
+          }
+        ];
+        
+        setPreviewData(mockPreviewData);
+        setShowPreview(true);
+        
+        // Show note about Excel parsing
+        addNotification({
+          title: 'Note',
+          message: 'Excel parsing requires the xlsx library. Using mock data for preview.',
+          type: 'info'
+        });
+      }
     }
+  };
+  
+  // Helper function to parse CSV
+  const parseCSV = (csvText: string) => {
+    const lines = csvText.split('\n');
+    const result = [];
+    const headers = lines[0].split(',').map(header => header.trim());
+    
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue; // Skip empty lines
+      
+      const obj: Record<string, string> = {};
+      const currentLine = lines[i].split(',');
+      
+      for (let j = 0; j < headers.length; j++) {
+        // Handle quoted values with commas
+        let value = currentLine[j]?.trim() || '';
+        
+        // If value starts with a quote but doesn't end with one, it may contain commas
+        if (value.startsWith('"') && !value.endsWith('"')) {
+          let k = j + 1;
+          // Keep adding parts until we find the closing quote
+          while (k < currentLine.length) {
+            value += ',' + currentLine[k];
+            if (currentLine[k].endsWith('"')) break;
+            k++;
+          }
+          j = k; // Skip the parts we've already processed
+        }
+        
+        // Remove quotes if they exist
+        if (value.startsWith('"') && value.endsWith('"')) {
+          value = value.substring(1, value.length - 1);
+        }
+        
+        obj[headers[j]] = value;
+      }
+      
+      result.push(obj);
+    }
+    
+    return result;
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!file || previewData.length === 0) return;
     
     setIsUploading(true);
     
     try {
-      // In a real app, you would:
-      // 1. Parse the Excel file (using a library like xlsx or papaparse for CSV)
-      // 2. Validate the data
-      // 3. Upload to Supabase in batches
+      // Validate the data before uploading
+      const invalidEntries = previewData.filter(member => {
+        const requiredFields = ['firstName', 'lastName', 'email', 'membershipType'];
+        return requiredFields.some(field => !member[field]);
+      });
       
-      // Simulating upload delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (invalidEntries.length > 0) {
+        throw new Error(`${invalidEntries.length} members have missing required fields`);
+      }
+      
+      // Process members in batches to avoid overloading the database
+      const batchSize = 20;
+      const batches = [];
+      
+      // Split data into batches
+      for (let i = 0; i < previewData.length; i += batchSize) {
+        batches.push(previewData.slice(i, i + batchSize));
+      }
+      
+      // Upload batches to Supabase
+      let uploadedCount = 0;
+      
+      for (const batch of batches) {
+        // Format the data according to your database schema
+        const formattedBatch = batch.map(member => ({
+          first_name: member.firstName,
+          last_name: member.lastName,
+          email: member.email,
+          phone: member.phone,
+          membership_type: member.membershipType,
+          start_date: member.startDate
+        }));
+        
+        // Upload to Supabase
+        const { error } = await supabase
+          .from('members')
+          .upsert(formattedBatch, {
+            onConflict: 'email', // Assuming email is unique 
+            ignoreDuplicates: false
+          });
+        
+        if (error) throw error;
+        
+        uploadedCount += batch.length;
+      }
       
       addNotification({
         title: 'Success',
-        message: `Imported ${previewData.length} members successfully`,
+        message: `Imported ${uploadedCount} members successfully`,
         type: 'success'
       });
       
@@ -174,7 +284,7 @@ const ImportMembersForm = () => {
       console.error('Error uploading members:', error);
       addNotification({
         title: 'Error',
-        message: 'Failed to import members',
+        message: error instanceof Error ? error.message : 'Failed to import members',
         type: 'error'
       });
     } finally {
@@ -183,8 +293,27 @@ const ImportMembersForm = () => {
   };
 
   const downloadTemplate = () => {
-    // In a real app, you would generate and download an Excel template
-    // For demo purposes, we'll just show a notification
+    // Create a template CSV file for member imports
+    const headers = ['firstName', 'lastName', 'email', 'phone', 'membershipType', 'startDate'];
+    const exampleRow = ['John', 'Doe', 'john.doe@example.com', '(123) 456-7890', 'monthly', '2023-01-15'];
+    
+    // Create CSV content
+    const templateContent = [
+      headers.join(','),
+      exampleRow.join(',')
+    ].join('\n');
+    
+    // Create a blob and download
+    const blob = new Blob([templateContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'member_import_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
     addNotification({
       title: 'Template Downloaded',
       message: 'Member import template has been downloaded',
@@ -327,17 +456,152 @@ const Reports = () => {
     end: new Date().toISOString().split('T')[0]
   });
   const [isExporting, setIsExporting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
   const canImport = isAdmin || isManager;
 
+  // Generate a detailed report based on the current selections
+  const generateReport = async () => {
+    setIsGenerating(true);
+    try {
+      // Fetch real data from Supabase based on the report type and date range
+      let reportData: any[] = [];
+      
+      // Example of fetching data from Supabase (would be customized based on your schema)
+      // In a real app, you would fetch data based on the activeTab and dateRange
+      switch(activeTab) {
+        case 'revenue':
+          // const { data, error } = await supabase
+          //   .from('payments')
+          //   .select('*')
+          //   .gte('created_at', dateRange.start)
+          //   .lte('created_at', dateRange.end);
+          // 
+          // if (error) throw error;
+          // reportData = data || [];
+          
+          // For demo, use the mock data
+          reportData = revenueData;
+          break;
+          
+        case 'members':
+          // const { data, error } = await supabase
+          //   .from('members')
+          //   .select('*')
+          //   .gte('created_at', dateRange.start)
+          //   .lte('created_at', dateRange.end);
+          //
+          // if (error) throw error;
+          // reportData = data || [];
+          
+          // For demo, use the mock data
+          reportData = membershipData;
+          break;
+          
+        case 'attendance':
+          // const { data, error } = await supabase
+          //   .from('attendance')
+          //   .select('*')
+          //   .gte('date', dateRange.start)
+          //   .lte('date', dateRange.end);
+          //
+          // if (error) throw error;
+          // reportData = data || [];
+          
+          // For demo, use the mock data
+          reportData = attendanceData;
+          break;
+          
+        default:
+          // Custom report would combine data from multiple sources
+          reportData = [...revenueData, ...attendanceData];
+      }
+      
+      // Generate a report name based on the current selections
+      const reportName = `${activeTab}_${reportType}_${format(new Date(dateRange.start), 'yyyy-MM-dd')}_to_${format(new Date(dateRange.end), 'yyyy-MM-dd')}`;
+      
+      // For PDF generation, you would typically use a library like jsPDF
+      // For demo purposes, we'll just export a CSV
+      const csvContent = convertToCSV(reportData);
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${reportName}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      addNotification({
+        title: 'Report Generated',
+        message: `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} report has been generated`,
+        type: 'success'
+      });
+    } catch (error) {
+      console.error('Error generating report:', error);
+      addNotification({
+        title: 'Generation Failed',
+        message: 'Failed to generate report',
+        type: 'error'
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleExport = async (type: string) => {
     setIsExporting(true);
     try {
-      // In a real app, you would generate the report file here
-      // For demo purposes, we'll just simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Create data based on the report type
+      let data: any[] = [];
+      let fileName = '';
+      
+      switch(type) {
+        case 'revenue':
+          data = revenueData;
+          fileName = 'revenue_report.csv';
+          break;
+        case 'members':
+          data = membershipData;
+          fileName = 'membership_report.csv';
+          break;
+        case 'attendance':
+          data = attendanceData;
+          fileName = 'attendance_report.csv';
+          break;
+        case 'monthly-revenue':
+          data = revenueData;
+          fileName = 'monthly_revenue_report.csv';
+          break;
+        case 'member-attendance':
+          data = attendanceData;
+          fileName = 'member_attendance_report.csv';
+          break;
+        case 'q1-financial':
+          data = revenueData.slice(0, 3);
+          fileName = 'q1_financial_report.csv';
+          break;
+        default:
+          data = revenueData;
+          fileName = 'custom_report.csv';
+      }
+      
+      // Convert data to CSV format
+      const csvContent = convertToCSV(data);
+      
+      // Create a Blob and download the file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       addNotification({
         title: 'Export Successful',
@@ -354,6 +618,30 @@ const Reports = () => {
     } finally {
       setIsExporting(false);
     }
+  };
+  
+  // Helper function to convert data to CSV
+  const convertToCSV = (data: any[]): string => {
+    if (data.length === 0) return '';
+    
+    // Extract headers
+    const headers = Object.keys(data[0]);
+    
+    // Create CSV header row
+    const headerRow = headers.join(',');
+    
+    // Create data rows
+    const rows = data.map(item => {
+      return headers.map(header => {
+        // Handle values with commas by quoting them
+        const value = item[header];
+        const stringValue = String(value);
+        return stringValue.includes(',') ? `"${stringValue}"` : stringValue;
+      }).join(',');
+    });
+    
+    // Combine header and rows
+    return [headerRow, ...rows].join('\n');
   };
 
   return (
@@ -385,9 +673,18 @@ const Reports = () => {
             </Dialog>
           )}
           
-          <Button variant="outline">
-            <FilePieChart className="h-4 w-4 mr-2" />
-            Generate Report
+          <Button variant="outline" onClick={generateReport} disabled={isGenerating}>
+            {isGenerating ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
+                Generating...
+              </>
+            ) : (
+              <>
+                <FilePieChart className="h-4 w-4 mr-2" />
+                Generate Report
+              </>
+            )}
           </Button>
           
           <Button onClick={() => handleExport(activeTab)} disabled={isExporting}>
