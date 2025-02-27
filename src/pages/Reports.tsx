@@ -60,28 +60,28 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 // Placeholder data for demonstration
 const revenueData = [
   { month: 'Jan', revenue: 12500 },
-  { month: 'Feb', revenue: 14200 },
+  { month: 'Fév', revenue: 14200 },
   { month: 'Mar', revenue: 15800 },
-  { month: 'Apr', revenue: 13900 },
-  { month: 'May', revenue: 16500 },
-  { month: 'Jun', revenue: 18200 },
+  { month: 'Avr', revenue: 13900 },
+  { month: 'Mai', revenue: 16500 },
+  { month: 'Juin', revenue: 18200 },
 ];
 
 const membershipData = [
-  { name: 'Monthly', value: 45 },
-  { name: 'Quarterly', value: 30 },
-  { name: 'Annual', value: 15 },
-  { name: 'Day Pass', value: 10 },
+  { name: 'Mensuel', value: 45 },
+  { name: 'Trimestriel', value: 30 },
+  { name: 'Annuel', value: 15 },
+  { name: 'Pass Journalier', value: 10 },
 ];
 
 const attendanceData = [
-  { day: 'Mon', visitors: 68 },
-  { day: 'Tue', visitors: 75 },
-  { day: 'Wed', visitors: 82 },
-  { day: 'Thu', visitors: 70 },
-  { day: 'Fri', visitors: 90 },
-  { day: 'Sat', visitors: 110 },
-  { day: 'Sun', visitors: 45 },
+  { day: 'Lun', visitors: 68 },
+  { day: 'Mar', visitors: 75 },
+  { day: 'Mer', visitors: 82 },
+  { day: 'Jeu', visitors: 70 },
+  { day: 'Ven', visitors: 90 },
+  { day: 'Sam', visitors: 110 },
+  { day: 'Dim', visitors: 45 },
 ];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -101,8 +101,8 @@ const ImportMembersForm = () => {
       // Check if file is an Excel file or CSV
       if (!selectedFile.name.endsWith('.xlsx') && !selectedFile.name.endsWith('.xls') && !selectedFile.name.endsWith('.csv')) {
         addNotification({
-          title: 'Invalid file type',
-          message: 'Please upload an Excel (.xlsx, .xls) or CSV file',
+          title: 'Type de fichier invalide',
+          message: 'Veuillez télécharger un fichier Excel (.xlsx, .xls) ou CSV',
           type: 'error'
         });
         return;
@@ -121,10 +121,10 @@ const ImportMembersForm = () => {
             setPreviewData(parsedData);
             setShowPreview(true);
           } catch (error) {
-            console.error('Error parsing CSV:', error);
+            console.error('Erreur lors de l\'analyse du CSV:', error);
             addNotification({
-              title: 'Error',
-              message: 'Failed to parse the CSV file',
+              title: 'Erreur',
+              message: 'Échec de l\'analyse du fichier CSV',
               type: 'error'
             });
           }
@@ -135,27 +135,27 @@ const ImportMembersForm = () => {
         // For demo purposes, we'll show mock data
         const mockPreviewData = [
           { 
-            firstName: 'John', 
-            lastName: 'Doe', 
-            email: 'john.doe@example.com',
-            phone: '(123) 456-7890',
-            membershipType: 'monthly',
+            firstName: 'Jean', 
+            lastName: 'Dupont', 
+            email: 'jean.dupont@exemple.com',
+            phone: '01 23 45 67 89',
+            membershipType: 'mensuel',
             startDate: '2023-06-15'
           },
           { 
-            firstName: 'Jane', 
-            lastName: 'Smith', 
-            email: 'jane.smith@example.com',
-            phone: '(123) 456-7891',
-            membershipType: 'quarterly',
+            firstName: 'Marie', 
+            lastName: 'Martin', 
+            email: 'marie.martin@exemple.com',
+            phone: '01 23 45 67 90',
+            membershipType: 'trimestriel',
             startDate: '2023-05-20'
           },
           { 
             firstName: 'Robert', 
-            lastName: 'Johnson', 
-            email: 'robert.j@example.com',
-            phone: '(123) 456-7892',
-            membershipType: 'annual',
+            lastName: 'Dubois', 
+            email: 'robert.d@exemple.com',
+            phone: '01 23 45 67 91',
+            membershipType: 'annuel',
             startDate: '2023-04-10'
           }
         ];
@@ -163,10 +163,9 @@ const ImportMembersForm = () => {
         setPreviewData(mockPreviewData);
         setShowPreview(true);
         
-        // Show note about Excel parsing
         addNotification({
           title: 'Note',
-          message: 'Excel parsing requires the xlsx library. Using mock data for preview.',
+          message: 'L\'analyse Excel nécessite la bibliothèque xlsx. Utilisation de données de démonstration pour l\'aperçu.',
           type: 'info'
         });
       }
@@ -180,28 +179,24 @@ const ImportMembersForm = () => {
     const headers = lines[0].split(',').map(header => header.trim());
     
     for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue; // Skip empty lines
+      if (!lines[i].trim()) continue;
       
       const obj: Record<string, string> = {};
       const currentLine = lines[i].split(',');
       
       for (let j = 0; j < headers.length; j++) {
-        // Handle quoted values with commas
         let value = currentLine[j]?.trim() || '';
         
-        // If value starts with a quote but doesn't end with one, it may contain commas
         if (value.startsWith('"') && !value.endsWith('"')) {
           let k = j + 1;
-          // Keep adding parts until we find the closing quote
           while (k < currentLine.length) {
             value += ',' + currentLine[k];
             if (currentLine[k].endsWith('"')) break;
             k++;
           }
-          j = k; // Skip the parts we've already processed
+          j = k;
         }
         
-        // Remove quotes if they exist
         if (value.startsWith('"') && value.endsWith('"')) {
           value = value.substring(1, value.length - 1);
         }
@@ -221,30 +216,25 @@ const ImportMembersForm = () => {
     setIsUploading(true);
     
     try {
-      // Validate the data before uploading
       const invalidEntries = previewData.filter(member => {
         const requiredFields = ['firstName', 'lastName', 'email', 'membershipType'];
         return requiredFields.some(field => !member[field]);
       });
       
       if (invalidEntries.length > 0) {
-        throw new Error(`${invalidEntries.length} members have missing required fields`);
+        throw new Error(`${invalidEntries.length} membres ont des champs obligatoires manquants`);
       }
       
-      // Process members in batches to avoid overloading the database
       const batchSize = 20;
       const batches = [];
       
-      // Split data into batches
       for (let i = 0; i < previewData.length; i += batchSize) {
         batches.push(previewData.slice(i, i + batchSize));
       }
       
-      // Upload batches to Supabase
       let uploadedCount = 0;
       
       for (const batch of batches) {
-        // Format the data according to your database schema
         const formattedBatch = batch.map(member => ({
           first_name: member.firstName,
           last_name: member.lastName,
@@ -254,11 +244,10 @@ const ImportMembersForm = () => {
           start_date: member.startDate
         }));
         
-        // Upload to Supabase
         const { error } = await supabase
           .from('members')
           .upsert(formattedBatch, {
-            onConflict: 'email', // Assuming email is unique 
+            onConflict: 'email',
             ignoreDuplicates: false
           });
         
@@ -268,12 +257,11 @@ const ImportMembersForm = () => {
       }
       
       addNotification({
-        title: 'Success',
-        message: `Imported ${uploadedCount} members successfully`,
+        title: 'Succès',
+        message: `${uploadedCount} membres importés avec succès`,
         type: 'success'
       });
       
-      // Reset form
       setFile(null);
       setPreviewData([]);
       setShowPreview(false);
@@ -281,10 +269,10 @@ const ImportMembersForm = () => {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      console.error('Error uploading members:', error);
+      console.error('Erreur lors de l\'importation des membres:', error);
       addNotification({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to import members',
+        title: 'Erreur',
+        message: error instanceof Error ? error.message : 'Échec de l\'importation des membres',
         type: 'error'
       });
     } finally {
@@ -293,30 +281,27 @@ const ImportMembersForm = () => {
   };
 
   const downloadTemplate = () => {
-    // Create a template CSV file for member imports
-    const headers = ['firstName', 'lastName', 'email', 'phone', 'membershipType', 'startDate'];
-    const exampleRow = ['John', 'Doe', 'john.doe@example.com', '(123) 456-7890', 'monthly', '2023-01-15'];
+    const headers = ['prénom', 'nom', 'email', 'téléphone', 'typeAbonnement', 'dateDebut'];
+    const exampleRow = ['Jean', 'Dupont', 'jean.dupont@exemple.com', '01 23 45 67 89', 'mensuel', '2023-01-15'];
     
-    // Create CSV content
     const templateContent = [
       headers.join(','),
       exampleRow.join(',')
     ].join('\n');
     
-    // Create a blob and download
     const blob = new Blob([templateContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'member_import_template.csv');
+    link.setAttribute('download', 'modele_import_membres.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
     addNotification({
-      title: 'Template Downloaded',
-      message: 'Member import template has been downloaded',
+      title: 'Modèle Téléchargé',
+      message: 'Le modèle d\'importation des membres a été téléchargé',
       type: 'success'
     });
   };
@@ -325,12 +310,12 @@ const ImportMembersForm = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-medium">Import Members</h3>
-          <p className="text-sm text-gray-500">Upload an Excel or CSV file to import multiple members at once</p>
+          <h3 className="text-lg font-medium">Importer des Membres</h3>
+          <p className="text-sm text-gray-500">Téléchargez un fichier Excel ou CSV pour importer plusieurs membres à la fois</p>
         </div>
         <Button variant="outline" size="sm" onClick={downloadTemplate}>
           <Download className="h-4 w-4 mr-2" />
-          Download Template
+          Télécharger le Modèle
         </Button>
       </div>
       
@@ -347,10 +332,10 @@ const ImportMembersForm = () => {
           <div className="space-y-2">
             <UploadCloud className="h-10 w-10 text-blue-500 mx-auto" />
             <p className="text-sm font-medium">
-              {file ? file.name : 'Click to upload or drag and drop'}
+              {file ? file.name : 'Cliquez pour télécharger ou glissez-déposez'}
             </p>
             <p className="text-xs text-gray-500">
-              Excel or CSV files (max 5MB)
+              Fichiers Excel ou CSV (max 5Mo)
             </p>
           </div>
         </Label>
@@ -359,10 +344,10 @@ const ImportMembersForm = () => {
       {showPreview && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Preview ({previewData.length} members)</h3>
+            <h3 className="text-lg font-medium">Aperçu ({previewData.length} membres)</h3>
             <Button variant="outline" size="sm" onClick={() => setIsAlertOpen(true)}>
               <XCircle className="h-4 w-4 mr-2" />
-              Cancel
+              Annuler
             </Button>
           </div>
           
@@ -370,11 +355,11 @@ const ImportMembersForm = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Membership</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Abonnement</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date de Début</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -393,7 +378,7 @@ const ImportMembersForm = () => {
                       {member.membershipType}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {format(parseISO(member.startDate), 'MMM d, yyyy')}
+                      {format(parseISO(member.startDate), 'd MMM yyyy')}
                     </td>
                   </tr>
                 ))}
@@ -406,12 +391,12 @@ const ImportMembersForm = () => {
               {isUploading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Importing...
+                  Importation en cours...
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Import {previewData.length} Members
+                  Importer {previewData.length} Membres
                 </>
               )}
             </Button>
@@ -422,13 +407,13 @@ const ImportMembersForm = () => {
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Import?</AlertDialogTitle>
+            <AlertDialogTitle>Annuler l'importation ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel? Your uploaded file and preview data will be discarded.
+              Êtes-vous sûr de vouloir annuler ? Votre fichier téléchargé et les données d'aperçu seront supprimés.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Back</AlertDialogCancel>
+            <AlertDialogCancel>Retour</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
               setFile(null);
               setPreviewData([]);
@@ -437,7 +422,7 @@ const ImportMembersForm = () => {
                 fileInputRef.current.value = '';
               }
             }}>
-              Yes, cancel import
+              Oui, annuler l'importation
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -462,68 +447,30 @@ const Reports = () => {
   const isManager = user?.role === 'manager';
   const canImport = isAdmin || isManager;
 
-  // Generate a detailed report based on the current selections
   const generateReport = async () => {
     setIsGenerating(true);
     try {
-      // Fetch real data from Supabase based on the report type and date range
       let reportData: any[] = [];
       
-      // Example of fetching data from Supabase (would be customized based on your schema)
-      // In a real app, you would fetch data based on the activeTab and dateRange
       switch(activeTab) {
         case 'revenue':
-          // const { data, error } = await supabase
-          //   .from('payments')
-          //   .select('*')
-          //   .gte('created_at', dateRange.start)
-          //   .lte('created_at', dateRange.end);
-          // 
-          // if (error) throw error;
-          // reportData = data || [];
-          
-          // For demo, use the mock data
           reportData = revenueData;
           break;
           
         case 'members':
-          // const { data, error } = await supabase
-          //   .from('members')
-          //   .select('*')
-          //   .gte('created_at', dateRange.start)
-          //   .lte('created_at', dateRange.end);
-          //
-          // if (error) throw error;
-          // reportData = data || [];
-          
-          // For demo, use the mock data
           reportData = membershipData;
           break;
           
         case 'attendance':
-          // const { data, error } = await supabase
-          //   .from('attendance')
-          //   .select('*')
-          //   .gte('date', dateRange.start)
-          //   .lte('date', dateRange.end);
-          //
-          // if (error) throw error;
-          // reportData = data || [];
-          
-          // For demo, use the mock data
           reportData = attendanceData;
           break;
           
         default:
-          // Custom report would combine data from multiple sources
           reportData = [...revenueData, ...attendanceData];
       }
       
-      // Generate a report name based on the current selections
       const reportName = `${activeTab}_${reportType}_${format(new Date(dateRange.start), 'yyyy-MM-dd')}_to_${format(new Date(dateRange.end), 'yyyy-MM-dd')}`;
       
-      // For PDF generation, you would typically use a library like jsPDF
-      // For demo purposes, we'll just export a CSV
       const csvContent = convertToCSV(reportData);
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -536,15 +483,15 @@ const Reports = () => {
       document.body.removeChild(link);
       
       addNotification({
-        title: 'Report Generated',
-        message: `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} report has been generated`,
+        title: 'Rapport Généré',
+        message: `Le rapport ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} a été généré`,
         type: 'success'
       });
     } catch (error) {
-      console.error('Error generating report:', error);
+      console.error('Erreur lors de la génération du rapport:', error);
       addNotification({
-        title: 'Generation Failed',
-        message: 'Failed to generate report',
+        title: 'Échec de la Génération',
+        message: 'Échec de la génération du rapport',
         type: 'error'
       });
     } finally {
@@ -604,15 +551,15 @@ const Reports = () => {
       document.body.removeChild(link);
       
       addNotification({
-        title: 'Export Successful',
-        message: `${type.charAt(0).toUpperCase() + type.slice(1)} report has been exported`,
+        title: 'Exportation Réussie',
+        message: `Le rapport ${type.charAt(0).toUpperCase() + type.slice(1)} a été exporté`,
         type: 'success'
       });
     } catch (error) {
-      console.error('Error exporting report:', error);
+      console.error('Erreur lors de l\'exportation du rapport:', error);
       addNotification({
-        title: 'Export Failed',
-        message: 'Failed to export report',
+        title: 'Échec de l\'Exportation',
+        message: 'Échec de l\'exportation du rapport',
         type: 'error'
       });
     } finally {
@@ -755,7 +702,7 @@ const Reports = () => {
               <Label htmlFor="report-type" className="text-sm">Type</Label>
               <Select value={reportType} onValueChange={setReportType}>
                 <SelectTrigger id="report-type" className="w-28">
-                  <SelectValue placeholder="Monthly" />
+                  <SelectValue placeholder="Mensuel" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="daily">Quotidien</SelectItem>
@@ -779,10 +726,10 @@ const Reports = () => {
               <CardTitle className="text-sm font-medium text-gray-500">Revenu Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$107,200</div>
+              <div className="text-2xl font-bold">107 200 €</div>
               <p className="text-xs text-green-600 flex items-center mt-1">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
-                +12.5% par rapport au mois dernier
+                +12,5% par rapport au mois dernier
               </p>
             </CardContent>
           </Card>
@@ -795,7 +742,7 @@ const Reports = () => {
               <div className="text-2xl font-bold">547</div>
               <p className="text-xs text-green-600 flex items-center mt-1">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
-                +8.3% par rapport au mois dernier
+                +8,3% par rapport au mois dernier
               </p>
             </CardContent>
           </Card>
@@ -808,7 +755,7 @@ const Reports = () => {
               <div className="text-2xl font-bold">68</div>
               <p className="text-xs text-green-600 flex items-center mt-1">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
-                +5.2% par rapport au mois dernier
+                +5,2% par rapport au mois dernier
               </p>
             </CardContent>
           </Card>
