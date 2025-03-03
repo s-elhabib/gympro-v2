@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   Users, 
@@ -15,26 +15,68 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
+import { supabase } from '../../lib/supabase';
 
 const Sidebar = () => {
   const { user } = useAuth();
   const [collapsed, setCollapsed] = React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
+  const [checkoutCount, setCheckoutCount] = useState(0);
   
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', roles: ['admin', 'staff', 'manager'] },
     { icon: Users, label: 'Membres', path: '/members', roles: ['admin', 'staff', 'manager'] },
     { icon: CreditCard, label: 'Paiements', path: '/payments', roles: ['admin', 'staff', 'manager'] },
-    { icon: Calendar, label: 'Presence', path: '/attendance', roles: ['admin', 'staff', 'trainer'] },
+    { 
+      icon: Calendar, 
+      label: 'Presence', 
+      path: '/attendance', 
+      roles: ['admin', 'staff', 'trainer'],
+      notificationCount: checkoutCount  // Using the real count from state
+    },
     { icon: Dumbbell, label: 'Cours', path: '/classes', roles: ['admin', 'trainer', 'manager'] },
     { icon: UserCog, label: 'Personnel', path: '/staff', roles: ['admin', 'manager'] },
     { icon: BarChart3, label: 'Rapports', path: '/reports', roles: ['admin', 'manager'] },
     { icon: Settings, label: 'Parametres', path: '/settings', roles: ['admin'] }
   ];
 
+  console.log(checkoutCount);
+  
   const filteredMenuItems = menuItems.filter(item => 
     item.roles.includes(user?.role || '')
   );
+
+  useEffect(() => {
+    const fetchOverdueCheckouts = async () => {
+      try {
+        const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
+
+        const { data, error } = await supabase
+          .from('attendance')
+          .select('*')
+          .is('check_out_time', null) // Not checked out
+          .lt('check_in_time', fiveHoursAgo.toISOString()) // Check-in time more than 5 hours ago
+
+          //.lt('check_in_time', new Date().toISOString()); // Only get records with check-in time before now
+
+        console.log('Overdue checkouts:', data);
+
+        if (error) {
+          console.error('Error fetching overdue checkouts:', error);
+          return;
+        }
+
+        setCheckoutCount(data?.length || 0);
+      } catch (error) {
+        console.error('Error in fetchOverdueCheckouts:', error);
+      }
+    };
+
+    fetchOverdueCheckouts();
+    const interval = setInterval(fetchOverdueCheckouts, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle mobile menu close when route changes
   const handleNavClick = () => {
@@ -87,7 +129,7 @@ const Sidebar = () => {
               onClick={handleNavClick}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+                  "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors relative",
                   isActive 
                     ? "bg-blue-600 text-white" 
                     : "text-gray-300 hover:bg-gray-800",
@@ -95,8 +137,27 @@ const Sidebar = () => {
                 )
               }
             >
-              <item.icon size={20} />
-              {!collapsed && <span>{item.label}</span>}
+              <div className="relative">
+                <item.icon size={20} />
+                {item.notificationCount > 0 && (
+                  <span className={cn(
+                    "absolute -top-2 -right-2 min-w-[20px] h-5 px-1",
+                    "flex items-center justify-center",
+                    "rounded-full text-xs font-medium",
+                    "bg-red-500 text-white",
+                    "border-2 border-gray-900",
+                    
+                    collapsed ? "-right-1" : "-right-2"
+                  )}>
+                    {item.notificationCount}
+                  </span>
+                )}
+              </div>
+              {!collapsed && (
+                <span className="flex-1">
+                  {item.label}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

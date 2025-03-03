@@ -408,7 +408,7 @@ const Dashboard = () => {
         />
         <StatCard 
           icon={Activity}
-          label="Fréquentation du Jour"
+          label="Présence du Jour"
           value={stats.attendance.value}
           trend={stats.attendance.trend}
           isPositive={stats.attendance.isPositive}

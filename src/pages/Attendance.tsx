@@ -284,25 +284,30 @@ const Attendance = () => {
     try {
       setIsLoading(true);
       
-      // Get total count
-      const { count } = await supabase
-        .from('attendance')
-        .select('*', { count: 'exact', head: true });
-      
-      setTotalRecords(count || 0);
-
-      // Fetch paginated data
-      const { data, error } = await supabase
+      // First get all data for search
+      const { data: allData, error: searchError } = await supabase
         .from('attendance')
         .select(`
           *,
           member:members(first_name, last_name)
         `)
-        .order('check_in_time', { ascending: false })
-        .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
+        .order('check_in_time', { ascending: false });
 
-      if (error) throw error;
-      setAttendance(data || []);
+      if (searchError) throw searchError;
+
+      // Filter based on search term
+      const filteredData = allData?.filter(record => 
+        searchByFullName(searchTerm, record.member.first_name, record.member.last_name)
+      ) || [];
+
+      // Update total count based on filtered data
+      setTotalRecords(filteredData.length);
+
+      // Paginate the filtered data
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE;
+      setAttendance(filteredData.slice(start, end));
+
     } catch (error) {
       console.error('Error fetching attendance:', error);
       addNotification({
@@ -317,7 +322,7 @@ const Attendance = () => {
 
   React.useEffect(() => {
     fetchAttendance();
-  }, [currentPage]);
+  }, [currentPage, searchTerm]);
 
   const handleCreateAttendance = async (data: AttendanceFormValues) => {
     try {
@@ -419,10 +424,6 @@ const Attendance = () => {
     return `${hours}h ${minutes}m`;
   };
 
-  const filteredAttendance = attendance.filter(record => 
-    searchByFullName(searchTerm, record.member.first_name, record.member.last_name)
-  );
-
   const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
 
   return (
@@ -480,14 +481,14 @@ const Attendance = () => {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : filteredAttendance.length === 0 ? (
+            ) : attendance.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   Aucun enregistrement de présence trouvé
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAttendance.map((record) => (
+              attendance.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell 
                     className="cursor-pointer hover:text-blue-600"

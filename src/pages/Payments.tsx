@@ -48,7 +48,8 @@ import { supabase } from '../lib/supabase';
 import MemberSearch from '../components/MemberSearch';
 import { searchByFullName } from '../lib/utils';
 import { useNotifications } from '../context/NotificationContext';
-import { log } from 'console';
+
+const ITEMS_PER_PAGE = 10; // Or whatever number you prefer
 
 const PaymentForm = ({ 
   defaultValues,
@@ -265,6 +266,8 @@ const Payments = () => {
   const [payments, setPayments] = React.useState<any[]>([]);
   const [selectedPayment, setSelectedPayment] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [totalRecords, setTotalRecords] = React.useState(0);
 
   const updatePaymentStatus = (payment: any) => {
     const today = new Date();
@@ -290,8 +293,6 @@ const Payments = () => {
     return { ...payment, status: 'paid' };
   };
 
-  
-
   const fetchPayments = async () => {
     try {
       setIsLoading(true);
@@ -305,10 +306,22 @@ const Payments = () => {
 
       if (error) throw error;
       
-      // Update payment statuses based on dates
-      const updatedPayments = data?.map(payment => updatePaymentStatus(payment));
+      // Filter based on search term
+      const filteredData = data?.filter(payment => 
+        searchByFullName(searchTerm, payment.member.first_name, payment.member.last_name)
+      ) || [];
 
-      setPayments(updatedPayments || []);
+      // Update payment statuses based on dates
+      const updatedPayments = filteredData.map(payment => updatePaymentStatus(payment));
+
+      // Update total count based on filtered data
+      setTotalRecords(updatedPayments.length);
+
+      // Paginate the filtered data
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE;
+      setPayments(updatedPayments.slice(start, end));
+
     } catch (error) {
       console.error('Error fetching payments:', error);
       addNotification({
@@ -323,7 +336,9 @@ const Payments = () => {
 
   React.useEffect(() => {
     fetchPayments();
-  }, []);
+  }, [currentPage, searchTerm]); // Add dependencies
+
+  const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
 
   const handleCreatePayment = async (data: PaymentFormValues) => {
     try {
@@ -456,10 +471,6 @@ const Payments = () => {
     return diffInDays;
   };
 
-  const filteredPayments = payments.filter(payment => 
-    searchByFullName(searchTerm, payment.member.first_name, payment.member.last_name)
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -514,14 +525,14 @@ const Payments = () => {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : filteredPayments.length === 0 ? (
+            ) : payments.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
                   Aucun paiement trouve
                 </TableCell>
               </TableRow>
             ) : (
-              filteredPayments.map((payment) => {
+              payments.map((payment) => {
                 const updatedPayment = updatePaymentStatus(payment);
                 return (
                   <TableRow key={payment.id}>
@@ -634,6 +645,31 @@ const Payments = () => {
             )}
           </TableBody>
         </Table>
+
+        {/* Add pagination controls */}
+        <div className="flex items-center justify-between px-4 py-3 border-t">
+          <div className="text-sm text-gray-500">
+            Page {currentPage} sur {totalPages}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              Précédent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Suivant
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
