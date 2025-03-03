@@ -59,29 +59,29 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 // Placeholder data for demonstration
 const revenueData = [
-  { month: 'Jan', revenue: 12500 },
-  { month: 'Feb', revenue: 14200 },
-  { month: 'Mar', revenue: 15800 },
-  { month: 'Apr', revenue: 13900 },
-  { month: 'May', revenue: 16500 },
-  { month: 'Jun', revenue: 18200 },
+  { month: 'Jan', revenue: 125000 },
+  { month: 'Feb', revenue: 142000 },
+  { month: 'Mar', revenue: 158000 },
+  { month: 'Apr', revenue: 139000 },
+  { month: 'May', revenue: 165000 },
+  { month: 'Jun', revenue: 182000 },
 ];
 
 const membershipData = [
-  { name: 'Monthly', value: 45 },
-  { name: 'Quarterly', value: 30 },
-  { name: 'Annual', value: 15 },
-  { name: 'Day Pass', value: 10 },
+  { name: 'Mensuel', value: 45 },
+  { name: 'Trimestriel', value: 30 },
+  { name: 'Annuel', value: 15 },
+  { name: 'Pass Journalier', value: 10 },
 ];
 
 const attendanceData = [
-  { day: 'Mon', visitors: 68 },
-  { day: 'Tue', visitors: 75 },
-  { day: 'Wed', visitors: 82 },
-  { day: 'Thu', visitors: 70 },
-  { day: 'Fri', visitors: 90 },
-  { day: 'Sat', visitors: 110 },
-  { day: 'Sun', visitors: 45 },
+  { day: 'Lun', visitors: 68 },
+  { day: 'Mar', visitors: 75 },
+  { day: 'Mer', visitors: 82 },
+  { day: 'Jeu', visitors: 70 },
+  { day: 'Ven', visitors: 90 },
+  { day: 'Sam', visitors: 110 },
+  { day: 'Dim', visitors: 45 },
 ];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -101,8 +101,8 @@ const ImportMembersForm = () => {
       // Check if file is an Excel file or CSV
       if (!selectedFile.name.endsWith('.xlsx') && !selectedFile.name.endsWith('.xls') && !selectedFile.name.endsWith('.csv')) {
         addNotification({
-          title: 'Invalid file type',
-          message: 'Please upload an Excel (.xlsx, .xls) or CSV file',
+          title: 'Type de fichier invalide',
+          message: 'Veuillez telecharger un fichier Excel (.xlsx, .xls) ou CSV',
           type: 'error'
         });
         return;
@@ -123,8 +123,8 @@ const ImportMembersForm = () => {
           } catch (error) {
             console.error('Error parsing CSV:', error);
             addNotification({
-              title: 'Error',
-              message: 'Failed to parse the CSV file',
+              title: 'Erreur',
+              message: 'Impossible de lire le fichier CSV',
               type: 'error'
             });
           }
@@ -139,7 +139,7 @@ const ImportMembersForm = () => {
             lastName: 'Doe', 
             email: 'john.doe@example.com',
             phone: '(123) 456-7890',
-            membershipType: 'monthly',
+            membershipType: 'mensuel',
             startDate: '2023-06-15'
           },
           { 
@@ -147,7 +147,7 @@ const ImportMembersForm = () => {
             lastName: 'Smith', 
             email: 'jane.smith@example.com',
             phone: '(123) 456-7891',
-            membershipType: 'quarterly',
+            membershipType: 'trimestriel',
             startDate: '2023-05-20'
           },
           { 
@@ -155,7 +155,7 @@ const ImportMembersForm = () => {
             lastName: 'Johnson', 
             email: 'robert.j@example.com',
             phone: '(123) 456-7892',
-            membershipType: 'annual',
+            membershipType: 'annuel',
             startDate: '2023-04-10'
           }
         ];
@@ -166,7 +166,7 @@ const ImportMembersForm = () => {
         // Show note about Excel parsing
         addNotification({
           title: 'Note',
-          message: 'Excel parsing requires the xlsx library. Using mock data for preview.',
+          message: 'L\'analyse Excel necessite la bibliotheque xlsx. Utilisation de donnees simulees pour l\'apercu.',
           type: 'info'
         });
       }
@@ -228,7 +228,7 @@ const ImportMembersForm = () => {
       });
       
       if (invalidEntries.length > 0) {
-        throw new Error(`${invalidEntries.length} members have missing required fields`);
+        throw new Error(`${invalidEntries.length} membres ont des champs obligatoires manquants`);
       }
       
       // Process members in batches to avoid overloading the database
@@ -268,8 +268,8 @@ const ImportMembersForm = () => {
       }
       
       addNotification({
-        title: 'Success',
-        message: `Imported ${uploadedCount} members successfully`,
+        title: 'Succes',
+        message: `${uploadedCount} membres importes avec succes`,
         type: 'success'
       });
       
@@ -283,8 +283,8 @@ const ImportMembersForm = () => {
     } catch (error) {
       console.error('Error uploading members:', error);
       addNotification({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to import members',
+        title: 'Erreur',
+        message: error instanceof Error ? error.message : 'Echec de l\'importation des membres',
         type: 'error'
       });
     } finally {
@@ -295,7 +295,7 @@ const ImportMembersForm = () => {
   const downloadTemplate = () => {
     // Create a template CSV file for member imports
     const headers = ['firstName', 'lastName', 'email', 'phone', 'membershipType', 'startDate'];
-    const exampleRow = ['John', 'Doe', 'john.doe@example.com', '(123) 456-7890', 'monthly', '2023-01-15'];
+    const exampleRow = ['John', 'Doe', 'john.doe@example.com', '(123) 456-7890', 'mensuel', '2023-01-15'];
     
     // Create CSV content
     const templateContent = [
@@ -309,14 +309,14 @@ const ImportMembersForm = () => {
     
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'member_import_template.csv');
+    link.setAttribute('download', 'modele_importation_membres.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
     addNotification({
-      title: 'Template Downloaded',
-      message: 'Member import template has been downloaded',
+      title: 'Modele Telecharge',
+      message: 'Le modele d\'importation des membres a ete telecharge',
       type: 'success'
     });
   };
@@ -325,12 +325,12 @@ const ImportMembersForm = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-medium">Import Members</h3>
-          <p className="text-sm text-gray-500">Upload an Excel or CSV file to import multiple members at once</p>
+          <h3 className="text-lg font-medium">Importer des Membres</h3>
+          <p className="text-sm text-gray-500">Telechargez un fichier Excel ou CSV pour importer plusieurs membres a la fois</p>
         </div>
         <Button variant="outline" size="sm" onClick={downloadTemplate}>
           <Download className="h-4 w-4 mr-2" />
-          Download Template
+          Telecharger le Modele
         </Button>
       </div>
       
@@ -347,10 +347,10 @@ const ImportMembersForm = () => {
           <div className="space-y-2">
             <UploadCloud className="h-10 w-10 text-blue-500 mx-auto" />
             <p className="text-sm font-medium">
-              {file ? file.name : 'Click to upload or drag and drop'}
+              {file ? file.name : 'Cliquez pour telecharger ou glissez-deposez'}
             </p>
             <p className="text-xs text-gray-500">
-              Excel or CSV files (max 5MB)
+              Fichiers Excel ou CSV (max 5MB)
             </p>
           </div>
         </Label>
@@ -359,10 +359,10 @@ const ImportMembersForm = () => {
       {showPreview && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Preview ({previewData.length} members)</h3>
+            <h3 className="text-lg font-medium">Apercu ({previewData.length} membres)</h3>
             <Button variant="outline" size="sm" onClick={() => setIsAlertOpen(true)}>
               <XCircle className="h-4 w-4 mr-2" />
-              Cancel
+              Annuler
             </Button>
           </div>
           
@@ -370,11 +370,11 @@ const ImportMembersForm = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Membership</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telephone</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Abonnement</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date de Debut</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -406,12 +406,12 @@ const ImportMembersForm = () => {
               {isUploading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Importing...
+                  Importation...
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Import {previewData.length} Members
+                  Importer {previewData.length} Membres
                 </>
               )}
             </Button>
@@ -422,13 +422,13 @@ const ImportMembersForm = () => {
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Import?</AlertDialogTitle>
+            <AlertDialogTitle>Annuler l'Importation ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel? Your uploaded file and preview data will be discarded.
+              Etes-vous sur de vouloir annuler ? Votre fichier telecharge et les donnees d'apercu seront supprimes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Back</AlertDialogCancel>
+            <AlertDialogCancel>Retour</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
               setFile(null);
               setPreviewData([]);
@@ -437,7 +437,7 @@ const ImportMembersForm = () => {
                 fileInputRef.current.value = '';
               }
             }}>
-              Yes, cancel import
+              Oui, annuler l'importation
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -536,15 +536,15 @@ const Reports = () => {
       document.body.removeChild(link);
       
       addNotification({
-        title: 'Report Generated',
-        message: `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} report has been generated`,
+        title: 'Rapport Genere',
+        message: `Le rapport ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} a ete genere`,
         type: 'success'
       });
     } catch (error) {
       console.error('Error generating report:', error);
       addNotification({
-        title: 'Generation Failed',
-        message: 'Failed to generate report',
+        title: 'Generation Echouee',
+        message: 'Echec de la generation du rapport',
         type: 'error'
       });
     } finally {
@@ -562,31 +562,31 @@ const Reports = () => {
       switch(type) {
         case 'revenue':
           data = revenueData;
-          fileName = 'revenue_report.csv';
+          fileName = 'rapport_revenus.csv';
           break;
         case 'members':
           data = membershipData;
-          fileName = 'membership_report.csv';
+          fileName = 'rapport_adhesions.csv';
           break;
         case 'attendance':
           data = attendanceData;
-          fileName = 'attendance_report.csv';
+          fileName = 'rapport_frequentation.csv';
           break;
         case 'monthly-revenue':
           data = revenueData;
-          fileName = 'monthly_revenue_report.csv';
+          fileName = 'rapport_revenus_mensuels.csv';
           break;
         case 'member-attendance':
           data = attendanceData;
-          fileName = 'member_attendance_report.csv';
+          fileName = 'rapport_frequentation_membres.csv';
           break;
         case 'q1-financial':
           data = revenueData.slice(0, 3);
-          fileName = 'q1_financial_report.csv';
+          fileName = 'rapport_financier_t1.csv';
           break;
         default:
           data = revenueData;
-          fileName = 'custom_report.csv';
+          fileName = 'rapport_personnalise.csv';
       }
       
       // Convert data to CSV format
@@ -604,15 +604,15 @@ const Reports = () => {
       document.body.removeChild(link);
       
       addNotification({
-        title: 'Export Successful',
-        message: `${type.charAt(0).toUpperCase() + type.slice(1)} report has been exported`,
+        title: 'Exportation Reussie',
+        message: `Le rapport ${type.charAt(0).toUpperCase() + type.slice(1)} a ete exporte`,
         type: 'success'
       });
     } catch (error) {
       console.error('Error exporting report:', error);
       addNotification({
-        title: 'Export Failed',
-        message: 'Failed to export report',
+        title: 'Exportation Echouee',
+        message: 'Echec de l\'exportation du rapport',
         type: 'error'
       });
     } finally {
@@ -648,8 +648,8 @@ const Reports = () => {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
-          <p className="text-sm text-gray-500 mt-1">View and export reports about your gym</p>
+          <h1 className="text-2xl font-bold text-gray-900">Rapports & Analyses</h1>
+          <p className="text-sm text-gray-500 mt-1">Consultez et exportez les rapports de votre salle de sport</p>
         </div>
         
         <div className="flex items-center space-x-3">
@@ -658,14 +658,14 @@ const Reports = () => {
               <DialogTrigger asChild>
                 <Button variant="outline">
                   <FileUp className="h-4 w-4 mr-2" />
-                  Import Members
+                  Importer des Membres
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-3xl">
                 <DialogHeader>
-                  <DialogTitle>Import Members</DialogTitle>
+                  <DialogTitle>Importer des Membres</DialogTitle>
                   <DialogDescription>
-                    Upload an Excel or CSV file to import multiple members at once.
+                    Telechargez un fichier Excel ou CSV pour importer plusieurs membres a la fois.
                   </DialogDescription>
                 </DialogHeader>
                 <ImportMembersForm />
@@ -677,12 +677,12 @@ const Reports = () => {
             {isGenerating ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
-                Generating...
+                Generation...
               </>
             ) : (
               <>
                 <FilePieChart className="h-4 w-4 mr-2" />
-                Generate Report
+                Generer un Rapport
               </>
             )}
           </Button>
@@ -691,12 +691,12 @@ const Reports = () => {
             {isExporting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Exporting...
+                Exportation...
               </>
             ) : (
               <>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
-                Export
+                Exporter
               </>
             )}
           </Button>
@@ -715,7 +715,7 @@ const Reports = () => {
                 onClick={() => setActiveTab('revenue')}
               >
                 <DollarSign className="h-4 w-4 mr-2" />
-                Revenue
+                Revenus
               </button>
               <button
                 type="button"
@@ -725,7 +725,7 @@ const Reports = () => {
                 onClick={() => setActiveTab('members')}
               >
                 <Users className="h-4 w-4 mr-2" />
-                Members
+                Membres
               </button>
               <button
                 type="button"
@@ -735,7 +735,7 @@ const Reports = () => {
                 onClick={() => setActiveTab('attendance')}
               >
                 <Activity className="h-4 w-4 mr-2" />
-                Attendance
+                Frequentation
               </button>
               <button
                 type="button"
@@ -745,7 +745,7 @@ const Reports = () => {
                 onClick={() => setActiveTab('custom')}
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
-                Custom
+                Personnalise
               </button>
             </div>
           </div>
@@ -755,13 +755,13 @@ const Reports = () => {
               <Label htmlFor="report-type" className="text-sm">Type</Label>
               <Select value={reportType} onValueChange={setReportType}>
                 <SelectTrigger id="report-type" className="w-28">
-                  <SelectValue placeholder="Monthly" />
+                  <SelectValue placeholder="Mensuel" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
+                  <SelectItem value="daily">Quotidien</SelectItem>
+                  <SelectItem value="weekly">Hebdomadaire</SelectItem>
+                  <SelectItem value="monthly">Mensuel</SelectItem>
+                  <SelectItem value="yearly">Annuel</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -86,7 +86,7 @@ const AttendanceForm = ({
         .single();
 
       if (!member) {
-        throw new Error('Member not found');
+        throw new Error('Membre non trouvé');
       }
 
       // Check for valid payments
@@ -110,16 +110,16 @@ const AttendanceForm = ({
       // Show warnings if there are issues
       if (member.status !== 'active') {
         addNotification({
-          title: 'Membership Inactive',
-          message: 'This member\'s membership is not active.',
+          title: 'Adhésion Inactive',
+          message: 'L\'adhésion de ce membre n\'est pas active.',
           type: 'warning'
         });
       }
 
       if (!hasValidPayment) {
         addNotification({
-          title: 'Payment Required',
-          message: 'This member has no valid payment on record.',
+          title: 'Paiement Requis',
+          message: 'Ce membre n\'a pas de paiement valide enregistré.',
           type: 'warning'
         });
       }
@@ -127,8 +127,8 @@ const AttendanceForm = ({
     } catch (error) {
       console.error('Error checking member status:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to verify member status',
+        title: 'Erreur',
+        message: 'Échec de la vérification du statut du membre',
         type: 'error'
       });
     }
@@ -150,8 +150,8 @@ const AttendanceForm = ({
   const handleSubmit = async (data: AttendanceFormValues) => {
     if (!memberStatus.hasValidPayment) {
       addNotification({
-        title: 'Cannot Record Attendance',
-        message: 'Member must have a valid payment to record attendance.',
+        title: 'Impossible d\'Enregistrer la Présence',
+        message: 'Le membre doit avoir un paiement valide pour enregistrer la présence.',
         type: 'error'
       });
       return;
@@ -167,7 +167,7 @@ const AttendanceForm = ({
           name="memberId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Member</FormLabel>
+              <FormLabel>Membre</FormLabel>
               <FormControl>
                 <MemberSearch 
                   onSelect={handleMemberSelect} 
@@ -187,8 +187,8 @@ const AttendanceForm = ({
                 memberStatus.isActive ? 'bg-green-500' : 'bg-red-500'
               }`} />
               <span className="text-sm">
-                Membership Status: <span className="font-medium capitalize">{
-                  memberStatus.isActive ? 'Active' : 'Inactive'
+                Statut d'Adhésion: <span className="font-medium capitalize">{
+                  memberStatus.isActive ? 'Actif' : 'Inactif'
                 }</span>
               </span>
             </div>
@@ -197,8 +197,8 @@ const AttendanceForm = ({
                 memberStatus.hasValidPayment ? 'bg-green-500' : 'bg-red-500'
               }`} />
               <span className="text-sm">
-                Payment Status: <span className="font-medium">{
-                  memberStatus.hasValidPayment ? 'Valid' : 'Payment Required'
+                Statut de Paiement: <span className="font-medium">{
+                  memberStatus.hasValidPayment ? 'Valide' : 'Paiement Requis'
                 }</span>
               </span>
             </div>
@@ -206,7 +206,7 @@ const AttendanceForm = ({
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
                 <span className="text-sm">
-                  Membership Type: <span className="font-medium capitalize">{
+                  Type d'Adhésion: <span className="font-medium capitalize">{
                     memberStatus.membershipType
                   }</span>
                 </span>
@@ -225,9 +225,9 @@ const AttendanceForm = ({
                 {...field}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
-                <option value="gym">Gym</option>
-                <option value="class">Class</option>
-                <option value="personal_training">Personal Training</option>
+                <option value="gym">Salle de Sport</option>
+                <option value="class">Cours</option>
+                <option value="personal_training">Entraînement Personnel</option>
               </select>
               <FormMessage />
             </FormItem>
@@ -253,15 +253,15 @@ const AttendanceForm = ({
           className="w-full"
           disabled={!memberStatus.hasValidPayment}
         >
-          {isEditing ? 'Update Attendance' : 'Record Attendance'}
+          {isEditing ? 'Mettre à Jour la Présence' : 'Enregistrer la Présence'}
         </Button>
 
         {selectedMemberId && !memberStatus.hasValidPayment && (
           <div className="flex items-start gap-2 p-3 bg-red-50 text-red-800 rounded-md">
             <AlertCircle className="h-5 w-5 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium">Cannot record attendance</p>
-              <p>Member must have a valid payment to record attendance.</p>
+              <p className="font-medium">Impossible d'enregistrer la présence</p>
+              <p>Le membre doit avoir un paiement valide pour enregistrer la présence.</p>
             </div>
           </div>
         )}
@@ -306,8 +306,8 @@ const Attendance = () => {
     } catch (error) {
       console.error('Error fetching attendance:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to fetch attendance records',
+        title: 'Erreur',
+        message: 'Échec de la récupération des enregistrements de présence',
         type: 'error'
       });
     } finally {
@@ -333,15 +333,15 @@ const Attendance = () => {
       await fetchAttendance();
       setIsAddDialogOpen(false);
       addNotification({
-        title: 'Success',
-        message: 'Attendance record created successfully',
+        title: 'Succès',
+        message: 'Présence enregistrée avec succès',
         type: 'success'
       });
     } catch (error) {
       console.error('Error creating attendance:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to create attendance record',
+        title: 'Erreur',
+        message: 'Échec de l\'enregistrement de la présence',
         type: 'error'
       });
     }
@@ -364,15 +364,15 @@ const Attendance = () => {
       ));
 
       addNotification({
-        title: 'Success',
-        message: 'Check-out recorded successfully',
+        title: 'Succès',
+        message: 'Départ enregistré avec succès',
         type: 'success'
       });
     } catch (error) {
       console.error('Error checking out:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to record check-out',
+        title: 'Erreur',
+        message: 'Échec de l\'enregistrement du départ',
         type: 'error'
       });
     }
@@ -392,15 +392,15 @@ const Attendance = () => {
       setTotalRecords(prev => prev - 1);
 
       addNotification({
-        title: 'Success',
-        message: 'Attendance record deleted successfully',
+        title: 'Succès',
+        message: 'Présence supprimée avec succès',
         type: 'success'
       });
     } catch (error) {
       console.error('Error deleting attendance:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to delete attendance record',
+        title: 'Erreur',
+        message: 'Échec de la suppression de la présence',
         type: 'error'
       });
     }
@@ -411,7 +411,7 @@ const Attendance = () => {
   };
 
   const formatDuration = (checkIn: string, checkOut: string | null) => {
-    if (!checkOut) return 'In Progress';
+    if (!checkOut) return 'En Cours';
     
     const duration = (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60);
     const hours = Math.floor(duration / 60);
@@ -428,19 +428,19 @@ const Attendance = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Attendance</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Présence</h1>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Record Attendance
+              Enregistrer la Présence
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Record Attendance</DialogTitle>
+              <DialogTitle>Enregistrer la Présence</DialogTitle>
               <DialogDescription>
-                Record member attendance details below.
+                Enregistrez les détails de présence du membre ci-dessous.
               </DialogDescription>
             </DialogHeader>
             <AttendanceForm onSubmit={handleCreateAttendance} />
@@ -451,7 +451,7 @@ const Attendance = () => {
       <div className="flex items-center space-x-2">
         <Search className="h-5 w-5 text-gray-400" />
         <Input
-          placeholder="Search attendance records..."
+          placeholder="Rechercher les enregistrements de présence..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -462,7 +462,7 @@ const Attendance = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Member</TableHead>
+              <TableHead>Membre</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Check In</TableHead>
               <TableHead>Check Out</TableHead>
@@ -483,7 +483,7 @@ const Attendance = () => {
             ) : filteredAttendance.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  No attendance records found
+                  Aucun enregistrement de présence trouvé
                 </TableCell>
               </TableRow>
             ) : (
@@ -537,7 +537,7 @@ const Attendance = () => {
                             onSelect={() => handleDeleteAttendance(record.id)}
                           >
                             <Trash className="h-4 w-4 mr-2" />
-                            Delete
+                            Supprimer
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -551,7 +551,7 @@ const Attendance = () => {
 
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <div className="text-sm text-gray-500">
-            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalRecords)} of {totalRecords} records
+            Affichage de {((currentPage - 1) * ITEMS_PER_PAGE) + 1} à {Math.min(currentPage * ITEMS_PER_PAGE, totalRecords)} sur {totalRecords} enregistrements
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -560,7 +560,7 @@ const Attendance = () => {
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
-              Previous
+              Précédent
             </Button>
             <Button
               variant="outline"
@@ -568,7 +568,7 @@ const Attendance = () => {
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
             >
-              Next
+              Suivant
             </Button>
           </div>
         </div>

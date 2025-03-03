@@ -55,7 +55,7 @@ const MemberForm = ({ defaultValues, onSubmit, isEditing = false }: MemberFormPr
             name="firstName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>First Name</FormLabel>
+                <FormLabel>Prénom</FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value || ''} />
                 </FormControl>
@@ -68,7 +68,7 @@ const MemberForm = ({ defaultValues, onSubmit, isEditing = false }: MemberFormPr
             name="lastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Last Name</FormLabel>
+                <FormLabel>Nom</FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value || ''} />
                 </FormControl>
@@ -97,7 +97,7 @@ const MemberForm = ({ defaultValues, onSubmit, isEditing = false }: MemberFormPr
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone</FormLabel>
+              <FormLabel>Téléphone</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ''} />
               </FormControl>
@@ -111,17 +111,17 @@ const MemberForm = ({ defaultValues, onSubmit, isEditing = false }: MemberFormPr
           name="membershipType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Membership Type</FormLabel>
+              <FormLabel>Type d'Abonnement</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select membership type" />
+                    <SelectValue placeholder="Sélectionner le type d'abonnement" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="basic">Basic</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
-                  <SelectItem value="platinum">Platinum</SelectItem>
+                  <SelectItem value="basic">Basique (200 MAD)</SelectItem>
+                  <SelectItem value="premium">Premium (350 MAD)</SelectItem>
+                  <SelectItem value="platinum">Platinum (500 MAD)</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -134,17 +134,17 @@ const MemberForm = ({ defaultValues, onSubmit, isEditing = false }: MemberFormPr
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
+              <FormLabel>Statut</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Sélectionner le statut" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
+                  <SelectItem value="active">Actif</SelectItem>
+                  <SelectItem value="inactive">Inactif</SelectItem>
+                  <SelectItem value="suspended">Suspendu</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -167,7 +167,7 @@ const MemberForm = ({ defaultValues, onSubmit, isEditing = false }: MemberFormPr
         />
 
         <Button type="submit" className="w-full">
-          {isEditing ? 'Update Member' : 'Save Member'}
+          {isEditing ? 'Mettre à Jour le Membre' : 'Enregistrer le Membre'}
         </Button>
       </form>
     </Form>

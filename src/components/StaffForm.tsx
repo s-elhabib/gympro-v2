@@ -49,7 +49,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
             name="firstName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>First Name</FormLabel>
+                <FormLabel>Prénom</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="John" />
                 </FormControl>
@@ -62,7 +62,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
             name="lastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Last Name</FormLabel>
+                <FormLabel>Nom</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="Doe" />
                 </FormControl>
@@ -91,7 +91,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone Number</FormLabel>
+                <FormLabel>Numéro de Téléphone</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="(123) 456-7890" />
                 </FormControl>
@@ -107,14 +107,14 @@ const StaffForm: React.FC<StaffFormProps> = ({
             name="role"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Role</FormLabel>
+                <FormLabel>Rôle</FormLabel>
                 <Select 
                   defaultValue={field.value} 
                   onValueChange={(value) => field.onChange(value)}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
+                      <SelectValue placeholder="Sélectionner un rôle" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -134,20 +134,20 @@ const StaffForm: React.FC<StaffFormProps> = ({
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormLabel>Statut</FormLabel>
                 <Select 
                   defaultValue={field.value} 
                   onValueChange={(value) => field.onChange(value)}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder="Sélectionner un statut" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="on_leave">On Leave</SelectItem>
+                    <SelectItem value="active">Actif</SelectItem>
+                    <SelectItem value="inactive">Inactif</SelectItem>
+                    <SelectItem value="on_leave">En Congé</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -161,7 +161,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
           name="hireDate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Hire Date</FormLabel>
+              <FormLabel>Date d'Embauche</FormLabel>
               <FormControl>
                 <Input 
                   type="date" 
@@ -183,7 +183,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
               <FormControl>
                 <textarea 
                   className="w-full min-h-[100px] rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Additional information..." 
+                  placeholder="Informations supplémentaires..." 
                   {...field} 
                 />
               </FormControl>
@@ -193,7 +193,7 @@ const StaffForm: React.FC<StaffFormProps> = ({
         />
 
         <Button type="submit" className="w-full">
-          {isEditing ? 'Update Staff Member' : 'Add Staff Member'}
+          {isEditing ? 'Mettre à Jour le Personnel' : 'Ajouter un Membre du Personnel'}
         </Button>
       </form>
     </Form>

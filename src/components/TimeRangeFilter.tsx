@@ -19,19 +19,19 @@ interface TimeRangeFilterProps {
 const getTimeRangeLabel = (range: TimeRange): string => {
   switch (range) {
     case '24h':
-      return 'Last 24 hours';
+      return 'Dernières 24 heures';
     case '7d':
-      return 'Last 7 days';
+      return 'Derniers 7 jours';
     case '30d':
-      return 'Last 30 days';
+      return 'Derniers 30 jours';
     case '90d':
-      return 'Last 90 days';
+      return 'Derniers 90 jours';
     case '12m':
-      return 'Last 12 months';
+      return 'Derniers 12 mois';
     case 'all':
-      return 'All time';
+      return 'Tout le temps';
     default:
-      return 'Custom';
+      return 'Personnalisé';
   }
 };
 
@@ -47,23 +47,23 @@ const TimeRangeFilter: React.FC<TimeRangeFilterProps> = ({ value, onChange }) =>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[200px]">
         <DropdownMenuItem onClick={() => onChange('24h')}>
-          Last 24 hours
+          Dernières 24 heures
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onChange('7d')}>
-          Last 7 days
+          Derniers 7 jours
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onChange('30d')}>
-          Last 30 days
+          Derniers 30 jours
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => onChange('90d')}>
-          Last 90 days
+          Derniers 90 jours
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onChange('12m')}>
-          Last 12 months
+          Derniers 12 mois
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onChange('all')}>
-          All time
+          Tout le temps
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

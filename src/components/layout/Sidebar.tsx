@@ -23,13 +23,13 @@ const Sidebar = () => {
   
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', roles: ['admin', 'staff', 'manager'] },
-    { icon: Users, label: 'Members', path: '/members', roles: ['admin', 'staff', 'manager'] },
-    { icon: CreditCard, label: 'Payments', path: '/payments', roles: ['admin', 'staff', 'manager'] },
-    { icon: Calendar, label: 'Attendance', path: '/attendance', roles: ['admin', 'staff', 'trainer'] },
-    { icon: Dumbbell, label: 'Classes', path: '/classes', roles: ['admin', 'trainer', 'manager'] },
-    { icon: UserCog, label: 'Staff', path: '/staff', roles: ['admin', 'manager'] },
-    { icon: BarChart3, label: 'Reports', path: '/reports', roles: ['admin', 'manager'] },
-    { icon: Settings, label: 'Settings', path: '/settings', roles: ['admin'] }
+    { icon: Users, label: 'Membres', path: '/members', roles: ['admin', 'staff', 'manager'] },
+    { icon: CreditCard, label: 'Paiements', path: '/payments', roles: ['admin', 'staff', 'manager'] },
+    { icon: Calendar, label: 'Presence', path: '/attendance', roles: ['admin', 'staff', 'trainer'] },
+    { icon: Dumbbell, label: 'Cours', path: '/classes', roles: ['admin', 'trainer', 'manager'] },
+    { icon: UserCog, label: 'Personnel', path: '/staff', roles: ['admin', 'manager'] },
+    { icon: BarChart3, label: 'Rapports', path: '/reports', roles: ['admin', 'manager'] },
+    { icon: Settings, label: 'Parametres', path: '/settings', roles: ['admin'] }
   ];
 
   const filteredMenuItems = menuItems.filter(item => 

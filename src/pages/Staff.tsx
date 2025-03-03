@@ -83,7 +83,7 @@ const Staff = () => {
             role: 'admin',
             hire_date: '2022-03-15',
             status: 'active',
-            notes: 'General manager with full system access'
+            notes: 'Directeur general avec acces complet au systeme'
           },
           {
             id: '2',
@@ -94,7 +94,7 @@ const Staff = () => {
             role: 'trainer',
             hire_date: '2022-05-20',
             status: 'active',
-            notes: 'Specializes in strength training'
+            notes: 'Specialisee en musculation'
           },
           {
             id: '3',
@@ -105,7 +105,7 @@ const Staff = () => {
             role: 'receptionist',
             hire_date: '2022-06-10',
             status: 'on_leave',
-            notes: 'On maternity leave until August 2023'
+            notes: 'En conge de maternite jusqu\'a aout 2023'
           },
           {
             id: '4',
@@ -116,7 +116,7 @@ const Staff = () => {
             role: 'trainer',
             hire_date: '2022-07-05',
             status: 'active',
-            notes: 'Specializes in yoga and pilates'
+            notes: 'Specialisee en yoga et pilates'
           },
           {
             id: '5',
@@ -127,7 +127,7 @@ const Staff = () => {
             role: 'maintenance',
             hire_date: '2022-08-15',
             status: 'inactive',
-            notes: 'Former maintenance staff'
+            notes: 'Ancien personnel de maintenance'
           }
         ];
         
@@ -139,8 +139,8 @@ const Staff = () => {
     } catch (error) {
       console.error('Error fetching staff:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to fetch staff data',
+        title: 'Erreur',
+        message: 'Echec de recuperation des donnees du personnel',
         type: 'error'
       });
       setIsLoading(false);
@@ -184,15 +184,15 @@ const Staff = () => {
       setIsAddDialogOpen(false);
       
       addNotification({
-        title: 'Success',
-        message: 'Staff member added successfully',
+        title: 'Succes',
+        message: 'Membre du personnel ajoute avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error adding staff:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to add staff member',
+        title: 'Erreur',
+        message: 'Echec de l\'ajout du membre du personnel',
         type: 'error'
       });
     }
@@ -220,15 +220,15 @@ const Staff = () => {
       setCurrentStaff(null);
       
       addNotification({
-        title: 'Success',
-        message: 'Staff member updated successfully',
+        title: 'Succes',
+        message: 'Membre du personnel mis a jour avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error updating staff:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to update staff member',
+        title: 'Erreur',
+        message: 'Echec de la mise a jour du membre du personnel',
         type: 'error'
       });
     }
@@ -245,15 +245,15 @@ const Staff = () => {
       setCurrentStaff(null);
       
       addNotification({
-        title: 'Success',
-        message: 'Staff member deleted successfully',
+        title: 'Succes',
+        message: 'Membre du personnel supprime avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error deleting staff:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to delete staff member',
+        title: 'Erreur',
+        message: 'Echec de la suppression du membre du personnel',
         type: 'error'
       });
     }
@@ -275,11 +275,11 @@ const Staff = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'active':
-        return 'Active';
+        return 'Actif';
       case 'inactive':
-        return 'Inactive';
+        return 'Inactif';
       case 'on_leave':
-        return 'On Leave';
+        return 'En Conge';
       default:
         return status;
     }
@@ -288,19 +288,19 @@ const Staff = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Staff Management</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Gestion du Personnel</h1>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add Staff Member
+              Ajouter un Membre
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Add New Staff Member</DialogTitle>
+              <DialogTitle>Ajouter un Nouveau Membre</DialogTitle>
               <DialogDescription>
-                Enter the details of the new staff member below.
+                Entrez les details du nouveau membre du personnel ci-dessous.
               </DialogDescription>
             </DialogHeader>
             <StaffForm onSubmit={handleAddStaff} />
@@ -312,7 +312,7 @@ const Staff = () => {
         <div className="relative flex items-center max-w-md">
           <Search className="absolute left-3 h-5 w-5 text-gray-400" />
           <Input
-            placeholder="Search staff members..."
+            placeholder="Rechercher des membres du personnel..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -324,11 +324,11 @@ const Staff = () => {
         <div className="flex items-center space-x-3">
           <Button variant="outline" size="sm" className="flex items-center">
             <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Filters
+            Filtres
           </Button>
           <Button variant="outline" size="sm" className="flex items-center">
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Exporter
           </Button>
         </div>
       </div>
@@ -337,12 +337,12 @@ const Staff = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <TableHead>Nom</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Hire Date</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Telephone</TableHead>
+              <TableHead>Date d'embauche</TableHead>
+              <TableHead>Statut</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -358,7 +358,7 @@ const Staff = () => {
             ) : paginatedStaff.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  No staff members found
+                  Aucun membre du personnel trouve
                 </TableCell>
               </TableRow>
             ) : (
@@ -393,7 +393,7 @@ const Staff = () => {
                             }}
                           >
                             <Edit className="h-4 w-4 mr-2" />
-                            Edit
+                            Modifier
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="text-red-600"
@@ -403,7 +403,7 @@ const Staff = () => {
                             }}
                           >
                             <Trash className="h-4 w-4 mr-2" />
-                            Delete
+                            Supprimer
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -418,7 +418,7 @@ const Staff = () => {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t">
             <div className="text-sm text-gray-500">
-              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredStaff.length)} of {filteredStaff.length} staff members
+              Affichage de {((currentPage - 1) * ITEMS_PER_PAGE) + 1} a {Math.min(currentPage * ITEMS_PER_PAGE, filteredStaff.length)} sur {filteredStaff.length} membres du personnel
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -427,7 +427,7 @@ const Staff = () => {
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
               >
-                Previous
+                Précedent
               </Button>
               <Button
                 variant="outline"
@@ -435,7 +435,7 @@ const Staff = () => {
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
               >
-                Next
+                Suivant
               </Button>
             </div>
           </div>
@@ -446,9 +446,9 @@ const Staff = () => {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Staff Member</DialogTitle>
+            <DialogTitle>Modifier le Membre du Personnel</DialogTitle>
             <DialogDescription>
-              Update the staff member's information.
+              Mettre a jour les informations du membre du personnel.
             </DialogDescription>
           </DialogHeader>
           {currentStaff && (
@@ -474,15 +474,15 @@ const Staff = () => {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Etes-vous sur?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the staff member's record. This action cannot be undone.
+              Cela supprimera definitivement l'enregistrement du membre du personnel. Cette action ne peut pas etre annulee.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteStaff} className="bg-red-600 hover:bg-red-700">
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

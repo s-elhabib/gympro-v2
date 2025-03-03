@@ -101,7 +101,7 @@ const PaymentForm = ({
           name="memberId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Member</FormLabel>
+              <FormLabel>Membre</FormLabel>
               <FormControl>
                 <MemberSearch 
                   onSelect={handleMemberSelect} 
@@ -119,7 +119,7 @@ const PaymentForm = ({
           name="amount"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Amount</FormLabel>
+              <FormLabel>Montant</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -140,7 +140,7 @@ const PaymentForm = ({
             name="paymentDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Payment Date</FormLabel>
+                <FormLabel>Date de Paiement</FormLabel>
                 <FormControl>
                   <Input
                     type="date"
@@ -159,7 +159,7 @@ const PaymentForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex justify-between items-center">
-                  <span>Due Date</span>
+                  <span>Date d'Echeance</span>
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -168,7 +168,7 @@ const PaymentForm = ({
                     className="h-6 px-2 text-xs"
                   >
                     <CalendarPlus className="h-3 w-3 mr-1" />
-                    +1 Month
+                    +1 Mois
                   </Button>
                 </FormLabel>
                 <FormControl>
@@ -189,18 +189,18 @@ const PaymentForm = ({
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
+              <FormLabel>Statut</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Selectionner le statut" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="paid">Paye</SelectItem>
+                  <SelectItem value="pending">En Attente</SelectItem>
+                  <SelectItem value="overdue">En Retard</SelectItem>
+                  <SelectItem value="cancelled">Annule</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -213,19 +213,19 @@ const PaymentForm = ({
           name="paymentMethod"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Payment Method</FormLabel>
+              <FormLabel>Mode de Paiement</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select payment method" />
+                    <SelectValue placeholder="Selectionner le mode de paiement" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="credit_card">Credit Card</SelectItem>
-                  <SelectItem value="debit_card">Debit Card</SelectItem>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="cash">Especes</SelectItem>
+                  <SelectItem value="credit_card">Carte de Credit</SelectItem>
+                  <SelectItem value="debit_card">Carte de Debit</SelectItem>
+                  <SelectItem value="bank_transfer">Virement Bancaire</SelectItem>
+                  <SelectItem value="other">Autre</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -248,7 +248,7 @@ const PaymentForm = ({
         />
 
         <Button type="submit" className="w-full">
-          {isEditing ? 'Update Payment' : 'Record Payment'}
+          {isEditing ? 'Mettre a jour le Paiement' : 'Enregistrer le Paiement'}
         </Button>
       </form>
     </Form>
@@ -274,7 +274,7 @@ const Payments = () => {
           *,
           member:members(first_name, last_name)
         `)
-        .order('due_date', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       
@@ -290,8 +290,8 @@ const Payments = () => {
     } catch (error) {
       console.error('Error fetching payments:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to fetch payments',
+        title: 'Erreur',
+        message: 'Impossible de recuperer les paiements',
         type: 'error'
       });
     } finally {
@@ -320,15 +320,15 @@ const Payments = () => {
       await fetchPayments();
       setIsAddDialogOpen(false);
       addNotification({
-        title: 'Success',
-        message: 'Payment recorded successfully',
+        title: 'Succes',
+        message: 'Paiement enregistre avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error creating payment:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to record payment',
+        title: 'Erreur',
+        message: 'Impossible d\'enregistrer le paiement',
         type: 'error'
       });
     }
@@ -357,15 +357,15 @@ const Payments = () => {
       setIsEditDialogOpen(false);
       setSelectedPayment(null);
       addNotification({
-        title: 'Success',
-        message: 'Payment updated successfully',
+        title: 'Succes',
+        message: 'Paiement mis a jour avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error updating payment:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to update payment',
+        title: 'Erreur',
+        message: 'Impossible de mettre a jour le paiement',
         type: 'error'
       });
     }
@@ -382,15 +382,15 @@ const Payments = () => {
 
       setPayments(prev => prev.filter(payment => payment.id !== id));
       addNotification({
-        title: 'Success',
-        message: 'Payment deleted successfully',
+        title: 'Succes',
+        message: 'Paiement supprime avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error deleting payment:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to delete payment',
+        title: 'Erreur',
+        message: 'Impossible de supprimer le paiement',
         type: 'error'
       });
     }
@@ -432,19 +432,19 @@ const Payments = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Payments</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Paiements</h1>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Record Payment
+              Enregistrer un Paiement
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Record Payment</DialogTitle>
+              <DialogTitle>Enregistrer un Paiement</DialogTitle>
               <DialogDescription>
-                Enter payment details below.
+                Saisissez les details du paiement ci-dessous.
               </DialogDescription>
             </DialogHeader>
             <PaymentForm onSubmit={handleCreatePayment} />
@@ -455,7 +455,7 @@ const Payments = () => {
       <div className="flex items-center space-x-2">
         <Search className="h-5 w-5 text-gray-400" />
         <Input
-          placeholder="Search payments..."
+          placeholder="Rechercher des paiements..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -466,11 +466,11 @@ const Payments = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Member</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Payment Method</TableHead>
+              <TableHead>Membre</TableHead>
+              <TableHead>Montant</TableHead>
+              <TableHead>Date d'Echeance</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Mode de Paiement</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -486,7 +486,7 @@ const Payments = () => {
             ) : filteredPayments.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
-                  No payments found
+                  Aucun paiement trouve
                 </TableCell>
               </TableRow>
             ) : (
@@ -499,7 +499,7 @@ const Payments = () => {
                     {`${payment.member.first_name} ${payment.member.last_name}`}
                   </TableCell>
                   <TableCell>
-                    ${payment.amount.toFixed(2)}
+                    {payment.amount.toFixed(2)} MAD
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
@@ -509,10 +509,19 @@ const Payments = () => {
                   </TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(payment.status)}`}>
-                      {payment.status}
+                      {payment.status === 'paid' ? 'Paye' :
+                       payment.status === 'pending' ? 'En Attente' :
+                       payment.status === 'overdue' ? 'En Retard' :
+                       payment.status === 'cancelled' ? 'Annule' : payment.status}
                     </span>
                   </TableCell>
-                  <TableCell className="capitalize">{payment.payment_method.replace('_', ' ')}</TableCell>
+                  <TableCell className="capitalize">
+                    {payment.payment_method === 'cash' ? 'Especes' :
+                     payment.payment_method === 'credit_card' ? 'Carte de Credit' :
+                     payment.payment_method === 'debit_card' ? 'Carte de Debit' :
+                     payment.payment_method === 'bank_transfer' ? 'Virement Bancaire' :
+                     'Autre'}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <DropdownMenu>
@@ -529,15 +538,15 @@ const Payments = () => {
                                 setSelectedPayment(payment);
                               }}>
                                 <Edit className="h-4 w-4 mr-2" />
-                                Edit
+                                Modifier
                               </DropdownMenuItem>
                             </DialogTrigger>
                             {selectedPayment && (
                               <DialogContent>
                                 <DialogHeader>
-                                  <DialogTitle>Edit Payment</DialogTitle>
+                                  <DialogTitle>Modifier le Paiement</DialogTitle>
                                   <DialogDescription>
-                                    Update payment details below.
+                                    Mettez a jour les details du paiement ci-dessous.
                                   </DialogDescription>
                                 </DialogHeader>
                                 <PaymentForm
@@ -561,7 +570,7 @@ const Payments = () => {
                             onSelect={() => handleDeletePayment(payment.id)}
                           >
                             <Trash className="h-4 w-4 mr-2" />
-                            Delete
+                            Supprimer
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

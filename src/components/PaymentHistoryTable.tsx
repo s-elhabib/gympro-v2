@@ -121,7 +121,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
               onClick={() => requestSort('member')}
             >
               <div className="flex items-center">
-                Member
+                Membre
                 {getSortIcon('member')}
               </div>
             </TableHead>
@@ -130,7 +130,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
               onClick={() => requestSort('amount')}
             >
               <div className="flex items-center">
-                Amount
+                Montant
                 {getSortIcon('amount')}
               </div>
             </TableHead>
@@ -139,7 +139,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
               onClick={() => requestSort('due_date')}
             >
               <div className="flex items-center">
-                Due Date
+                Date d'échéance
                 {getSortIcon('due_date')}
               </div>
             </TableHead>
@@ -148,7 +148,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
               onClick={() => requestSort('payment_date')}
             >
               <div className="flex items-center">
-                Payment Date
+                Date de paiement
                 {getSortIcon('payment_date')}
               </div>
             </TableHead>
@@ -157,7 +157,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
               onClick={() => requestSort('status')}
             >
               <div className="flex items-center">
-                Status
+                Statut
                 {getSortIcon('status')}
               </div>
             </TableHead>
@@ -166,7 +166,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
               onClick={() => requestSort('payment_method')}
             >
               <div className="flex items-center">
-                Payment Method
+                Mode de paiement
                 {getSortIcon('payment_method')}
               </div>
             </TableHead>
@@ -184,7 +184,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
           ) : sortedPayments.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="text-center py-8">
-                No payments found
+                Aucun paiement trouvé
               </TableCell>
             </TableRow>
           ) : (
@@ -196,7 +196,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
                 >
                   {`${payment.member.first_name} ${payment.member.last_name}`}
                 </TableCell>
-                <TableCell>${payment.amount.toFixed(2)}</TableCell>
+                <TableCell>{payment.amount.toFixed(2)} MAD</TableCell>
                 <TableCell>{format(new Date(payment.due_date), 'MMM d, yyyy')}</TableCell>
                 <TableCell>{format(new Date(payment.payment_date), 'MMM d, yyyy')}</TableCell>
                 <TableCell>
@@ -204,11 +204,19 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
                     getStatusColor(payment.status, payment.due_date)
                   }`}>
                     {isAfter(new Date(), new Date(payment.due_date)) && payment.status === 'pending'
-                      ? 'overdue'
+                      ? 'En retard'
+                      : payment.status === 'paid' ? 'Payé' 
+                      : payment.status === 'pending' ? 'En attente'
+                      : payment.status === 'cancelled' ? 'Annulé'
                       : payment.status}
                   </span>
                 </TableCell>
-                <TableCell className="capitalize">{payment.payment_method.replace('_', ' ')}</TableCell>
+                <TableCell className="capitalize">
+                  {payment.payment_method === 'cash' ? 'Espèces' :
+                   payment.payment_method === 'credit_card' ? 'Carte bancaire' :
+                   payment.payment_method === 'bank_transfer' ? 'Virement bancaire' :
+                   payment.payment_method.replace('_', ' ')}
+                </TableCell>
               </TableRow>
             ))
           )}
@@ -217,7 +225,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
 
       <div className="flex items-center justify-between px-4 py-3 border-t">
         <div className="text-sm text-gray-500">
-          Page {currentPage} of {totalPages}
+          Page {currentPage} sur {totalPages}
         </div>
         <div className="flex items-center space-x-2">
           <Button
@@ -226,7 +234,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
           >
-            Previous
+            Précédent
           </Button>
           <Button
             variant="outline"
@@ -234,7 +242,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
           >
-            Next
+            Suivant
           </Button>
         </div>
       </div>

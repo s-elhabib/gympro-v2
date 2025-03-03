@@ -30,8 +30,8 @@ const StatCard: React.FC<StatCardProps> = ({
   const [timeRange, setTimeRange] = React.useState<TimeRange>('7d');
 
   const formattedValue = format === 'currency' 
-    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
-    : new Intl.NumberFormat('en-US').format(value);
+    ? `${new Intl.NumberFormat('fr-FR').format(value)} MAD`
+    : new Intl.NumberFormat('fr-FR').format(value);
 
   const handleTimeRangeChange = (range: TimeRange) => {
     setTimeRange(range);
@@ -43,7 +43,7 @@ const StatCard: React.FC<StatCardProps> = ({
       <div className="bg-gray-50 rounded-lg p-6 border-2 border-dashed border-gray-200">
         <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2">
           <Lock className="h-8 w-8" />
-          <p className="text-sm font-medium text-center">This information is only visible to administrators</p>
+          <p className="text-sm font-medium text-center">Cette information est uniquement visible par les administrateurs</p>
         </div>
       </div>
     );
@@ -65,7 +65,7 @@ const StatCard: React.FC<StatCardProps> = ({
         ) : (
           <div className={`flex items-center text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
             {isPositive ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-            <span>{new Intl.NumberFormat('en-US', { 
+            <span>{new Intl.NumberFormat('fr-FR', { 
               style: 'percent', 
               minimumFractionDigits: 1,
               maximumFractionDigits: 1 
@@ -79,7 +79,7 @@ const StatCard: React.FC<StatCardProps> = ({
         {showTimeRangeFilter && (
           <div className={`flex items-center text-sm mt-2 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
             {isPositive ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-            <span>{new Intl.NumberFormat('en-US', { 
+            <span>{new Intl.NumberFormat('fr-FR', { 
               style: 'percent', 
               minimumFractionDigits: 1,
               maximumFractionDigits: 1 

@@ -17,11 +17,11 @@ import { Button } from '../components/ui/button';
 import { useNotifications } from '../context/NotificationContext';
 
 const signUpSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email('Adresse e-mail invalide'),
+  password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caracteres'),
+  confirmPassword: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caracteres'),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
+  message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
 });
 
@@ -51,13 +51,13 @@ const SignUp = () => {
       setError(null);
       await signUp(data.email, data.password);
       addNotification({
-        title: 'Account created',
-        message: 'Your account has been created successfully. Please sign in.',
+        title: 'Compte cree',
+        message: 'Votre compte a ete cree avec succes. Veuillez vous connecter.',
         type: 'success',
       });
       navigate('/login');
     } catch (err: any) {
-      setError(err.message || 'An error occurred during sign up');
+      setError(err.message || 'Une erreur est survenue lors de l\'inscription');
       console.error('Sign up error:', err);
     } finally {
       setIsLoading(false);
@@ -71,9 +71,9 @@ const SignUp = () => {
           <div className="flex justify-center">
             <Dumbbell className="h-12 w-12 text-blue-500" />
           </div>
-          <h1 className="text-2xl font-semibold">Create an Account</h1>
+          <h1 className="text-2xl font-semibold">Creer un Compte</h1>
           <p className="text-gray-400 text-sm">
-            Join Gym Manager to start managing your fitness business
+            Rejoignez Gym Manager pour commencer a gerer votre entreprise de fitness
           </p>
         </div>
 
@@ -93,7 +93,7 @@ const SignUp = () => {
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="Email"
+                      placeholder="E-mail"
                       className="bg-[#24242C] border-[#34343E] h-12 px-4"
                       {...field}
                     />
@@ -112,7 +112,7 @@ const SignUp = () => {
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Password"
+                        placeholder="Mot de passe"
                         className="bg-[#24242C] border-[#34343E] h-12 px-4 pr-10"
                         {...field}
                       />
@@ -143,7 +143,7 @@ const SignUp = () => {
                     <div className="relative">
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm Password"
+                        placeholder="Confirmer le mot de passe"
                         className="bg-[#24242C] border-[#34343E] h-12 px-4 pr-10"
                         {...field}
                       />
@@ -170,7 +170,7 @@ const SignUp = () => {
               className="w-full bg-blue-500 hover:bg-blue-600 h-12 text-base font-medium"
               disabled={isLoading}
             >
-              {isLoading ? 'Creating account...' : 'Create Account'}
+              {isLoading ? 'Creation du compte...' : 'Creer un Compte'}
             </Button>
 
             <div className="relative">
@@ -178,7 +178,7 @@ const SignUp = () => {
                 <div className="w-full border-t border-gray-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-[#1C1C25] text-gray-400">Or sign up with</span>
+                <span className="px-2 bg-[#1C1C25] text-gray-400">Ou inscrivez-vous avec</span>
               </div>
             </div>
 
@@ -210,9 +210,9 @@ const SignUp = () => {
             </div>
 
             <p className="text-center text-gray-400 text-sm">
-              Already have an account?{' '}
+              Vous avez deja un compte?{' '}
               <Link to="/login" className="text-blue-500 hover:text-blue-400">
-                Sign in
+                Se connecter
               </Link>
             </p>
           </form>
@@ -220,11 +220,11 @@ const SignUp = () => {
 
         <div className="text-center space-y-4">
           <div className="flex justify-center space-x-4 text-sm text-gray-400">
-            <a href="#" className="hover:text-gray-300">Privacy Policy</a>
-            <a href="#" className="hover:text-gray-300">Terms & Conditions</a>
+            <a href="#" className="hover:text-gray-300">Politique de Confidentialite</a>
+            <a href="#" className="hover:text-gray-300">Conditions d'Utilisation</a>
           </div>
           <p className="text-xs text-gray-500">
-            © 2025 Gym Manager Inc. All rights reserved.
+            © 2025 Gym Manager Inc. Tous droits reserves.
           </p>
         </div>
       </div>
