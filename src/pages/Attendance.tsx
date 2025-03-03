@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Search, Clock, MoreVertical, Trash, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { Plus, Search, Clock, MoreVertical, Trash, AlertCircle, Edit } from 'lucide-react';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -41,6 +42,7 @@ import { supabase } from '../lib/supabase';
 import MemberSearch from '../components/MemberSearch';
 import { useNotifications } from '../context/NotificationContext';
 import { searchByFullName } from '../lib/utils';
+import { AttendanceEditForm } from '../components/AttendanceEditForm';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -279,34 +281,46 @@ const Attendance = () => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const [totalRecords, setTotalRecords] = React.useState(0);
   const { addNotification } = useNotifications();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedAttendance, setSelectedAttendance] = useState<any>(null);
+  const pageSize = 10;
 
   const fetchAttendance = async () => {
     try {
       setIsLoading(true);
       
-      // First get all data for search
-      const { data: allData, error: searchError } = await supabase
+      // Calculate date range based on current page
+      const targetDate = subDays(new Date(), currentPage - 1);
+      const dayStart = startOfDay(targetDate);
+      const dayEnd = endOfDay(targetDate);
+      
+      console.log('Fetching attendance for:', {
+        start: dayStart.toISOString(),
+        end: dayEnd.toISOString()
+      });
+
+      // Fetch attendance for the specific date
+      const { data: attendanceData, error } = await supabase
         .from('attendance')
         .select(`
           *,
           member:members(first_name, last_name)
         `)
+        .gte('check_in_time', dayStart.toISOString())
+        .lt('check_in_time', dayEnd.toISOString())
         .order('check_in_time', { ascending: false });
 
-      if (searchError) throw searchError;
+      if (error) throw error;
 
-      // Filter based on search term
-      const filteredData = allData?.filter(record => 
-        searchByFullName(searchTerm, record.member.first_name, record.member.last_name)
-      ) || [];
+      // Filter based on search term if provided
+      const filteredData = searchTerm 
+        ? attendanceData?.filter(record => 
+            searchByFullName(searchTerm, record.member.first_name, record.member.last_name)
+          )
+        : attendanceData;
 
-      // Update total count based on filtered data
-      setTotalRecords(filteredData.length);
-
-      // Paginate the filtered data
-      const start = (currentPage - 1) * ITEMS_PER_PAGE;
-      const end = start + ITEMS_PER_PAGE;
-      setAttendance(filteredData.slice(start, end));
+      setAttendance(filteredData || []);
+      setTotalRecords(filteredData?.length || 0);
 
     } catch (error) {
       console.error('Error fetching attendance:', error);
@@ -411,6 +425,38 @@ const Attendance = () => {
     }
   };
 
+  const handleEditAttendance = async (data: any) => {
+    try {
+      const { error } = await supabase
+        .from('attendance')
+        .update({
+          check_in_time: new Date(data.checkInTime).toISOString(),
+          type: data.type,
+          notes: data.notes,
+          check_out_time: null // Reset checkout when editing
+        })
+        .eq('id', selectedAttendance.id);
+
+      if (error) throw error;
+
+      await fetchAttendance();
+      setIsEditDialogOpen(false);
+      setSelectedAttendance(null);
+      addNotification({
+        title: 'Succès',
+        message: 'Présence mise à jour avec succès',
+        type: 'success'
+      });
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      addNotification({
+        title: 'Erreur',
+        message: 'Échec de la mise à jour de la présence',
+        type: 'error'
+      });
+    }
+  };
+
   const formatTime = (date: string) => {
     return format(new Date(date), 'h:mm a');
   };
@@ -424,7 +470,20 @@ const Attendance = () => {
     return `${hours}h ${minutes}m`;
   };
 
-  const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
+  const formatDateHeader = (page: number) => {
+    const date = subDays(new Date(), page - 1);
+    if (page === 1) {
+      return "Aujourd'hui";
+    } else if (page === 2) {
+      return "Hier";
+    } else {
+      return format(date, 'dd MMMM yyyy', { locale: fr });
+    }
+  };
+
+  const totalPages = Math.ceil(totalRecords / pageSize);
+
+  const isToday = currentPage === 1;
 
   return (
     <div className="space-y-6">
@@ -460,11 +519,16 @@ const Attendance = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm">
+        <div className="px-4 py-3 border-b">
+          <h2 className="text-lg font-medium">
+            {formatDateHeader(currentPage)}
+          </h2>
+        </div>
+
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Membre</TableHead>
-              <TableHead>Date</TableHead>
               <TableHead>Check In</TableHead>
               <TableHead>Check Out</TableHead>
               <TableHead>Duration</TableHead>
@@ -475,7 +539,7 @@ const Attendance = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   <div className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
@@ -483,7 +547,7 @@ const Attendance = () => {
               </TableRow>
             ) : attendance.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   Aucun enregistrement de présence trouvé
                 </TableCell>
               </TableRow>
@@ -495,9 +559,6 @@ const Attendance = () => {
                     onClick={() => navigate(`/members/${record.member_id}`)}
                   >
                     {`${record.member.first_name} ${record.member.last_name}`}
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(record.check_in_time), 'MMM d, yyyy')}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
@@ -533,6 +594,37 @@ const Attendance = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                            <DialogTrigger asChild>
+                              <DropdownMenuItem 
+                                onSelect={(e) => {
+                                  e.preventDefault();
+                                  setSelectedAttendance(record);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Modifier
+                              </DropdownMenuItem>
+                            </DialogTrigger>
+                            {selectedAttendance && (
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Modifier la Présence</DialogTitle>
+                                  <DialogDescription>
+                                    Mettez à jour les détails de présence ci-dessous.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <AttendanceEditForm
+                                  defaultValues={{
+                                    checkInTime: selectedAttendance.check_in_time,
+                                    type: selectedAttendance.type,
+                                    notes: selectedAttendance.notes
+                                  }}
+                                  onSubmit={handleEditAttendance}
+                                />
+                              </DialogContent>
+                            )}
+                          </Dialog>
                           <DropdownMenuItem
                             className="text-red-600"
                             onSelect={() => handleDeleteAttendance(record.id)}
@@ -552,24 +644,32 @@ const Attendance = () => {
 
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <div className="text-sm text-gray-500">
-            Affichage de {((currentPage - 1) * ITEMS_PER_PAGE) + 1} à {Math.min(currentPage * ITEMS_PER_PAGE, totalRecords)} sur {totalRecords} enregistrements
+            {formatDateHeader(currentPage)}
           </div>
           <div className="flex items-center space-x-2">
+            {!isToday && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+              >
+                Aujourd'hui
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
-              Précédent
+              Plus Récent
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(p => p + 1)}
             >
-              Suivant
+              Plus Ancien
             </Button>
           </div>
         </div>
