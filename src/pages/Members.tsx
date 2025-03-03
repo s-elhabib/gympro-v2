@@ -50,19 +50,28 @@ const Members = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [members, setMembers] = React.useState<any[]>([]);
+  const [filteredMembers, setFilteredMembers] = React.useState<any[]>([]);
   const [selectedMember, setSelectedMember] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [totalRecords, setTotalRecords] = React.useState(0);
+  const pageSize = 10;
+
+  // Calculate total pages
+  const totalPages = Math.ceil(totalRecords / pageSize);
 
   const fetchMembers = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('members')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setMembers(data || []);
+      setTotalRecords(count || 0);
+      filterMembers(data || [], searchTerm);
     } catch (error) {
       console.error('Error fetching members:', error);
       toast.error("Échec de la récupération des membres");
@@ -71,9 +80,33 @@ const Members = () => {
     }
   };
 
+  // Filter members based on search term
+  const filterMembers = (membersData: any[], term: string) => {
+    const filtered = membersData.filter(member => 
+      searchByFullName(term, member.first_name, member.last_name) ||
+      member.email.toLowerCase().includes(term.toLowerCase())
+    );
+    setFilteredMembers(filtered);
+    setTotalRecords(filtered.length);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Update filtered members when search term changes
+  React.useEffect(() => {
+    filterMembers(members, searchTerm);
+  }, [searchTerm, members]);
+
+  // Initial fetch
   React.useEffect(() => {
     fetchMembers();
   }, []);
+
+  // Get current page items
+  const getCurrentPageItems = () => {
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredMembers.slice(start, end);
+  };
 
   const handleCreateMember = async (data: MemberFormValues) => {
     try {
@@ -150,11 +183,6 @@ const Members = () => {
     }
   };
 
-  const filteredMembers = members.filter(member => 
-    searchByFullName(searchTerm, member.first_name, member.last_name) ||
-    member.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <>
       <div className="space-y-6">
@@ -219,7 +247,7 @@ const Members = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredMembers.map((member) => (
+                    getCurrentPageItems().map((member) => (
                       <TableRow key={member.id}>
                         <TableCell>{`${member.first_name} ${member.last_name}`}</TableCell>
                         <TableCell className="hidden md:table-cell">{member.email}</TableCell>
@@ -316,6 +344,33 @@ const Members = () => {
               </Table>
             </div>
           </div>
+
+          {/* Add pagination controls */}
+          {filteredMembers.length > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <div className="text-sm text-gray-500">
+                Page {currentPage} sur {totalPages}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Précédent
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Suivant
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
