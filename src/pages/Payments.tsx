@@ -290,6 +290,8 @@ const Payments = () => {
     return { ...payment, status: 'paid' };
   };
 
+  
+
   const fetchPayments = async () => {
     try {
       setIsLoading(true);
@@ -541,12 +543,12 @@ const Payments = () => {
                     <TableCell>
                       <div className="flex items-center space-x-1">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
-                          {payment.status === 'paid' ? 'Payé' :
-                           payment.status === 'pending' ? 'En Attente' :
-                           payment.status === 'cancelled' ? 'Annulé' : 
-                           payment.status === 'overdue' ? 'En Retard' :
-                           payment.status === 'near_overdue' ? 'Échéance Proche' :
-                           payment.status}
+                          {updatedPayment.status === 'paid' ? 'Payé' :
+                           updatedPayment.status === 'pending' ? 'En Attente' :
+                           updatedPayment.status === 'cancelled' ? 'Annulé' : 
+                           updatedPayment.status === 'overdue' ? 'En Retard' :
+                           updatedPayment.status === 'near_overdue' ? 'Échéance Proche' :
+                           updatedPayment.status}
                         </span>
                         {(payment.status === 'overdue' || payment.status === 'near_overdue') && 
                          getDaysDifference(payment.due_date) !== 0 && (
@@ -558,8 +560,8 @@ const Payments = () => {
                             }
                           `}>
                             {payment.status === 'overdue' 
-                              ? `+${Math.abs(getDaysDifference(payment.due_date))}j`
-                              : `-${Math.abs(getDaysDifference(payment.due_date))}j`
+                              ? `${Math.abs(getDaysDifference(payment.due_date))}j`
+                              : `${Math.abs(getDaysDifference(payment.due_date))}j`
                             }
                           </span>
                         )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { format, isAfter } from 'date-fns';
+import { format, isAfter, parseISO, addDays, isBefore, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import {
@@ -66,8 +66,75 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
       : <ChevronDown className="h-4 w-4 ml-1" />;
   };
 
+  const updatePaymentStatus = (payment: Payment) => {
+    const today = new Date();
+    const dueDate = parseISO(payment.due_date);
+    const sevenDaysFromNow = addDays(today, 7);
+
+    // If payment is cancelled or paid, don't change status
+    if (payment.status === 'cancelled') {
+      return payment;
+    }
+
+    // Check if payment is overdue
+    if (isBefore(dueDate, today)) {
+      return { ...payment, status: 'overdue' };
+    }
+
+    // Check if due date is within next 7 days
+    if (isBefore(dueDate, sevenDaysFromNow)) {
+      return { ...payment, status: 'near_overdue' };
+    }
+
+    // If due date is in the future and not near, status is pending
+    return { ...payment, status: 'paid' };
+  };
+
+  const getDaysDifference = (dueDate: string) => {
+    const today = new Date();
+    const due = parseISO(dueDate);
+    const diffInDays = differenceInDays(today, due);
+    return diffInDays;
+  };
+
   const sortedPayments = React.useMemo(() => {
-    if (!sortConfig) return payments;
+    if (!sortConfig) {
+      // Default sort by due date and status
+      return [...payments].sort((a, b) => {
+        const aDate = new Date(a.due_date);
+        const bDate = new Date(b.due_date);
+        const now = new Date();
+
+        // Determine status based on payment status and due date
+        const getEffectiveStatus = (status: string, dueDate: Date) => {
+          if (status === 'paid') return 'paid';
+          if (status === 'cancelled') return 'cancelled';
+          return isAfter(now, dueDate) ? 'overdue' : 'pending';
+        };
+
+        const aStatus = getEffectiveStatus(a.status, aDate);
+        const bStatus = getEffectiveStatus(b.status, bDate);
+
+        // Sort by status priority
+        const statusPriority = {
+          'overdue': 1,
+          'pending': 2,
+          'paid': 3,
+          'cancelled': 4
+        };
+
+        const aPriority = statusPriority[aStatus as keyof typeof statusPriority];
+        const bPriority = statusPriority[bStatus as keyof typeof statusPriority];
+
+        // First sort by status priority
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+
+        // Then sort by due date within same status
+        return aDate.getTime() - bDate.getTime();
+      });
+    }
 
     return [...payments].sort((a, b) => {
       let aValue: any = a[sortConfig.key as keyof Payment];
@@ -95,19 +162,37 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
     });
   }, [payments, sortConfig]);
 
-  const getStatusColor = (status: string, dueDate: string) => {
-    if (status === 'pending' && isAfter(new Date(), new Date(dueDate))) {
-      return 'bg-red-100 text-red-800';
-    }
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
         return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
+      case 'overdue':
+        return 'bg-red-100 text-red-800';
+      case 'near_overdue':
+        return 'bg-orange-100 text-orange-800';
       case 'cancelled':
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'Payé';
+      case 'pending':
+        return 'En Attente';
+      case 'overdue':
+        return 'En Retard';
+      case 'near_overdue':
+        return 'Échéance Proche';
+      case 'cancelled':
+        return 'Annulé';
+      default:
+        return status;
     }
   };
 
@@ -136,20 +221,20 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
             </TableHead>
             <TableHead 
               className="cursor-pointer"
-              onClick={() => requestSort('due_date')}
-            >
-              <div className="flex items-center">
-                Date d'échéance
-                {getSortIcon('due_date')}
-              </div>
-            </TableHead>
-            <TableHead 
-              className="cursor-pointer"
               onClick={() => requestSort('payment_date')}
             >
               <div className="flex items-center">
                 Date de paiement
                 {getSortIcon('payment_date')}
+              </div>
+            </TableHead>
+            <TableHead 
+              className="cursor-pointer"
+              onClick={() => requestSort('due_date')}
+            >
+              <div className="flex items-center">
+                Date d'échéance
+                {getSortIcon('due_date')}
               </div>
             </TableHead>
             <TableHead 
@@ -188,37 +273,50 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
               </TableCell>
             </TableRow>
           ) : (
-            sortedPayments.map((payment) => (
-              <TableRow key={payment.id}>
-                <TableCell 
-                  className="cursor-pointer hover:text-blue-600"
-                  onClick={() => navigate(`/members/${payment.member_id}`)}
-                >
-                  {`${payment.member.first_name} ${payment.member.last_name}`}
-                </TableCell>
-                <TableCell>{payment.amount.toFixed(2)} MAD</TableCell>
-                <TableCell>{format(new Date(payment.due_date), 'MMM d, yyyy')}</TableCell>
-                <TableCell>{format(new Date(payment.payment_date), 'MMM d, yyyy')}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs capitalize ${
-                    getStatusColor(payment.status, payment.due_date)
-                  }`}>
-                    {isAfter(new Date(), new Date(payment.due_date)) && payment.status === 'pending'
-                      ? 'En retard'
-                      : payment.status === 'paid' ? 'Payé' 
-                      : payment.status === 'pending' ? 'En attente'
-                      : payment.status === 'cancelled' ? 'Annulé'
-                      : payment.status}
-                  </span>
-                </TableCell>
-                <TableCell className="capitalize">
-                  {payment.payment_method === 'cash' ? 'Espèces' :
-                   payment.payment_method === 'credit_card' ? 'Carte bancaire' :
-                   payment.payment_method === 'bank_transfer' ? 'Virement bancaire' :
-                   payment.payment_method.replace('_', ' ')}
-                </TableCell>
-              </TableRow>
-            ))
+            sortedPayments.map((payment) => {
+              const updatedPayment = updatePaymentStatus(payment);
+              return (
+                <TableRow key={payment.id}>
+                  <TableCell 
+                    className="cursor-pointer hover:text-blue-600"
+                    onClick={() => navigate(`/members/${payment.member_id}`)}
+                  >
+                    {`${payment.member.first_name} ${payment.member.last_name}`}
+                  </TableCell>
+                  <TableCell>{payment.amount.toFixed(2)} MAD</TableCell>
+                  <TableCell>{format(new Date(payment.payment_date), 'MMM d, yyyy')}</TableCell>
+                  <TableCell>{format(new Date(payment.due_date), 'MMM d, yyyy')}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-1">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(updatedPayment.status)}`}>
+                        {getStatusText(updatedPayment.status)}
+                      </span>
+                      {(updatedPayment.status === 'overdue' || updatedPayment.status === 'near_overdue') && 
+                       getDaysDifference(payment.due_date) !== 0 && (
+                        <span className={`
+                          inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
+                          ${updatedPayment.status === 'overdue' 
+                            ? 'bg-red-50 text-red-700 border border-red-200' 
+                            : 'bg-orange-50 text-orange-700 border border-orange-200'
+                          }
+                        `}>
+                          {updatedPayment.status === 'overdue' 
+                            ? `${Math.abs(getDaysDifference(payment.due_date))}j`
+                            : `${Math.abs(getDaysDifference(payment.due_date))}j`
+                          }
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="capitalize">
+                    {payment.payment_method === 'cash' ? 'Espèces' :
+                     payment.payment_method === 'credit_card' ? 'Carte bancaire' :
+                     payment.payment_method === 'bank_transfer' ? 'Virement bancaire' :
+                     payment.payment_method.replace('_', ' ')}
+                  </TableCell>
+                </TableRow>
+              );
+            })
           )}
         </TableBody>
       </Table>
