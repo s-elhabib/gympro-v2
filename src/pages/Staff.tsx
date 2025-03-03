@@ -51,6 +51,7 @@ import { supabase } from '../lib/supabase';
 import { useNotifications } from '../context/NotificationContext';
 import { StaffFormValues } from '../lib/validations/staff';
 import StaffForm from '../components/StaffForm';
+import * as XLSX from 'xlsx';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -70,72 +71,28 @@ const Staff = () => {
     try {
       setIsLoading(true);
       
-      // Simulate loading staff from database
-      // In a real app, this would fetch from supabase
-      setTimeout(() => {
-        const dummyStaff = [
-          {
-            id: '1',
-            first_name: 'John',
-            last_name: 'Smith',
-            email: 'john.smith@example.com',
-            phone: '(123) 456-7890',
-            role: 'admin',
-            hire_date: '2022-03-15',
-            status: 'active',
-            notes: 'Directeur general avec acces complet au systeme'
-          },
-          {
-            id: '2',
-            first_name: 'Sarah',
-            last_name: 'Johnson',
-            email: 'sarah.j@example.com',
-            phone: '(123) 456-7891',
-            role: 'trainer',
-            hire_date: '2022-05-20',
-            status: 'active',
-            notes: 'Specialisee en musculation'
-          },
-          {
-            id: '3',
-            first_name: 'Michael',
-            last_name: 'Davis',
-            email: 'michael.d@example.com',
-            phone: '(123) 456-7892',
-            role: 'receptionist',
-            hire_date: '2022-06-10',
-            status: 'on_leave',
-            notes: 'En conge de maternite jusqu\'a aout 2023'
-          },
-          {
-            id: '4',
-            first_name: 'Jessica',
-            last_name: 'Williams',
-            email: 'jessica.w@example.com',
-            phone: '(123) 456-7893',
-            role: 'trainer',
-            hire_date: '2022-07-05',
-            status: 'active',
-            notes: 'Specialisee en yoga et pilates'
-          },
-          {
-            id: '5',
-            first_name: 'David',
-            last_name: 'Brown',
-            email: 'david.b@example.com',
-            phone: '(123) 456-7894',
-            role: 'maintenance',
-            hire_date: '2022-08-15',
-            status: 'inactive',
-            notes: 'Ancien personnel de maintenance'
-          }
-        ];
-        
-        setStaff(dummyStaff);
-        setTotalRecords(dummyStaff.length);
-        setIsLoading(false);
-      }, 800);
-      
+      const { data, error } = await supabase
+        .from('staff')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Filter based on search term
+      const filteredData = data?.filter(member => 
+        `${member.first_name} ${member.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.role.toLowerCase().includes(searchTerm.toLowerCase())
+      ) || [];
+
+      // Update total count based on filtered data
+      setTotalRecords(filteredData.length);
+
+      // Paginate the filtered data
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE;
+      setStaff(filteredData.slice(start, end));
+
     } catch (error) {
       console.error('Error fetching staff:', error);
       addNotification({
@@ -143,45 +100,30 @@ const Staff = () => {
         message: 'Echec de recuperation des donnees du personnel',
         type: 'error'
       });
+    } finally {
       setIsLoading(false);
     }
   };
 
-  React.useEffect(() => {
-    fetchStaff();
-  }, []);
-
-  const filteredStaff = staff.filter(member => 
-    `${member.first_name} ${member.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const paginatedStaff = filteredStaff.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
-  const totalPages = Math.ceil(filteredStaff.length / ITEMS_PER_PAGE);
-
   const handleAddStaff = async (data: StaffFormValues) => {
     try {
-      // In a real app, you would save to supabase
-      const newStaff = {
-        id: (staff.length + 1).toString(),
-        first_name: data.firstName,
-        last_name: data.lastName,
-        email: data.email,
-        phone: data.phone,
-        role: data.role,
-        hire_date: data.hireDate.toISOString().split('T')[0],
-        status: data.status,
-        notes: data.notes || ''
-      };
+      const { error } = await supabase
+        .from('staff')
+        .insert([{
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          role: data.role,
+          hire_date: data.hireDate.toISOString().split('T')[0],
+          status: data.status,
+          notes: data.notes || ''
+        }]);
+
+      if (error) throw error;
       
-      setStaff([newStaff, ...staff]);
-      setTotalRecords(prev => prev + 1);
       setIsAddDialogOpen(false);
+      fetchStaff();
       
       addNotification({
         title: 'Succes',
@@ -202,22 +144,25 @@ const Staff = () => {
     try {
       if (!currentStaff) return;
       
-      // In a real app, you would update in supabase
-      const updatedStaff = {
-        ...currentStaff,
-        first_name: data.firstName,
-        last_name: data.lastName,
-        email: data.email,
-        phone: data.phone,
-        role: data.role,
-        hire_date: data.hireDate.toISOString().split('T')[0],
-        status: data.status,
-        notes: data.notes || ''
-      };
+      const { error } = await supabase
+        .from('staff')
+        .update({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          role: data.role,
+          hire_date: data.hireDate.toISOString().split('T')[0],
+          status: data.status,
+          notes: data.notes || ''
+        })
+        .eq('id', currentStaff.id);
+
+      if (error) throw error;
       
-      setStaff(staff.map(s => s.id === currentStaff.id ? updatedStaff : s));
       setIsEditDialogOpen(false);
       setCurrentStaff(null);
+      fetchStaff();
       
       addNotification({
         title: 'Succes',
@@ -238,11 +183,16 @@ const Staff = () => {
     try {
       if (!currentStaff) return;
       
-      // In a real app, you would delete from supabase
-      setStaff(staff.filter(s => s.id !== currentStaff.id));
-      setTotalRecords(prev => prev - 1);
+      const { error } = await supabase
+        .from('staff')
+        .delete()
+        .eq('id', currentStaff.id);
+
+      if (error) throw error;
+      
       setIsDeleteDialogOpen(false);
       setCurrentStaff(null);
+      fetchStaff();
       
       addNotification({
         title: 'Succes',
@@ -258,6 +208,59 @@ const Staff = () => {
       });
     }
   };
+
+  const handleExport = async () => {
+    try {
+      // Get all staff data (not just current page)
+      const { data, error } = await supabase
+        .from('staff')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform data for export
+      const exportData = data.map(staff => ({
+        'Prénom': staff.first_name,
+        'Nom': staff.last_name,
+        'Email': staff.email,
+        'Téléphone': staff.phone,
+        'Rôle': staff.role.replace('_', ' '),
+        'Date d\'embauche': format(new Date(staff.hire_date), 'dd/MM/yyyy'),
+        'Statut': getStatusText(staff.status),
+        'Notes': staff.notes
+      }));
+
+      // Create worksheet
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Personnel");
+
+      // Generate Excel file
+      XLSX.writeFile(wb, `Personnel_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+
+      addNotification({
+        title: 'Succès',
+        message: 'Export Excel réussi',
+        type: 'success'
+      });
+    } catch (error) {
+      console.error('Error exporting staff:', error);
+      addNotification({
+        title: 'Erreur',
+        message: 'Échec de l\'export Excel',
+        type: 'error'
+      });
+    }
+  };
+
+  React.useEffect(() => {
+    fetchStaff();
+  }, [currentPage, searchTerm]);
+
+  const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -316,17 +319,19 @@ const Staff = () => {
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              setCurrentPage(1); // Reset to first page on search
+              setCurrentPage(1);
             }}
             className="pl-10"
           />
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="outline" size="sm" className="flex items-center">
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Filtres
-          </Button>
-          <Button variant="outline" size="sm" className="flex items-center">
+         
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center"
+            onClick={handleExport}
+          >
             <Download className="h-4 w-4 mr-2" />
             Exporter
           </Button>
@@ -355,14 +360,14 @@ const Staff = () => {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : paginatedStaff.length === 0 ? (
+            ) : staff.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   Aucun membre du personnel trouve
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedStaff.map((member) => (
+              staff.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell className="font-medium">
                     {`${member.first_name} ${member.last_name}`}
@@ -415,24 +420,24 @@ const Staff = () => {
           </TableBody>
         </Table>
 
-        {totalPages > 1 && (
+        {totalRecords > 0 && (
           <div className="flex items-center justify-between px-4 py-3 border-t">
             <div className="text-sm text-gray-500">
-              Affichage de {((currentPage - 1) * ITEMS_PER_PAGE) + 1} a {Math.min(currentPage * ITEMS_PER_PAGE, filteredStaff.length)} sur {filteredStaff.length} membres du personnel
+              Affichage de {((currentPage - 1) * ITEMS_PER_PAGE) + 1} à {Math.min(currentPage * ITEMS_PER_PAGE, totalRecords)} sur {totalRecords} membres du personnel
             </div>
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
               >
-                Précedent
+                Précédent
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
               >
                 Suivant
