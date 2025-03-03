@@ -15,9 +15,10 @@ const MemberProfile = React.lazy(() => import('./pages/MemberProfile'));
 const Payments = React.lazy(() => import('./pages/Payments'));
 const Attendance = React.lazy(() => import('./pages/Attendance'));
 const Staff = React.lazy(() => import('./pages/Staff'));
-const Reports = React.lazy(() => import('./pages/Reports'));
+const Reports = React.lazy(() => import('./pages/Reportsold'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const Classes = React.lazy(() => import('./pages/Classes'));
+
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();

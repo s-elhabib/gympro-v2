@@ -40,8 +40,7 @@ const Sidebar = () => {
     { icon: Settings, label: 'Parametres', path: '/settings', roles: ['admin'] }
   ];
 
-  console.log(checkoutCount);
-  
+ 
   const filteredMenuItems = menuItems.filter(item => 
     item.roles.includes(user?.role || '')
   );
@@ -57,8 +56,7 @@ const Sidebar = () => {
           .is('check_out_time', null) // Not checked out
           .lt('check_in_time', fiveHoursAgo.toISOString()) // Check-in time more than 5 hours ago
 
-          //.lt('check_in_time', new Date().toISOString()); // Only get records with check-in time before now
-
+    
         console.log('Overdue checkouts:', data);
 
         if (error) {
