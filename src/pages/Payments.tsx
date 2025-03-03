@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Search, MoreVertical, Edit, Trash, Calendar, CalendarPlus } from 'lucide-react';
-import { format, isAfter, parseISO, addMonths, isValid } from 'date-fns';
+import { format, isAfter, parseISO, addMonths, isValid, isBefore, addDays, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -48,6 +48,7 @@ import { supabase } from '../lib/supabase';
 import MemberSearch from '../components/MemberSearch';
 import { searchByFullName } from '../lib/utils';
 import { useNotifications } from '../context/NotificationContext';
+import { log } from 'console';
 
 const PaymentForm = ({ 
   defaultValues,
@@ -265,6 +266,30 @@ const Payments = () => {
   const [selectedPayment, setSelectedPayment] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  const updatePaymentStatus = (payment: any) => {
+    const today = new Date();
+    const dueDate = parseISO(payment.due_date);
+    const sevenDaysFromNow = addDays(today, 7);
+
+    // If payment is cancelled, don't change status
+    if (payment.status === 'cancelled') {
+      return payment;
+    }
+
+    // Check if payment is overdue
+    if (isBefore(dueDate, today)) {
+      return { ...payment, status: 'overdue' };
+    }
+
+    // Check if due date is within next 7 days
+    if (isBefore(dueDate, sevenDaysFromNow)) {
+      return { ...payment, status: 'near_overdue' };
+    }
+
+    // If due date is in the future and not near, status is pending
+    return { ...payment, status: 'paid' };
+  };
+
   const fetchPayments = async () => {
     try {
       setIsLoading(true);
@@ -278,13 +303,8 @@ const Payments = () => {
 
       if (error) throw error;
       
-      // Update overdue status
-      const updatedPayments = data?.map(payment => {
-        if (payment.status === 'pending' && isAfter(new Date(), parseISO(payment.due_date))) {
-          return { ...payment, status: 'overdue' };
-        }
-        return payment;
-      });
+      // Update payment statuses based on dates
+      const updatedPayments = data?.map(payment => updatePaymentStatus(payment));
 
       setPayments(updatedPayments || []);
     } catch (error) {
@@ -404,6 +424,8 @@ const Payments = () => {
         return 'bg-yellow-100 text-yellow-800';
       case 'overdue':
         return 'bg-red-100 text-red-800';
+      case 'near_overdue':
+        return 'bg-orange-100 text-orange-800';
       case 'cancelled':
         return 'bg-gray-100 text-gray-800';
       default:
@@ -423,6 +445,13 @@ const Payments = () => {
       console.error('Error formatting date:', error);
       return '-';
     }
+  };
+
+  const getDaysDifference = (dueDate: string) => {
+    const today = new Date();
+    const due = parseISO(dueDate);
+    const diffInDays = differenceInDays(today, due);
+    return diffInDays;
   };
 
   const filteredPayments = payments.filter(payment => 
@@ -490,94 +519,116 @@ const Payments = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredPayments.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell 
-                    className="cursor-pointer hover:text-blue-600"
-                    onClick={() => navigate(`/members/${payment.member_id}`)}
-                  >
-                    {`${payment.member.first_name} ${payment.member.last_name}`}
-                  </TableCell>
-                  <TableCell>
-                    {payment.amount.toFixed(2)} MAD
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      <span>{formatDate(payment.due_date)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(payment.status)}`}>
-                      {payment.status === 'paid' ? 'Paye' :
-                       payment.status === 'pending' ? 'En Attente' :
-                       payment.status === 'overdue' ? 'En Retard' :
-                       payment.status === 'cancelled' ? 'Annule' : payment.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="capitalize">
-                    {payment.payment_method === 'cash' ? 'Especes' :
-                     payment.payment_method === 'credit_card' ? 'Carte de Credit' :
-                     payment.payment_method === 'debit_card' ? 'Carte de Debit' :
-                     payment.payment_method === 'bank_transfer' ? 'Virement Bancaire' :
-                     'Autre'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                            <DialogTrigger asChild>
-                              <DropdownMenuItem onSelect={(e) => {
-                                e.preventDefault();
-                                setSelectedPayment(payment);
-                              }}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Modifier
-                              </DropdownMenuItem>
-                            </DialogTrigger>
-                            {selectedPayment && (
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Modifier le Paiement</DialogTitle>
-                                  <DialogDescription>
-                                    Mettez a jour les details du paiement ci-dessous.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <PaymentForm
-                                  defaultValues={{
-                                    memberId: selectedPayment.member_id,
-                                    amount: selectedPayment.amount,
-                                    paymentDate: new Date(selectedPayment.payment_date),
-                                    dueDate: new Date(selectedPayment.due_date),
-                                    status: selectedPayment.status,
-                                    paymentMethod: selectedPayment.payment_method,
-                                    notes: selectedPayment.notes || ''
-                                  }}
-                                  onSubmit={handleUpdatePayment}
-                                  isEditing
-                                />
-                              </DialogContent>
-                            )}
-                          </Dialog>
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onSelect={() => handleDeletePayment(payment.id)}
-                          >
-                            <Trash className="h-4 w-4 mr-2" />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              filteredPayments.map((payment) => {
+                const updatedPayment = updatePaymentStatus(payment);
+                return (
+                  <TableRow key={payment.id}>
+                    <TableCell 
+                      className="cursor-pointer hover:text-blue-600"
+                      onClick={() => navigate(`/members/${payment.member_id}`)}
+                    >
+                      {`${payment.member.first_name} ${payment.member.last_name}`}
+                    </TableCell>
+                    <TableCell>
+                      {payment.amount.toFixed(2)} MAD
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                        <span>{formatDate(payment.due_date)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
+                          {payment.status === 'paid' ? 'Payé' :
+                           payment.status === 'pending' ? 'En Attente' :
+                           payment.status === 'cancelled' ? 'Annulé' : 
+                           payment.status === 'overdue' ? 'En Retard' :
+                           payment.status === 'near_overdue' ? 'Échéance Proche' :
+                           payment.status}
+                        </span>
+                        {(payment.status === 'overdue' || payment.status === 'near_overdue') && 
+                         getDaysDifference(payment.due_date) !== 0 && (
+                          <span className={`
+                            inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
+                            ${payment.status === 'overdue' 
+                              ? 'bg-red-50 text-red-700 border border-red-200' 
+                              : 'bg-orange-50 text-orange-700 border border-orange-200'
+                            }
+                          `}>
+                            {payment.status === 'overdue' 
+                              ? `+${Math.abs(getDaysDifference(payment.due_date))}j`
+                              : `-${Math.abs(getDaysDifference(payment.due_date))}j`
+                            }
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {payment.payment_method === 'cash' ? 'Especes' :
+                       payment.payment_method === 'credit_card' ? 'Carte de Credit' :
+                       payment.payment_method === 'debit_card' ? 'Carte de Debit' :
+                       payment.payment_method === 'bank_transfer' ? 'Virement Bancaire' :
+                       'Autre'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                              <DialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => {
+                                  e.preventDefault();
+                                  setSelectedPayment(payment);
+                                }}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Modifier
+                                </DropdownMenuItem>
+                              </DialogTrigger>
+                              {selectedPayment && (
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Modifier le Paiement</DialogTitle>
+                                    <DialogDescription>
+                                      Mettez a jour les details du paiement ci-dessous.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <PaymentForm
+                                    defaultValues={{
+                                      memberId: selectedPayment.member_id,
+                                      amount: selectedPayment.amount,
+                                      paymentDate: new Date(selectedPayment.payment_date),
+                                      dueDate: new Date(selectedPayment.due_date),
+                                      status: selectedPayment.status,
+                                      paymentMethod: selectedPayment.payment_method,
+                                      notes: selectedPayment.notes || ''
+                                    }}
+                                    onSubmit={handleUpdatePayment}
+                                    isEditing
+                                  />
+                                </DialogContent>
+                              )}
+                            </Dialog>
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onSelect={() => handleDeletePayment(payment.id)}
+                            >
+                              <Trash className="h-4 w-4 mr-2" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
