@@ -1,6 +1,4 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Search, MoreVertical, Edit, Trash } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -38,7 +36,7 @@ import {
 } from "../components/ui/dropdown-menu";
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { memberSchema, type MemberFormValues } from '../lib/validations/member';
+import {  type MemberFormValues } from '../lib/validations/member';
 import { supabase } from '../lib/supabase';
 import MemberForm from '../components/MemberForm';
 import { searchByFullName } from '../lib/utils';

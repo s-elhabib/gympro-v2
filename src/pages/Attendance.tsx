@@ -294,10 +294,7 @@ const Attendance = () => {
       const dayStart = startOfDay(targetDate);
       const dayEnd = endOfDay(targetDate);
       
-      console.log('Fetching attendance for:', {
-        start: dayStart.toISOString(),
-        end: dayEnd.toISOString()
-      });
+  
 
       // Fetch attendance for the specific date
       const { data: attendanceData, error } = await supabase

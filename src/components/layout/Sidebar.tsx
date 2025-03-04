@@ -57,7 +57,6 @@ const Sidebar = () => {
           .lt('check_in_time', fiveHoursAgo.toISOString()) // Check-in time more than 5 hours ago
 
     
-        console.log('Overdue checkouts:', data);
 
         if (error) {
           console.error('Error fetching overdue checkouts:', error);

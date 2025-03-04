@@ -13,7 +13,6 @@ import {
   UploadCloud,
   CheckCircle,
   XCircle,
-  AlertCircle,
   ArrowUpRight,
   ArrowDownRight
 } from 'lucide-react';
@@ -57,33 +56,8 @@ import { supabase } from '../lib/supabase';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { MemberStats } from '@/components/MemberStats';
 
-// Placeholder data for demonstration
-const revenueData = [
-  { month: 'Jan', revenue: 125000 },
-  { month: 'Feb', revenue: 142000 },
-  { month: 'Mar', revenue: 158000 },
-  { month: 'Apr', revenue: 139000 },
-  { month: 'May', revenue: 165000 },
-  { month: 'Jun', revenue: 182000 },
-];
-
-const membershipData = [
-  { name: 'Mensuel', value: 45 },
-  { name: 'Trimestriel', value: 30 },
-  { name: 'Annuel', value: 15 },
-  { name: 'Pass Journalier', value: 10 },
-];
-
-const attendanceData = [
-  { day: 'Lun', visitors: 68 },
-  { day: 'Mar', visitors: 75 },
-  { day: 'Mer', visitors: 82 },
-  { day: 'Jeu', visitors: 70 },
-  { day: 'Ven', visitors: 90 },
-  { day: 'Sam', visitors: 110 },
-  { day: 'Dim', visitors: 45 },
-];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -1707,6 +1681,8 @@ const Reports = () => {
           </div>
         </div>
       </div>
+      
+      <MemberStats />
     </div>
   );
 };
