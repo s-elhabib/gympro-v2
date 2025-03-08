@@ -296,12 +296,12 @@ const Staff = () => {
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Ajouter un Membre
+              Ajouter un Personnel
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Ajouter un Nouveau Membre</DialogTitle>
+              <DialogTitle>Ajouter un Nouveau Personnel</DialogTitle>
               <DialogDescription>
                 Entrez les details du nouveau membre du personnel ci-dessous.
               </DialogDescription>

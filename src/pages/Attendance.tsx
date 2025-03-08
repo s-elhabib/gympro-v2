@@ -478,7 +478,6 @@ const Attendance = () => {
     }
   };
 
-  const totalPages = Math.ceil(totalRecords / pageSize);
 
   const isToday = currentPage === 1;
 
