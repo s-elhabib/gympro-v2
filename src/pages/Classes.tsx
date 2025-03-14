@@ -85,7 +85,7 @@ const mockClasses = [
   {
     id: '1',
     name: 'Power Yoga',
-    description: 'A vigorous, fitness-based approach to vinyasa-style yoga.',
+    description: 'Une approche vigoureuse du yoga de style vinyasa basee sur le fitness.',
     instructor: 'Sarah Johnson',
     capacity: 25,
     duration: 60,
@@ -102,15 +102,15 @@ const mockClasses = [
   },
   {
     id: '2',
-    name: 'Spin Class',
-    description: 'High-intensity indoor cycling workout set to energizing music.',
+    name: 'Cours de Velo',
+    description: 'Entrainement intense de cyclisme en salle sur une musique energisante.',
     instructor: 'Mike Davis',
     capacity: 20,
     duration: 45,
     day: 'tuesday',
     startTime: '17:30',
     endTime: '18:15',
-    location: 'Spin Room',
+    location: 'Salle de Velo',
     category: 'cardio',
     difficulty: 'all_levels',
     isActive: true,
@@ -120,15 +120,15 @@ const mockClasses = [
   },
   {
     id: '3',
-    name: 'HIIT Training',
-    description: 'High-intensity interval training combining cardio and strength.',
+    name: 'Entrainement HIIT',
+    description: 'Entrainement par intervalles de haute intensite combinant cardio et force.',
     instructor: 'Alex Smith',
     capacity: 15,
     duration: 30,
     day: 'wednesday',
     startTime: '12:00',
     endTime: '12:30',
-    location: 'Functional Training Area',
+    location: 'Zone Entrainement Fonctionnel',
     category: 'strength',
     difficulty: 'advanced',
     isActive: true,
@@ -138,8 +138,8 @@ const mockClasses = [
   },
   {
     id: '4',
-    name: 'Pilates Basics',
-    description: 'Core-strengthening exercises focusing on alignment, breathing, and control.',
+    name: 'Pilates Base',
+    description: 'Exercices de renforcement du centre axés sur l\'alignement, la respiration et le controle.',
     instructor: 'Emma Wilson',
     capacity: 15,
     duration: 60,
@@ -157,7 +157,7 @@ const mockClasses = [
   {
     id: '5',
     name: 'Zumba',
-    description: 'Dance fitness program featuring Latin and international music.',
+    description: 'Programme de fitness danse avec de la musique latine et internationale.',
     instructor: 'Maria Lopez',
     capacity: 30,
     duration: 60,
@@ -174,15 +174,15 @@ const mockClasses = [
   },
   {
     id: '6',
-    name: 'Bootcamp',
-    description: 'Military-inspired circuit training for full-body conditioning.',
+    name: 'Camp d\'entrainement',
+    description: 'Entrainement en circuit inspire du style militaire pour un conditionnement complet du corps.',
     instructor: 'Jack Thompson',
     capacity: 20,
     duration: 45,
     day: 'saturday',
     startTime: '09:00',
     endTime: '09:45',
-    location: 'Outdoor Area',
+    location: 'Zone Exterieure',
     category: 'strength',
     difficulty: 'advanced',
     isActive: false,
@@ -208,7 +208,7 @@ const ClassScheduleByDay = ({ classes, onEdit, onDelete }) => {
           
           {groupedClasses[day.value].length === 0 ? (
             <div className="p-4 text-center text-gray-500">
-              No classes scheduled for {day.label}
+              Aucun cours prevu pour {day.label}
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
@@ -254,14 +254,14 @@ const ClassScheduleByDay = ({ classes, onEdit, onDelete }) => {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => onEdit(cls)}>
                                 <Edit className="h-4 w-4 mr-2" />
-                                Edit
+                                Modifier
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 className="text-red-600"
                                 onClick={() => onDelete(cls)}
                               >
                                 <Trash className="h-4 w-4 mr-2" />
-                                Delete
+                                Supprimer
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -284,14 +284,14 @@ const ClassesTable = ({ classes, onEdit, onDelete }) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Class Name</TableHead>
-            <TableHead>Schedule</TableHead>
-            <TableHead>Instructor</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Difficulty</TableHead>
-            <TableHead>Capacity</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Nom du Cours</TableHead>
+            <TableHead>Horaire</TableHead>
+            <TableHead>Instructeur</TableHead>
+            <TableHead>Emplacement</TableHead>
+            <TableHead>Categorie</TableHead>
+            <TableHead>Difficulte</TableHead>
+            <TableHead>Capacite</TableHead>
+            <TableHead>Statut</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -299,7 +299,7 @@ const ClassesTable = ({ classes, onEdit, onDelete }) => {
           {classes.length === 0 ? (
             <TableRow>
               <TableCell colSpan={9} className="text-center py-8">
-                No classes found
+                Aucun cours trouve
               </TableCell>
             </TableRow>
           ) : (
@@ -331,12 +331,12 @@ const ClassesTable = ({ classes, onEdit, onDelete }) => {
                   {cls.isActive ? (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       <Check className="h-3 w-3 mr-1" />
-                      Active
+                      Actif
                     </span>
                   ) : (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                       <Ban className="h-3 w-3 mr-1" />
-                      Inactive
+                      Inactif
                     </span>
                   )}
                 </TableCell>
@@ -351,14 +351,14 @@ const ClassesTable = ({ classes, onEdit, onDelete }) => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => onEdit(cls)}>
                           <Edit className="h-4 w-4 mr-2" />
-                          Edit
+                          Modifier
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           className="text-red-600"
                           onClick={() => onDelete(cls)}
                         >
                           <Trash className="h-4 w-4 mr-2" />
-                          Delete
+                          Supprimer
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -402,15 +402,15 @@ const Classes = () => {
       setIsAddDialogOpen(false);
       
       addNotification({
-        title: 'Success',
-        message: 'Class added successfully',
+        title: 'Succes',
+        message: 'Cours ajoute avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error adding class:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to add class',
+        title: 'Erreur',
+        message: 'Echec de l\'ajout du cours',
         type: 'error'
       });
     }
@@ -432,15 +432,15 @@ const Classes = () => {
       setCurrentClass(null);
       
       addNotification({
-        title: 'Success',
-        message: 'Class updated successfully',
+        title: 'Succes',
+        message: 'Cours mis a jour avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error updating class:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to update class',
+        title: 'Erreur',
+        message: 'Echec de la mise a jour du cours',
         type: 'error'
       });
     }
@@ -456,15 +456,15 @@ const Classes = () => {
       setCurrentClass(null);
       
       addNotification({
-        title: 'Success',
-        message: 'Class deleted successfully',
+        title: 'Succes',
+        message: 'Cours supprime avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error deleting class:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to delete class',
+        title: 'Erreur',
+        message: 'Echec de la suppression du cours',
         type: 'error'
       });
     }
@@ -505,22 +505,22 @@ const Classes = () => {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Class Management</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your gym's class schedule and details</p>
+          <h1 className="text-2xl font-bold text-gray-900">Gestion des Cours</h1>
+          <p className="text-sm text-gray-500 mt-1">Gerez l'emploi du temps et les details des cours de votre salle de sport</p>
         </div>
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add New Class
+              Ajouter un Nouveau Cours
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Add New Class</DialogTitle>
+              <DialogTitle>Ajouter un Nouveau Cours</DialogTitle>
               <DialogDescription>
-                Fill out the form below to create a new class.
+                Remplissez le formulaire ci-dessous pour creer un nouveau cours.
               </DialogDescription>
             </DialogHeader>
             <ClassForm onSubmit={handleAddClass} />
@@ -531,43 +531,43 @@ const Classes = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Total Classes</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Total des Cours</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{classesStats.totalClasses}</div>
             <p className="text-xs text-gray-600 flex items-center mt-1">
-              {classesStats.activeClasses} active, {classesStats.totalClasses - classesStats.activeClasses} inactive
+              {classesStats.activeClasses} actifs, {classesStats.totalClasses - classesStats.activeClasses} inactifs
             </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Total Weekly Sessions</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Sessions Hebdomadaires Totales</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{classes.filter(cls => cls.isActive).length}</div>
             <p className="text-xs text-gray-600 flex items-center mt-1">
-              Across {new Set(classes.filter(cls => cls.isActive).map(cls => cls.day)).size} days
+              Sur {new Set(classes.filter(cls => cls.isActive).map(cls => cls.day)).size} jours
             </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Total Capacity</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Capacite Totale</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{classesStats.totalCapacity}</div>
             <p className="text-xs text-gray-600 flex items-center mt-1">
-              {Math.round((classesStats.totalEnrollments / classesStats.totalCapacity) * 100)}% utilization rate
+              {Math.round((classesStats.totalEnrollments / classesStats.totalCapacity) * 100)}% taux d'utilisation
             </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Most Popular Category</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Categorie la Plus Populaire</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold capitalize">
@@ -579,11 +579,11 @@ const Classes = () => {
                   }, {})
                 )
                 .sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[0]
-                .replace('_', ' ') || 'None'
+                .replace('_', ' ') || 'Aucune'
               }
             </div>
             <p className="text-xs text-gray-600 flex items-center mt-1">
-              Based on current enrollments
+              Base sur les inscriptions actuelles
             </p>
           </CardContent>
         </Card>
@@ -593,7 +593,7 @@ const Classes = () => {
         <div className="relative flex items-center max-w-md">
           <Search className="absolute left-3 h-5 w-5 text-gray-400" />
           <Input
-            placeholder="Search classes..."
+            placeholder="Rechercher des cours..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -609,7 +609,7 @@ const Classes = () => {
             onChange={(e) => setCategoryFilter(e.target.value || null)}
             className="rounded-md border border-gray-300 text-sm py-2 px-3"
           >
-            <option value="">All Categories</option>
+            <option value="">Toutes les Categories</option>
             {classCategories.map((category) => (
               <option key={category.value} value={category.value}>
                 {category.label}
@@ -627,7 +627,7 @@ const Classes = () => {
               onClick={() => setViewMode('schedule')}
             >
               <Calendar className="h-4 w-4 inline-block mr-1" />
-              Schedule
+              Emploi du temps
             </button>
             <button
               className={`px-3 py-2 text-sm font-medium ${
@@ -638,7 +638,7 @@ const Classes = () => {
               onClick={() => setViewMode('table')}
             >
               <DumbbellIcon className="h-4 w-4 inline-block mr-1" />
-              Classes
+              Cours
             </button>
           </div>
         </div>
@@ -661,7 +661,7 @@ const Classes = () => {
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-500">
-                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredClasses.length)} of {filteredClasses.length} classes
+                Affichage de {((currentPage - 1) * ITEMS_PER_PAGE) + 1} a {Math.min(currentPage * ITEMS_PER_PAGE, filteredClasses.length)} sur {filteredClasses.length} cours
               </div>
               <div className="flex items-center space-x-2">
                 <Button
@@ -670,7 +670,7 @@ const Classes = () => {
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  Precedent
                 </Button>
                 <Button
                   variant="outline"
@@ -678,7 +678,7 @@ const Classes = () => {
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                 >
-                  Next
+                  Suivant
                 </Button>
               </div>
             </div>
@@ -690,9 +690,9 @@ const Classes = () => {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Class</DialogTitle>
+            <DialogTitle>Modifier le Cours</DialogTitle>
             <DialogDescription>
-              Update the class information below.
+              Mettez a jour les informations du cours ci-dessous.
             </DialogDescription>
           </DialogHeader>
           {currentClass && (
@@ -722,24 +722,24 @@ const Classes = () => {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Class</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer le Cours</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{currentClass?.name}"? This action cannot be undone.
+              Etes-vous sur de vouloir supprimer "{currentClass?.name}" ? Cette action ne peut pas etre annulee.
               {currentClass?.current_enrollments > 0 && (
                 <div className="mt-2 p-2 bg-yellow-50 text-yellow-800 rounded-md flex items-start">
                   <AlertCircle className="h-5 w-5 mr-2 mt-0.5" />
                   <div>
-                    This class has {currentClass?.current_enrollments} active enrollments. 
-                    Deleting will impact members who are currently enrolled.
+                    Ce cours a {currentClass?.current_enrollments} inscriptions actives. 
+                    La suppression affectera les membres actuellement inscrits.
                   </div>
                 </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteClass} className="bg-red-600 hover:bg-red-700">
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -67,19 +67,19 @@ const MemberProfile = () => {
         return {
           start: startOfWeek(now),
           end: endOfWeek(now),
-          label: 'This Week'
+          label: 'Cette Semaine'
         };
       case 'month':
         return {
           start: startOfMonth(now),
           end: endOfMonth(now),
-          label: 'This Month'
+          label: 'Ce Mois'
         };
       case 'year':
         return {
           start: startOfYear(now),
           end: endOfYear(now),
-          label: 'This Year'
+          label: 'Cette Année'
         };
     }
   };
@@ -127,8 +127,8 @@ const MemberProfile = () => {
     } catch (error) {
       console.error('Error fetching attendance stats:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to load attendance statistics',
+        title: 'Erreur',
+        message: 'Échec du chargement des statistiques de présence',
         type: 'error'
       });
     }
@@ -140,7 +140,7 @@ const MemberProfile = () => {
       setError(null);
       
       if (!id) {
-        throw new Error('Member ID is required');
+        throw new Error('ID du membre requis');
       }
 
       // Fetch member details
@@ -151,7 +151,7 @@ const MemberProfile = () => {
         .single();
 
       if (memberError) throw memberError;
-      if (!memberData) throw new Error('Member not found');
+      if (!memberData) throw new Error('Membre non trouvé');
 
       setMember(memberData);
 
@@ -172,8 +172,8 @@ const MemberProfile = () => {
       console.error('Error fetching member data:', error);
       setError(error.message);
       addNotification({
-        title: 'Error',
-        message: error.message || 'Failed to load member data',
+        title: 'Erreur',
+        message: error.message || 'Échec du chargement des données du membre',
         type: 'error'
       });
     } finally {
@@ -224,7 +224,7 @@ const MemberProfile = () => {
   const handleUpdateMember = async (data: MemberFormValues) => {
     try {
       if (!id) {
-        throw new Error('Member ID is required');
+        throw new Error('ID du membre requis');
       }
 
       const { error } = await supabase
@@ -252,10 +252,10 @@ const MemberProfile = () => {
       // Refresh member data
       await fetchMemberData();
       
-      toast.success("Member information updated successfully");
+      toast.success("Informations du membre mises à jour avec succès");
     } catch (error: any) {
       console.error('Error updating member:', error);
-      toast.error(error.message || 'Failed to update member');
+      toast.error(error.message || 'Échec de la mise à jour du membre');
     }
   };
 
@@ -274,14 +274,14 @@ const MemberProfile = () => {
           <AlertCircle className="h-8 w-8" />
         </div>
         <h1 className="text-2xl font-semibold mb-2">
-          {error || 'Member not found'}
+          {error || 'Membre non trouvé'}
         </h1>
         <p className="text-gray-500 mb-6">
-          Please check the member ID and try again
+          Veuillez vérifier l'ID du membre et réessayer
         </p>
         <Button onClick={() => navigate('/members')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Members
+          Retour aux Membres
         </Button>
       </div>
     );
@@ -292,20 +292,20 @@ const MemberProfile = () => {
       <div className="flex items-center justify-between">
         <Button variant="outline" onClick={() => navigate('/members')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Members
+          Retour aux Membres
         </Button>
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Edit className="h-4 w-4 mr-2" />
-              Edit Member
+              Modifier le Membre
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit Member</DialogTitle>
+              <DialogTitle>Modifier le Membre</DialogTitle>
               <DialogDescription>
-                Update member information below.
+                Mettre à jour les informations du membre ci-dessous.
               </DialogDescription>
             </DialogHeader>
             <MemberForm
@@ -338,7 +338,7 @@ const MemberProfile = () => {
               <span className={`inline-block px-2 py-1 rounded-full text-xs capitalize mt-1 ${
                 getStatusColor(member.status)
               }`}>
-                {member.status}
+                {member.status === 'active' ? 'Actif' : member.status === 'inactive' ? 'Inactif' : 'Suspendu'}
               </span>
             </div>
           </div>
@@ -349,15 +349,15 @@ const MemberProfile = () => {
               <p className="text-gray-900">{member.email}</p>
             </div>
             <div>
-              <label className="text-sm text-gray-500">Phone</label>
+              <label className="text-sm text-gray-500">Téléphone</label>
               <p className="text-gray-900">{member.phone}</p>
             </div>
             <div>
-              <label className="text-sm text-gray-500">Membership Type</label>
+              <label className="text-sm text-gray-500">Type d'Adhésion</label>
               <p className="text-gray-900 capitalize">{member.membership_type}</p>
             </div>
             <div>
-              <label className="text-sm text-gray-500">Member Since</label>
+              <label className="text-sm text-gray-500">Membre Depuis</label>
               <p className="text-gray-900">{format(new Date(member.start_date), 'MMMM d, yyyy')}</p>
             </div>
           </div>
@@ -366,7 +366,7 @@ const MemberProfile = () => {
         {/* Attendance Stats Card */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold">Attendance Overview</h2>
+            <h2 className="text-lg font-semibold">Aperçu des Présences</h2>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -376,13 +376,13 @@ const MemberProfile = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setTimeRange('week')}>
-                  This Week
+                  Cette Semaine
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTimeRange('month')}>
-                  This Month
+                  Ce Mois
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTimeRange('year')}>
-                  This Year
+                  Cette Année
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -393,14 +393,14 @@ const MemberProfile = () => {
               <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex items-center space-x-2 text-blue-600 mb-2">
                   <Calendar className="h-5 w-5" />
-                  <span className="font-medium">Total Visits</span>
+                  <span className="font-medium">Visites Totales</span>
                 </div>
                 <p className="text-2xl font-semibold">{attendanceStats.totalVisits}</p>
               </div>
               <div className="bg-green-50 rounded-lg p-4">
                 <div className="flex items-center space-x-2 text-green-600 mb-2">
                   <Clock className="h-5 w-5" />
-                  <span className="font-medium">Avg. Duration</span>
+                  <span className="font-medium">Durée Moy.</span>
                 </div>
                 <p className="text-2xl font-semibold">
                   {Math.round(attendanceStats.avgDuration)} min
@@ -410,12 +410,12 @@ const MemberProfile = () => {
             <div className="bg-purple-50 rounded-lg p-4">
               <div className="flex items-center space-x-2 text-purple-600 mb-2">
                 <Dumbbell className="h-5 w-5" />
-                <span className="font-medium">Most Common Activity</span>
+                <span className="font-medium">Activité la Plus Fréquente</span>
               </div>
               <p className="text-2xl font-semibold capitalize">
                 {attendanceStats.mostFrequentType
                   ? attendanceStats.mostFrequentType.replace('_', ' ')
-                  : 'No activities yet'}
+                  : 'Pas encore d\'activités'}
               </p>
             </div>
           </div>
@@ -423,7 +423,7 @@ const MemberProfile = () => {
 
         {/* Payment Summary Card */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-semibold mb-6">Payment Summary</h2>
+          <h2 className="text-lg font-semibold mb-6">Résumé des Paiements</h2>
           {payments.length > 0 ? (
             <div className="space-y-4">
               {payments.slice(0, 3).map((payment) => (
@@ -431,7 +431,7 @@ const MemberProfile = () => {
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
                       <CreditCard className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium">${payment.amount.toFixed(2)}</span>
+                      <span className="font-medium">{payment.amount.toFixed(2)} MAD</span>
                     </div>
                     <p className="text-sm text-gray-500">
                       {format(new Date(payment.payment_date), 'MMM d, yyyy')}
@@ -440,14 +440,14 @@ const MemberProfile = () => {
                   <span className={`px-2 py-1 rounded-full text-xs capitalize ${
                     getPaymentStatusColor(payment.status, payment.due_date)
                   }`}>
-                    {payment.status}
+                    {payment.status === 'paid' ? 'Payé' : payment.status === 'pending' ? 'En attente' : 'Annulé'}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center text-gray-500 py-8">
-              No payment records found
+              Aucun historique de paiement trouvé
             </div>
           )}
         </div>
@@ -455,14 +455,14 @@ const MemberProfile = () => {
 
       {/* Attendance History */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold mb-6">Attendance History</h2>
+        <h2 className="text-lg font-semibold mb-6">Historique des Présences</h2>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
-              <TableHead>Check In</TableHead>
-              <TableHead>Check Out</TableHead>
-              <TableHead>Duration</TableHead>
+              <TableHead>Entrée</TableHead>
+              <TableHead>Sortie</TableHead>
+              <TableHead>Durée</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Notes</TableHead>
             </TableRow>
@@ -476,7 +476,7 @@ const MemberProfile = () => {
                   <TableCell>
                     {record.check_out_time 
                       ? format(new Date(record.check_out_time), 'h:mm a')
-                      : 'In Progress'
+                      : 'En Cours'
                     }
                   </TableCell>
                   <TableCell>
@@ -497,7 +497,7 @@ const MemberProfile = () => {
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  No attendance records found for the selected period
+                  Aucun enregistrement de présence trouvé pour la période sélectionnée
                 </TableCell>
               </TableRow>
             )}
@@ -507,15 +507,15 @@ const MemberProfile = () => {
 
       {/* Payment History */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold mb-6">Payment History</h2>
+        <h2 className="text-lg font-semibold mb-6">Historique des Paiements</h2>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Amount</TableHead>
-              <TableHead>Payment Date</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Payment Method</TableHead>
+              <TableHead>Montant</TableHead>
+              <TableHead>Date de Paiement</TableHead>
+              <TableHead>Date d'Échéance</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Mode de Paiement</TableHead>
               <TableHead>Notes</TableHead>
             </TableRow>
           </TableHeader>
@@ -523,14 +523,14 @@ const MemberProfile = () => {
             {payments.length > 0 ? (
               payments.map((payment) => (
                 <TableRow key={payment.id}>
-                  <TableCell>${payment.amount.toFixed(2)}</TableCell>
+                  <TableCell>{payment.amount.toFixed(2)} MAD</TableCell>
                   <TableCell>{format(new Date(payment.payment_date), 'MMM d, yyyy')}</TableCell>
                   <TableCell>{format(new Date(payment.due_date), 'MMM d, yyyy')}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs capitalize ${
                       getPaymentStatusColor(payment.status, payment.due_date)
                     }`}>
-                      {payment.status}
+                      {payment.status === 'paid' ? 'Payé' : payment.status === 'pending' ? 'En attente' : 'Annulé'}
                     </span>
                   </TableCell>
                   <TableCell className="capitalize">{payment.payment_method.replace('_', ' ')}</TableCell>
@@ -540,7 +540,7 @@ const MemberProfile = () => {
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  No payment records found
+                  Aucun historique de paiement trouvé
                 </TableCell>
               </TableRow>
             )}

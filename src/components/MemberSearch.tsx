@@ -115,7 +115,7 @@ const MemberSearch = ({ onSelect, defaultValue, showSelectedOnly = false }: Memb
     <div ref={searchRef} className="relative">
       <Input
         type="text"
-        placeholder="Search members..."
+        placeholder="Rechercher des membres..."
         value={searchTerm}
         onChange={(e) => {
           if (showSelectedOnly && selectedMember) return;
@@ -134,7 +134,7 @@ const MemberSearch = ({ onSelect, defaultValue, showSelectedOnly = false }: Memb
           {isLoading ? (
             <div className="p-4 text-center text-gray-500">
               <div className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-              <span className="ml-2">Loading members...</span>
+              <span className="ml-2">Chargement des membres...</span>
             </div>
           ) : (
             <ul className="max-h-60 overflow-auto py-1">

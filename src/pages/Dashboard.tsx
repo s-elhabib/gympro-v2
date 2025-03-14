@@ -13,7 +13,7 @@ import {
   Lock,
   AlertCircle
 } from 'lucide-react';
-import { format, subMonths, subDays, differenceInDays, subYears } from 'date-fns';
+import { format, subMonths, subDays, differenceInDays, subYears, parseISO, isAfter, isBefore, addDays } from 'date-fns';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { supabase } from '../lib/supabase';
@@ -96,15 +96,50 @@ const Dashboard = () => {
       if (paymentsError) throw paymentsError;
 
       if (paymentsData) {
-        setAllPayments(paymentsData);
-        setTotalRecords(paymentsData.length);
+        // Update payment status based on due date
+        const now = new Date();
+        const updatedPayments = paymentsData.map(payment => {
+          const dueDate = parseISO(payment.due_date);
+          const nearFutureDate = addDays(now, 7);
+
+          if (payment.status === 'paid') {
+            return payment;
+          } else if (isBefore(dueDate, now)) {
+            return { ...payment, status: 'overdue' };
+          } else if (isBefore(dueDate, nearFutureDate)) {
+            return { ...payment, status: 'due-soon' };
+          } else {
+            return { ...payment, status: 'pending' };
+          }
+        });
+
+        // Sort payments by status priority and due date
+        const sortedPayments = updatedPayments.sort((a, b) => {
+          const statusPriority = {
+            'overdue': 1,
+            'due-soon': 2,
+            'pending': 3,
+            'paid': 4
+          };
+
+          const priorityA = statusPriority[a.status as keyof typeof statusPriority];
+          const priorityB = statusPriority[b.status as keyof typeof statusPriority];
+
+          if (priorityA === priorityB) {
+            return parseISO(a.due_date).getTime() - parseISO(b.due_date).getTime();
+          }
+          return priorityA - priorityB;
+        });
+
+        setAllPayments(sortedPayments);
+        setTotalRecords(sortedPayments.length);
 
         // Calculate total revenue and trend
-        const totalRevenue = paymentsData
+        const totalRevenue = sortedPayments
           .filter(p => p.status === 'paid')
           .reduce((sum, p) => sum + p.amount, 0);
 
-        const lastMonthRevenue = paymentsData
+        const lastMonthRevenue = sortedPayments
           .filter(p => {
             const date = new Date(p.payment_date);
             const lastMonth = new Date();
@@ -113,7 +148,7 @@ const Dashboard = () => {
           })
           .reduce((sum, p) => sum + p.amount, 0);
 
-        const previousMonthRevenue = paymentsData
+        const previousMonthRevenue = sortedPayments
           .filter(p => {
             const date = new Date(p.payment_date);
             const twoMonthsAgo = new Date();
@@ -135,7 +170,7 @@ const Dashboard = () => {
         });
 
         const monthlyRevenue = last12Months.map(month => {
-          return paymentsData
+          return sortedPayments
             .filter(p => {
               const paymentMonth = format(new Date(p.payment_date), 'MMM yyyy');
               return paymentMonth === month && p.status === 'paid';
@@ -207,14 +242,14 @@ const Dashboard = () => {
         }
 
         // Update displayed payments based on current page and search
-        updateDisplayedPayments(paymentsData, searchTerm, currentPage);
+        updateDisplayedPayments(sortedPayments, searchTerm, currentPage);
       }
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
       setError(error.message);
       addNotification({
-        title: 'Error',
-        message: 'Failed to load dashboard data. Please try again.',
+        title: 'Erreur',
+        message: 'Échec du chargement des données du tableau de bord. Veuillez réessayer.',
         type: 'error'
       });
     } finally {
@@ -300,8 +335,8 @@ const Dashboard = () => {
     } catch (error: any) {
       console.error('Error updating revenue:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to update revenue data. Please try again.',
+        title: 'Erreur',
+        message: 'Échec de la mise à jour des données de revenus. Veuillez réessayer.',
         type: 'error'
       });
     } finally {
@@ -325,9 +360,9 @@ const Dashboard = () => {
         <div className="bg-red-100 text-red-600 p-4 rounded-full mb-4">
           <AlertCircle className="h-8 w-8" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to load dashboard</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Échec du chargement du tableau de bord</h2>
         <p className="text-gray-500 mb-4">{error}</p>
-        <Button onClick={fetchDashboardData}>Try Again</Button>
+        <Button onClick={fetchDashboardData}>Réessayer</Button>
       </div>
     );
   }
@@ -336,17 +371,17 @@ const Dashboard = () => {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">An overview of your gym's performance</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Tableau de bord</h1>
+          <p className="text-sm text-gray-500 mt-1">Un aperçu des performances de votre salle de sport</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" size="sm" className="flex items-center">
             <Filter className="h-4 w-4 mr-2" />
-            Filters
+            Filtres
           </Button>
           <Button variant="outline" size="sm" className="flex items-center">
             <Download className="h-4 w-4 mr-2" />
-            Download
+            Télécharger
           </Button>
         </div>
       </div>
@@ -354,7 +389,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <StatCard 
           icon={DollarSign}
-          label="Total Revenue"
+          label="Revenu Total"
           value={stats.totalRevenue.value}
           trend={stats.totalRevenue.trend}
           isPositive={stats.totalRevenue.isPositive}
@@ -366,21 +401,21 @@ const Dashboard = () => {
         />
         <StatCard 
           icon={Users}
-          label="Active Members"
+          label="Membres Actifs"
           value={stats.activeMembers.value}
           trend={stats.activeMembers.trend}
           isPositive={stats.activeMembers.isPositive}
         />
         <StatCard 
           icon={Activity}
-          label="Today's Attendance"
+          label="Présence du Jour"
           value={stats.attendance.value}
           trend={stats.attendance.trend}
           isPositive={stats.attendance.isPositive}
         />
         <StatCard 
           icon={TrendingUp}
-          label="New Sign-ups"
+          label="Nouvelles Inscriptions"
           value={stats.newSignups.value}
           trend={stats.newSignups.trend}
           isPositive={stats.newSignups.isPositive}
@@ -390,13 +425,13 @@ const Dashboard = () => {
       <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Payment History</h2>
-            <p className="text-sm text-gray-500">Overview of all member payments</p>
+            <h2 className="text-lg font-semibold text-gray-900">Historique des Paiements</h2>
+            <p className="text-sm text-gray-500">Aperçu de tous les paiements des membres</p>
           </div>
           <div className="flex items-center space-x-2 w-full sm:w-auto">
             <Search className="h-5 w-5 text-gray-400" />
             <Input
-              placeholder="Search payments..."
+              placeholder="Rechercher des paiements..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);

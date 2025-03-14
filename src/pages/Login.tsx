@@ -16,8 +16,8 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email('Adresse email invalide'),
+  password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -43,7 +43,7 @@ const Login = () => {
       setError(null);
       await signIn(data.email, data.password);
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
+      setError(err.message || 'Email ou mot de passe invalide');
       console.error('Login error:', err);
     } finally {
       setIsLoading(false);
@@ -57,9 +57,9 @@ const Login = () => {
           <div className="flex justify-center">
             <Dumbbell className="h-12 w-12 text-blue-500" />
           </div>
-          <h1 className="text-2xl font-semibold">Welcome Back to Gym Manager</h1>
+          <h1 className="text-2xl font-semibold">Bienvenue sur Gym Manager</h1>
           <p className="text-gray-400 text-sm">
-            Enter your username and password to continue.
+            Entrez votre nom d'utilisateur et mot de passe pour continuer.
           </p>
         </div>
 
@@ -100,7 +100,7 @@ const Login = () => {
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Password"
+                        placeholder="Mot de passe"
                         className="bg-[#24242C] border-[#34343E] h-12 px-4 pr-10"
                         {...field}
                       />
@@ -130,13 +130,13 @@ const Login = () => {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                 />
-                <span className="text-gray-300">Remember me</span>
+                <span className="text-gray-300">Se souvenir de moi</span>
               </label>
               <Link
                 to="/forgot-password"
                 className="text-blue-500 hover:text-blue-400"
               >
-                Forgot password?
+                Mot de passe oublié ?
               </Link>
             </div>
 
@@ -145,7 +145,7 @@ const Login = () => {
               className="w-full bg-blue-500 hover:bg-blue-600 h-12 text-base font-medium"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? 'Connexion...' : 'Se connecter'}
             </Button>
 
             <div className="relative">
@@ -153,7 +153,7 @@ const Login = () => {
                 <div className="w-full border-t border-gray-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-[#1C1C25] text-gray-400">Or login with</span>
+                <span className="px-2 bg-[#1C1C25] text-gray-400">Ou se connecter avec</span>
               </div>
             </div>
 
@@ -185,9 +185,9 @@ const Login = () => {
             </div>
 
             <p className="text-center text-gray-400 text-sm">
-              Don't have an account?{' '}
+              Vous n'avez pas de compte ?{' '}
               <Link to="/signup" className="text-blue-500 hover:text-blue-400">
-                Register
+                S'inscrire
               </Link>
             </p>
           </form>
@@ -195,11 +195,11 @@ const Login = () => {
 
         <div className="text-center space-y-4">
           <div className="flex justify-center space-x-4 text-sm text-gray-400">
-            <a href="#" className="hover:text-gray-300">Privacy Policy</a>
-            <a href="#" className="hover:text-gray-300">Terms & Conditions</a>
+            <a href="#" className="hover:text-gray-300">Politique de confidentialité</a>
+            <a href="#" className="hover:text-gray-300">Conditions générales</a>
           </div>
           <p className="text-xs text-gray-500">
-            © 2025 Gym Manager Inc. All rights reserved.
+            © 2025 Gym Manager Inc. Tous droits réservés.
           </p>
         </div>
       </div>

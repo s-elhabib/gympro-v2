@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Search, Clock, MoreVertical, Trash, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { Plus, Search, Clock, MoreVertical, Trash, AlertCircle, Edit } from 'lucide-react';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -41,6 +42,7 @@ import { supabase } from '../lib/supabase';
 import MemberSearch from '../components/MemberSearch';
 import { useNotifications } from '../context/NotificationContext';
 import { searchByFullName } from '../lib/utils';
+import { AttendanceEditForm } from '../components/AttendanceEditForm';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -86,7 +88,7 @@ const AttendanceForm = ({
         .single();
 
       if (!member) {
-        throw new Error('Member not found');
+        throw new Error('Membre non trouvé');
       }
 
       // Check for valid payments
@@ -110,16 +112,16 @@ const AttendanceForm = ({
       // Show warnings if there are issues
       if (member.status !== 'active') {
         addNotification({
-          title: 'Membership Inactive',
-          message: 'This member\'s membership is not active.',
+          title: 'Adhésion Inactive',
+          message: 'L\'adhésion de ce membre n\'est pas active.',
           type: 'warning'
         });
       }
 
       if (!hasValidPayment) {
         addNotification({
-          title: 'Payment Required',
-          message: 'This member has no valid payment on record.',
+          title: 'Paiement Requis',
+          message: 'Ce membre n\'a pas de paiement valide enregistré.',
           type: 'warning'
         });
       }
@@ -127,8 +129,8 @@ const AttendanceForm = ({
     } catch (error) {
       console.error('Error checking member status:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to verify member status',
+        title: 'Erreur',
+        message: 'Échec de la vérification du statut du membre',
         type: 'error'
       });
     }
@@ -150,8 +152,8 @@ const AttendanceForm = ({
   const handleSubmit = async (data: AttendanceFormValues) => {
     if (!memberStatus.hasValidPayment) {
       addNotification({
-        title: 'Cannot Record Attendance',
-        message: 'Member must have a valid payment to record attendance.',
+        title: 'Impossible d\'Enregistrer la Présence',
+        message: 'Le membre doit avoir un paiement valide pour enregistrer la présence.',
         type: 'error'
       });
       return;
@@ -167,7 +169,7 @@ const AttendanceForm = ({
           name="memberId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Member</FormLabel>
+              <FormLabel>Membre</FormLabel>
               <FormControl>
                 <MemberSearch 
                   onSelect={handleMemberSelect} 
@@ -187,8 +189,8 @@ const AttendanceForm = ({
                 memberStatus.isActive ? 'bg-green-500' : 'bg-red-500'
               }`} />
               <span className="text-sm">
-                Membership Status: <span className="font-medium capitalize">{
-                  memberStatus.isActive ? 'Active' : 'Inactive'
+                Statut d'Adhésion: <span className="font-medium capitalize">{
+                  memberStatus.isActive ? 'Actif' : 'Inactif'
                 }</span>
               </span>
             </div>
@@ -197,8 +199,8 @@ const AttendanceForm = ({
                 memberStatus.hasValidPayment ? 'bg-green-500' : 'bg-red-500'
               }`} />
               <span className="text-sm">
-                Payment Status: <span className="font-medium">{
-                  memberStatus.hasValidPayment ? 'Valid' : 'Payment Required'
+                Statut de Paiement: <span className="font-medium">{
+                  memberStatus.hasValidPayment ? 'Valide' : 'Paiement Requis'
                 }</span>
               </span>
             </div>
@@ -206,7 +208,7 @@ const AttendanceForm = ({
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
                 <span className="text-sm">
-                  Membership Type: <span className="font-medium capitalize">{
+                  Type d'Adhésion: <span className="font-medium capitalize">{
                     memberStatus.membershipType
                   }</span>
                 </span>
@@ -225,9 +227,9 @@ const AttendanceForm = ({
                 {...field}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
-                <option value="gym">Gym</option>
-                <option value="class">Class</option>
-                <option value="personal_training">Personal Training</option>
+                <option value="gym">Salle de Sport</option>
+                <option value="class">Cours</option>
+                <option value="personal_training">Entraînement Personnel</option>
               </select>
               <FormMessage />
             </FormItem>
@@ -253,15 +255,15 @@ const AttendanceForm = ({
           className="w-full"
           disabled={!memberStatus.hasValidPayment}
         >
-          {isEditing ? 'Update Attendance' : 'Record Attendance'}
+          {isEditing ? 'Mettre à Jour la Présence' : 'Enregistrer la Présence'}
         </Button>
 
         {selectedMemberId && !memberStatus.hasValidPayment && (
           <div className="flex items-start gap-2 p-3 bg-red-50 text-red-800 rounded-md">
             <AlertCircle className="h-5 w-5 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium">Cannot record attendance</p>
-              <p>Member must have a valid payment to record attendance.</p>
+              <p className="font-medium">Impossible d'enregistrer la présence</p>
+              <p>Le membre doit avoir un paiement valide pour enregistrer la présence.</p>
             </div>
           </div>
         )}
@@ -279,35 +281,49 @@ const Attendance = () => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const [totalRecords, setTotalRecords] = React.useState(0);
   const { addNotification } = useNotifications();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedAttendance, setSelectedAttendance] = useState<any>(null);
+  const pageSize = 10;
 
   const fetchAttendance = async () => {
     try {
       setIsLoading(true);
       
-      // Get total count
-      const { count } = await supabase
-        .from('attendance')
-        .select('*', { count: 'exact', head: true });
+      // Calculate date range based on current page
+      const targetDate = subDays(new Date(), currentPage - 1);
+      const dayStart = startOfDay(targetDate);
+      const dayEnd = endOfDay(targetDate);
       
-      setTotalRecords(count || 0);
+  
 
-      // Fetch paginated data
-      const { data, error } = await supabase
+      // Fetch attendance for the specific date
+      const { data: attendanceData, error } = await supabase
         .from('attendance')
         .select(`
           *,
           member:members(first_name, last_name)
         `)
-        .order('check_in_time', { ascending: false })
-        .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
+        .gte('check_in_time', dayStart.toISOString())
+        .lt('check_in_time', dayEnd.toISOString())
+        .order('check_in_time', { ascending: false });
 
       if (error) throw error;
-      setAttendance(data || []);
+
+      // Filter based on search term if provided
+      const filteredData = searchTerm 
+        ? attendanceData?.filter(record => 
+            searchByFullName(searchTerm, record.member.first_name, record.member.last_name)
+          )
+        : attendanceData;
+
+      setAttendance(filteredData || []);
+      setTotalRecords(filteredData?.length || 0);
+
     } catch (error) {
       console.error('Error fetching attendance:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to fetch attendance records',
+        title: 'Erreur',
+        message: 'Échec de la récupération des enregistrements de présence',
         type: 'error'
       });
     } finally {
@@ -317,7 +333,7 @@ const Attendance = () => {
 
   React.useEffect(() => {
     fetchAttendance();
-  }, [currentPage]);
+  }, [currentPage, searchTerm]);
 
   const handleCreateAttendance = async (data: AttendanceFormValues) => {
     try {
@@ -333,15 +349,15 @@ const Attendance = () => {
       await fetchAttendance();
       setIsAddDialogOpen(false);
       addNotification({
-        title: 'Success',
-        message: 'Attendance record created successfully',
+        title: 'Succès',
+        message: 'Présence enregistrée avec succès',
         type: 'success'
       });
     } catch (error) {
       console.error('Error creating attendance:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to create attendance record',
+        title: 'Erreur',
+        message: 'Échec de l\'enregistrement de la présence',
         type: 'error'
       });
     }
@@ -364,15 +380,15 @@ const Attendance = () => {
       ));
 
       addNotification({
-        title: 'Success',
-        message: 'Check-out recorded successfully',
+        title: 'Succès',
+        message: 'Départ enregistré avec succès',
         type: 'success'
       });
     } catch (error) {
       console.error('Error checking out:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to record check-out',
+        title: 'Erreur',
+        message: 'Échec de l\'enregistrement du départ',
         type: 'error'
       });
     }
@@ -392,15 +408,47 @@ const Attendance = () => {
       setTotalRecords(prev => prev - 1);
 
       addNotification({
-        title: 'Success',
-        message: 'Attendance record deleted successfully',
+        title: 'Succès',
+        message: 'Présence supprimée avec succès',
         type: 'success'
       });
     } catch (error) {
       console.error('Error deleting attendance:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to delete attendance record',
+        title: 'Erreur',
+        message: 'Échec de la suppression de la présence',
+        type: 'error'
+      });
+    }
+  };
+
+  const handleEditAttendance = async (data: any) => {
+    try {
+      const { error } = await supabase
+        .from('attendance')
+        .update({
+          check_in_time: new Date(data.checkInTime).toISOString(),
+          type: data.type,
+          notes: data.notes,
+          check_out_time: null // Reset checkout when editing
+        })
+        .eq('id', selectedAttendance.id);
+
+      if (error) throw error;
+
+      await fetchAttendance();
+      setIsEditDialogOpen(false);
+      setSelectedAttendance(null);
+      addNotification({
+        title: 'Succès',
+        message: 'Présence mise à jour avec succès',
+        type: 'success'
+      });
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      addNotification({
+        title: 'Erreur',
+        message: 'Échec de la mise à jour de la présence',
         type: 'error'
       });
     }
@@ -411,7 +459,7 @@ const Attendance = () => {
   };
 
   const formatDuration = (checkIn: string, checkOut: string | null) => {
-    if (!checkOut) return 'In Progress';
+    if (!checkOut) return 'En Cours';
     
     const duration = (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60);
     const hours = Math.floor(duration / 60);
@@ -419,28 +467,36 @@ const Attendance = () => {
     return `${hours}h ${minutes}m`;
   };
 
-  const filteredAttendance = attendance.filter(record => 
-    searchByFullName(searchTerm, record.member.first_name, record.member.last_name)
-  );
+  const formatDateHeader = (page: number) => {
+    const date = subDays(new Date(), page - 1);
+    if (page === 1) {
+      return "Aujourd'hui";
+    } else if (page === 2) {
+      return "Hier";
+    } else {
+      return format(date, 'dd MMMM yyyy', { locale: fr });
+    }
+  };
 
-  const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
+
+  const isToday = currentPage === 1;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Attendance</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Présence</h1>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Record Attendance
+              Enregistrer la Présence
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Record Attendance</DialogTitle>
+              <DialogTitle>Enregistrer la Présence</DialogTitle>
               <DialogDescription>
-                Record member attendance details below.
+                Enregistrez les détails de présence du membre ci-dessous.
               </DialogDescription>
             </DialogHeader>
             <AttendanceForm onSubmit={handleCreateAttendance} />
@@ -451,7 +507,7 @@ const Attendance = () => {
       <div className="flex items-center space-x-2">
         <Search className="h-5 w-5 text-gray-400" />
         <Input
-          placeholder="Search attendance records..."
+          placeholder="Rechercher les enregistrements de présence..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -459,11 +515,16 @@ const Attendance = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm">
+        <div className="px-4 py-3 border-b">
+          <h2 className="text-lg font-medium">
+            {formatDateHeader(currentPage)}
+          </h2>
+        </div>
+
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Member</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead>Membre</TableHead>
               <TableHead>Check In</TableHead>
               <TableHead>Check Out</TableHead>
               <TableHead>Duration</TableHead>
@@ -474,29 +535,26 @@ const Attendance = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   <div className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
                 </TableCell>
               </TableRow>
-            ) : filteredAttendance.length === 0 ? (
+            ) : attendance.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  No attendance records found
+                <TableCell colSpan={6} className="text-center py-8">
+                  Aucun enregistrement de présence trouvé
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAttendance.map((record) => (
+              attendance.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell 
                     className="cursor-pointer hover:text-blue-600"
                     onClick={() => navigate(`/members/${record.member_id}`)}
                   >
                     {`${record.member.first_name} ${record.member.last_name}`}
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(record.check_in_time), 'MMM d, yyyy')}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
@@ -532,12 +590,43 @@ const Attendance = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                            <DialogTrigger asChild>
+                              <DropdownMenuItem 
+                                onSelect={(e) => {
+                                  e.preventDefault();
+                                  setSelectedAttendance(record);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Modifier
+                              </DropdownMenuItem>
+                            </DialogTrigger>
+                            {selectedAttendance && (
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Modifier la Présence</DialogTitle>
+                                  <DialogDescription>
+                                    Mettez à jour les détails de présence ci-dessous.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <AttendanceEditForm
+                                  defaultValues={{
+                                    checkInTime: selectedAttendance.check_in_time,
+                                    type: selectedAttendance.type,
+                                    notes: selectedAttendance.notes
+                                  }}
+                                  onSubmit={handleEditAttendance}
+                                />
+                              </DialogContent>
+                            )}
+                          </Dialog>
                           <DropdownMenuItem
                             className="text-red-600"
                             onSelect={() => handleDeleteAttendance(record.id)}
                           >
                             <Trash className="h-4 w-4 mr-2" />
-                            Delete
+                            Supprimer
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -551,24 +640,32 @@ const Attendance = () => {
 
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <div className="text-sm text-gray-500">
-            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalRecords)} of {totalRecords} records
+            {formatDateHeader(currentPage)}
           </div>
           <div className="flex items-center space-x-2">
+            {!isToday && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+              >
+                Aujourd'hui
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
-              Previous
+              Plus Récent
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(p => p + 1)}
             >
-              Next
+              Plus Ancien
             </Button>
           </div>
         </div>

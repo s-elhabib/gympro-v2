@@ -46,8 +46,8 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
     <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Revenue Overview</h2>
-          <p className="text-sm text-gray-500">Last 12 months</p>
+          <h2 className="text-lg font-semibold text-gray-900">Aperçu des Revenus</h2>
+          <p className="text-sm text-gray-500">12 derniers mois</p>
         </div>
       </div>
       <div className="h-[300px] md:h-[400px]">
@@ -81,9 +81,9 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
                   callbacks: {
                     label: function(context) {
                       let value = context.parsed.y;
-                      return `Revenue: ${new Intl.NumberFormat('en-US', { 
+                      return `Revenu: ${new Intl.NumberFormat('ar-MA', { 
                         style: 'currency', 
-                        currency: 'USD' 
+                        currency: 'MAD' 
                       }).format(value)}`;
                     }
                   }
@@ -114,7 +114,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
                       size: 12
                     },
                     callback: function(value) {
-                      return '$' + value.toLocaleString();
+                      return value.toLocaleString() + ' MAD';
                     }
                   }
                 }
@@ -127,7 +127,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
           />
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
-            No revenue data available for the selected period
+            Aucune donnée de revenu disponible pour la période sélectionnée
           </div>
         )}
       </div>

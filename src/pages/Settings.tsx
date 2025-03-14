@@ -50,8 +50,9 @@ import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 
 const CURRENCY_OPTIONS = [
-  { value: 'USD', label: 'USD - US Dollar ($)' },
+  { value: 'MAD', label: 'MAD - Dirham Marocain (DH)' },
   { value: 'EUR', label: 'EUR - Euro (€)' },
+  { value: 'GBP', label: 'GBP - Livre Sterling (£)' },
   { value: 'GBP', label: 'GBP - British Pound (£)' },
   { value: 'CAD', label: 'CAD - Canadian Dollar (C$)' },
   { value: 'AUD', label: 'AUD - Australian Dollar (A$)' },

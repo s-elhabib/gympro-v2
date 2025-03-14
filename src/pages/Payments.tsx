@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Search, MoreVertical, Edit, Trash, Calendar, CalendarPlus } from 'lucide-react';
-import { format, isAfter, parseISO, addMonths, isValid } from 'date-fns';
+import { format, isAfter, parseISO, addMonths, isValid, isBefore, addDays, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -48,6 +48,8 @@ import { supabase } from '../lib/supabase';
 import MemberSearch from '../components/MemberSearch';
 import { searchByFullName } from '../lib/utils';
 import { useNotifications } from '../context/NotificationContext';
+
+const ITEMS_PER_PAGE = 10; // Or whatever number you prefer
 
 const PaymentForm = ({ 
   defaultValues,
@@ -101,7 +103,7 @@ const PaymentForm = ({
           name="memberId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Member</FormLabel>
+              <FormLabel>Membre</FormLabel>
               <FormControl>
                 <MemberSearch 
                   onSelect={handleMemberSelect} 
@@ -119,7 +121,7 @@ const PaymentForm = ({
           name="amount"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Amount</FormLabel>
+              <FormLabel>Montant</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -140,7 +142,7 @@ const PaymentForm = ({
             name="paymentDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Payment Date</FormLabel>
+                <FormLabel>Date de Paiement</FormLabel>
                 <FormControl>
                   <Input
                     type="date"
@@ -159,7 +161,7 @@ const PaymentForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex justify-between items-center">
-                  <span>Due Date</span>
+                  <span>Date d'Echeance</span>
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -168,7 +170,7 @@ const PaymentForm = ({
                     className="h-6 px-2 text-xs"
                   >
                     <CalendarPlus className="h-3 w-3 mr-1" />
-                    +1 Month
+                    +1 Mois
                   </Button>
                 </FormLabel>
                 <FormControl>
@@ -189,18 +191,18 @@ const PaymentForm = ({
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
+              <FormLabel>Statut</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Selectionner le statut" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="paid">Paye</SelectItem>
+                  <SelectItem value="pending">En Attente</SelectItem>
+                  <SelectItem value="overdue">En Retard</SelectItem>
+                  <SelectItem value="cancelled">Annule</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -213,19 +215,19 @@ const PaymentForm = ({
           name="paymentMethod"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Payment Method</FormLabel>
+              <FormLabel>Mode de Paiement</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select payment method" />
+                    <SelectValue placeholder="Selectionner le mode de paiement" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="credit_card">Credit Card</SelectItem>
-                  <SelectItem value="debit_card">Debit Card</SelectItem>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="cash">Especes</SelectItem>
+                  <SelectItem value="credit_card">Carte de Credit</SelectItem>
+                  <SelectItem value="debit_card">Carte de Debit</SelectItem>
+                  <SelectItem value="bank_transfer">Virement Bancaire</SelectItem>
+                  <SelectItem value="other">Autre</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -248,7 +250,7 @@ const PaymentForm = ({
         />
 
         <Button type="submit" className="w-full">
-          {isEditing ? 'Update Payment' : 'Record Payment'}
+          {isEditing ? 'Mettre a jour le Paiement' : 'Enregistrer le Paiement'}
         </Button>
       </form>
     </Form>
@@ -264,6 +266,32 @@ const Payments = () => {
   const [payments, setPayments] = React.useState<any[]>([]);
   const [selectedPayment, setSelectedPayment] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [totalRecords, setTotalRecords] = React.useState(0);
+
+  const updatePaymentStatus = (payment: any) => {
+    const today = new Date();
+    const dueDate = parseISO(payment.due_date);
+    const sevenDaysFromNow = addDays(today, 7);
+
+    // If payment is cancelled, don't change status
+    if (payment.status === 'cancelled') {
+      return payment;
+    }
+
+    // Check if payment is overdue
+    if (isBefore(dueDate, today)) {
+      return { ...payment, status: 'overdue' };
+    }
+
+    // Check if due date is within next 7 days
+    if (isBefore(dueDate, sevenDaysFromNow)) {
+      return { ...payment, status: 'near_overdue' };
+    }
+
+    // If due date is in the future and not near, status is pending
+    return { ...payment, status: 'paid' };
+  };
 
   const fetchPayments = async () => {
     try {
@@ -274,24 +302,31 @@ const Payments = () => {
           *,
           member:members(first_name, last_name)
         `)
-        .order('due_date', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Update overdue status
-      const updatedPayments = data?.map(payment => {
-        if (payment.status === 'pending' && isAfter(new Date(), parseISO(payment.due_date))) {
-          return { ...payment, status: 'overdue' };
-        }
-        return payment;
-      });
+      // Filter based on search term
+      const filteredData = data?.filter(payment => 
+        searchByFullName(searchTerm, payment.member.first_name, payment.member.last_name)
+      ) || [];
 
-      setPayments(updatedPayments || []);
+      // Update payment statuses based on dates
+      const updatedPayments = filteredData.map(payment => updatePaymentStatus(payment));
+
+      // Update total count based on filtered data
+      setTotalRecords(updatedPayments.length);
+
+      // Paginate the filtered data
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE;
+      setPayments(updatedPayments.slice(start, end));
+
     } catch (error) {
       console.error('Error fetching payments:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to fetch payments',
+        title: 'Erreur',
+        message: 'Impossible de recuperer les paiements',
         type: 'error'
       });
     } finally {
@@ -301,7 +336,9 @@ const Payments = () => {
 
   React.useEffect(() => {
     fetchPayments();
-  }, []);
+  }, [currentPage, searchTerm]); // Add dependencies
+
+  const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
 
   const handleCreatePayment = async (data: PaymentFormValues) => {
     try {
@@ -320,15 +357,15 @@ const Payments = () => {
       await fetchPayments();
       setIsAddDialogOpen(false);
       addNotification({
-        title: 'Success',
-        message: 'Payment recorded successfully',
+        title: 'Succes',
+        message: 'Paiement enregistre avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error creating payment:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to record payment',
+        title: 'Erreur',
+        message: 'Impossible d\'enregistrer le paiement',
         type: 'error'
       });
     }
@@ -357,15 +394,15 @@ const Payments = () => {
       setIsEditDialogOpen(false);
       setSelectedPayment(null);
       addNotification({
-        title: 'Success',
-        message: 'Payment updated successfully',
+        title: 'Succes',
+        message: 'Paiement mis a jour avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error updating payment:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to update payment',
+        title: 'Erreur',
+        message: 'Impossible de mettre a jour le paiement',
         type: 'error'
       });
     }
@@ -382,15 +419,15 @@ const Payments = () => {
 
       setPayments(prev => prev.filter(payment => payment.id !== id));
       addNotification({
-        title: 'Success',
-        message: 'Payment deleted successfully',
+        title: 'Succes',
+        message: 'Paiement supprime avec succes',
         type: 'success'
       });
     } catch (error) {
       console.error('Error deleting payment:', error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to delete payment',
+        title: 'Erreur',
+        message: 'Impossible de supprimer le paiement',
         type: 'error'
       });
     }
@@ -404,6 +441,8 @@ const Payments = () => {
         return 'bg-yellow-100 text-yellow-800';
       case 'overdue':
         return 'bg-red-100 text-red-800';
+      case 'near_overdue':
+        return 'bg-orange-100 text-orange-800';
       case 'cancelled':
         return 'bg-gray-100 text-gray-800';
       default:
@@ -425,26 +464,29 @@ const Payments = () => {
     }
   };
 
-  const filteredPayments = payments.filter(payment => 
-    searchByFullName(searchTerm, payment.member.first_name, payment.member.last_name)
-  );
+  const getDaysDifference = (dueDate: string) => {
+    const today = new Date();
+    const due = parseISO(dueDate);
+    const diffInDays = differenceInDays(today, due);
+    return diffInDays;
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Payments</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Paiements</h1>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Record Payment
+              Enregistrer un Paiement
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Record Payment</DialogTitle>
+              <DialogTitle>Enregistrer un Paiement</DialogTitle>
               <DialogDescription>
-                Enter payment details below.
+                Saisissez les details du paiement ci-dessous.
               </DialogDescription>
             </DialogHeader>
             <PaymentForm onSubmit={handleCreatePayment} />
@@ -455,7 +497,7 @@ const Payments = () => {
       <div className="flex items-center space-x-2">
         <Search className="h-5 w-5 text-gray-400" />
         <Input
-          placeholder="Search payments..."
+          placeholder="Rechercher des paiements..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -466,11 +508,11 @@ const Payments = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Member</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Payment Method</TableHead>
+              <TableHead>Membre</TableHead>
+              <TableHead>Montant</TableHead>
+              <TableHead>Date d'Echeance</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Mode de Paiement</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -483,95 +525,151 @@ const Payments = () => {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : filteredPayments.length === 0 ? (
+            ) : payments.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
-                  No payments found
+                  Aucun paiement trouve
                 </TableCell>
               </TableRow>
             ) : (
-              filteredPayments.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell 
-                    className="cursor-pointer hover:text-blue-600"
-                    onClick={() => navigate(`/members/${payment.member_id}`)}
-                  >
-                    {`${payment.member.first_name} ${payment.member.last_name}`}
-                  </TableCell>
-                  <TableCell>
-                    ${payment.amount.toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      <span>{formatDate(payment.due_date)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(payment.status)}`}>
-                      {payment.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="capitalize">{payment.payment_method.replace('_', ' ')}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                            <DialogTrigger asChild>
-                              <DropdownMenuItem onSelect={(e) => {
-                                e.preventDefault();
-                                setSelectedPayment(payment);
-                              }}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                            </DialogTrigger>
-                            {selectedPayment && (
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Edit Payment</DialogTitle>
-                                  <DialogDescription>
-                                    Update payment details below.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <PaymentForm
-                                  defaultValues={{
-                                    memberId: selectedPayment.member_id,
-                                    amount: selectedPayment.amount,
-                                    paymentDate: new Date(selectedPayment.payment_date),
-                                    dueDate: new Date(selectedPayment.due_date),
-                                    status: selectedPayment.status,
-                                    paymentMethod: selectedPayment.payment_method,
-                                    notes: selectedPayment.notes || ''
-                                  }}
-                                  onSubmit={handleUpdatePayment}
-                                  isEditing
-                                />
-                              </DialogContent>
-                            )}
-                          </Dialog>
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onSelect={() => handleDeletePayment(payment.id)}
-                          >
-                            <Trash className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              payments.map((payment) => {
+                const updatedPayment = updatePaymentStatus(payment);
+                return (
+                  <TableRow key={payment.id}>
+                    <TableCell 
+                      className="cursor-pointer hover:text-blue-600"
+                      onClick={() => navigate(`/members/${payment.member_id}`)}
+                    >
+                      {`${payment.member.first_name} ${payment.member.last_name}`}
+                    </TableCell>
+                    <TableCell>
+                      {payment.amount.toFixed(2)} MAD
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                        <span>{formatDate(payment.due_date)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
+                          {updatedPayment.status === 'paid' ? 'Payé' :
+                           updatedPayment.status === 'pending' ? 'En Attente' :
+                           updatedPayment.status === 'cancelled' ? 'Annulé' : 
+                           updatedPayment.status === 'overdue' ? 'En Retard' :
+                           updatedPayment.status === 'near_overdue' ? 'Échéance Proche' :
+                           updatedPayment.status}
+                        </span>
+                        {(payment.status === 'overdue' || payment.status === 'near_overdue') && 
+                         getDaysDifference(payment.due_date) !== 0 && (
+                          <span className={`
+                            inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
+                            ${payment.status === 'overdue' 
+                              ? 'bg-red-50 text-red-700 border border-red-200' 
+                              : 'bg-orange-50 text-orange-700 border border-orange-200'
+                            }
+                          `}>
+                            {payment.status === 'overdue' 
+                              ? `${Math.abs(getDaysDifference(payment.due_date))}j`
+                              : `${Math.abs(getDaysDifference(payment.due_date))}j`
+                            }
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {payment.payment_method === 'cash' ? 'Especes' :
+                       payment.payment_method === 'credit_card' ? 'Carte de Credit' :
+                       payment.payment_method === 'debit_card' ? 'Carte de Debit' :
+                       payment.payment_method === 'bank_transfer' ? 'Virement Bancaire' :
+                       'Autre'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                              <DialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => {
+                                  e.preventDefault();
+                                  setSelectedPayment(payment);
+                                }}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Modifier
+                                </DropdownMenuItem>
+                              </DialogTrigger>
+                              {selectedPayment && (
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Modifier le Paiement</DialogTitle>
+                                    <DialogDescription>
+                                      Mettez a jour les details du paiement ci-dessous.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <PaymentForm
+                                    defaultValues={{
+                                      memberId: selectedPayment.member_id,
+                                      amount: selectedPayment.amount,
+                                      paymentDate: new Date(selectedPayment.payment_date),
+                                      dueDate: new Date(selectedPayment.due_date),
+                                      status: selectedPayment.status,
+                                      paymentMethod: selectedPayment.payment_method,
+                                      notes: selectedPayment.notes || ''
+                                    }}
+                                    onSubmit={handleUpdatePayment}
+                                    isEditing
+                                  />
+                                </DialogContent>
+                              )}
+                            </Dialog>
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onSelect={() => handleDeletePayment(payment.id)}
+                            >
+                              <Trash className="h-4 w-4 mr-2" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
+
+        {/* Add pagination controls */}
+        <div className="flex items-center justify-between px-4 py-3 border-t">
+          <div className="text-sm text-gray-500">
+            Page {currentPage} sur {totalPages}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              Précédent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Suivant
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
