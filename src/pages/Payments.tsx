@@ -1,9 +1,26 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Search, MoreVertical, Edit, Trash, Calendar, CalendarPlus } from 'lucide-react';
-import { format, isAfter, parseISO, addMonths, isValid, isBefore, addDays, differenceInDays } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  Edit,
+  Trash,
+  Calendar,
+  CalendarPlus,
+} from "lucide-react";
+import {
+  format,
+  isAfter,
+  parseISO,
+  addMonths,
+  isValid,
+  isBefore,
+  addDays,
+  differenceInDays,
+} from "date-fns";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -26,8 +43,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import {
   Form,
   FormControl,
@@ -35,7 +52,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '../components/ui/form';
+} from "../components/ui/form";
 import {
   Select,
   SelectContent,
@@ -43,56 +60,61 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { paymentSchema, type PaymentFormValues } from '../lib/validations/payment';
-import { supabase } from '../lib/supabase';
-import MemberSearch from '../components/MemberSearch';
-import { searchByFullName } from '../lib/utils';
-import { useNotifications } from '../context/NotificationContext';
+import {
+  paymentSchema,
+  type PaymentFormValues,
+} from "../lib/validations/payment";
+import { supabase } from "../lib/supabase";
+import MemberSearch from "../components/MemberSearch";
+import { searchByFullName } from "../lib/utils";
+import { useNotifications } from "../context/NotificationContext";
 
 const ITEMS_PER_PAGE = 10; // Or whatever number you prefer
 
-const PaymentForm = ({ 
+const PaymentForm = ({
   defaultValues,
   onSubmit,
-  isEditing = false
-}: { 
-  defaultValues?: Partial<PaymentFormValues>,
-  onSubmit: (data: PaymentFormValues) => void,
-  isEditing?: boolean 
+  isEditing = false,
+}: {
+  defaultValues?: Partial<PaymentFormValues>;
+  onSubmit: (data: PaymentFormValues) => void;
+  isEditing?: boolean;
 }) => {
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      memberId: '',
+      memberId: "",
       amount: 0,
       paymentDate: new Date(),
       dueDate: new Date(),
-      status: 'pending',
-      paymentMethod: 'cash',
-      notes: '',
+      status: "pending",
+      paymentMethod: "cash",
+      notes: "",
       ...defaultValues,
     },
   });
 
   const handleMemberSelect = (member: { id: string }) => {
-    form.setValue('memberId', member.id);
+    form.setValue("memberId", member.id);
   };
 
   const handleAddOneMonth = () => {
-    const currentDueDate = form.getValues('dueDate');
+    const currentDueDate = form.getValues("dueDate");
     const newDueDate = addMonths(currentDueDate, 1);
-    form.setValue('dueDate', newDueDate);
+    form.setValue("dueDate", newDueDate);
   };
 
   // Helper function to safely format dates
-  const formatDateForInput = (date: Date | string | null | undefined): string => {
-    if (!date) return '';
-    
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    
-    if (!isValid(dateObj)) return '';
-    
-    return format(dateObj, 'yyyy-MM-dd');
+  const formatDateForInput = (
+    date: Date | string | null | undefined
+  ): string => {
+    if (!date) return "";
+
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+
+    if (!isValid(dateObj)) return "";
+
+    return format(dateObj, "yyyy-MM-dd");
   };
 
   return (
@@ -105,9 +127,9 @@ const PaymentForm = ({
             <FormItem>
               <FormLabel>Membre</FormLabel>
               <FormControl>
-                <MemberSearch 
-                  onSelect={handleMemberSelect} 
-                  defaultValue={field.value} 
+                <MemberSearch
+                  onSelect={handleMemberSelect}
+                  defaultValue={field.value}
                   showSelectedOnly={isEditing}
                 />
               </FormControl>
@@ -128,7 +150,9 @@ const PaymentForm = ({
                   step="0.01"
                   min="0"
                   value={field.value}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    field.onChange(parseFloat(e.target.value) || 0)
+                  }
                 />
               </FormControl>
               <FormMessage />
@@ -147,7 +171,11 @@ const PaymentForm = ({
                   <Input
                     type="date"
                     value={formatDateForInput(field.value)}
-                    onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : new Date())}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? new Date(e.target.value) : new Date()
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -162,10 +190,10 @@ const PaymentForm = ({
               <FormItem>
                 <FormLabel className="flex justify-between items-center">
                   <span>Date d'Echeance</span>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={handleAddOneMonth}
                     className="h-6 px-2 text-xs"
                   >
@@ -177,7 +205,11 @@ const PaymentForm = ({
                   <Input
                     type="date"
                     value={formatDateForInput(field.value)}
-                    onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : new Date())}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? new Date(e.target.value) : new Date()
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -226,7 +258,9 @@ const PaymentForm = ({
                   <SelectItem value="cash">Especes</SelectItem>
                   <SelectItem value="credit_card">Carte de Credit</SelectItem>
                   <SelectItem value="debit_card">Carte de Debit</SelectItem>
-                  <SelectItem value="bank_transfer">Virement Bancaire</SelectItem>
+                  <SelectItem value="bank_transfer">
+                    Virement Bancaire
+                  </SelectItem>
                   <SelectItem value="other">Autre</SelectItem>
                 </SelectContent>
               </Select>
@@ -242,7 +276,7 @@ const PaymentForm = ({
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Input {...field} value={field.value || ''} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -250,7 +284,7 @@ const PaymentForm = ({
         />
 
         <Button type="submit" className="w-full">
-          {isEditing ? 'Mettre a jour le Paiement' : 'Enregistrer le Paiement'}
+          {isEditing ? "Mettre a jour le Paiement" : "Enregistrer le Paiement"}
         </Button>
       </form>
     </Form>
@@ -260,7 +294,7 @@ const PaymentForm = ({
 const Payments = () => {
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
-  const [searchTerm, setSearchTerm] = React.useState('');
+  const [searchTerm, setSearchTerm] = React.useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [payments, setPayments] = React.useState<any[]>([]);
@@ -275,44 +309,53 @@ const Payments = () => {
     const sevenDaysFromNow = addDays(today, 7);
 
     // If payment is cancelled, don't change status
-    if (payment.status === 'cancelled') {
+    if (payment.status === "cancelled") {
       return payment;
     }
 
     // Check if payment is overdue
     if (isBefore(dueDate, today)) {
-      return { ...payment, status: 'overdue' };
+      return { ...payment, status: "overdue" };
     }
 
     // Check if due date is within next 7 days
     if (isBefore(dueDate, sevenDaysFromNow)) {
-      return { ...payment, status: 'near_overdue' };
+      return { ...payment, status: "near_overdue" };
     }
 
     // If due date is in the future and not near, status is pending
-    return { ...payment, status: 'paid' };
+    return { ...payment, status: "paid" };
   };
 
   const fetchPayments = async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from('payments')
-        .select(`
+        .from("payments")
+        .select(
+          `
           *,
-          member:members(first_name, last_name)
-        `)
-        .order('created_at', { ascending: false });
+          member:members!payments_member_id_fkey(first_name, last_name)
+        `
+        )
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
+
       // Filter based on search term
-      const filteredData = data?.filter(payment => 
-        searchByFullName(searchTerm, payment.member.first_name, payment.member.last_name)
-      ) || [];
+      const filteredData =
+        data?.filter((payment) =>
+          searchByFullName(
+            searchTerm,
+            payment.member.first_name,
+            payment.member.last_name
+          )
+        ) || [];
 
       // Update payment statuses based on dates
-      const updatedPayments = filteredData.map(payment => updatePaymentStatus(payment));
+      const updatedPayments = filteredData.map((payment) =>
+        updatePaymentStatus(payment)
+      );
 
       // Update total count based on filtered data
       setTotalRecords(updatedPayments.length);
@@ -321,13 +364,12 @@ const Payments = () => {
       const start = (currentPage - 1) * ITEMS_PER_PAGE;
       const end = start + ITEMS_PER_PAGE;
       setPayments(updatedPayments.slice(start, end));
-
     } catch (error) {
-      console.error('Error fetching payments:', error);
+      console.error("Error fetching payments:", error);
       addNotification({
-        title: 'Erreur',
-        message: 'Impossible de recuperer les paiements',
-        type: 'error'
+        title: "Erreur",
+        message: "Impossible de recuperer les paiements",
+        type: "error",
       });
     } finally {
       setIsLoading(false);
@@ -342,31 +384,33 @@ const Payments = () => {
 
   const handleCreatePayment = async (data: PaymentFormValues) => {
     try {
-      const { error } = await supabase.from('payments').insert([{
-        member_id: data.memberId,
-        amount: data.amount,
-        payment_date: data.paymentDate.toISOString(),
-        due_date: data.dueDate.toISOString(),
-        status: data.status,
-        payment_method: data.paymentMethod,
-        notes: data.notes || null
-      }]);
+      const { error } = await supabase.from("payments").insert([
+        {
+          member_id: data.memberId,
+          amount: data.amount,
+          payment_date: data.paymentDate.toISOString(),
+          due_date: data.dueDate.toISOString(),
+          status: data.status,
+          payment_method: data.paymentMethod,
+          notes: data.notes || null,
+        },
+      ]);
 
       if (error) throw error;
 
       await fetchPayments();
       setIsAddDialogOpen(false);
       addNotification({
-        title: 'Succes',
-        message: 'Paiement enregistre avec succes',
-        type: 'success'
+        title: "Succes",
+        message: "Paiement enregistre avec succes",
+        type: "success",
       });
     } catch (error) {
-      console.error('Error creating payment:', error);
+      console.error("Error creating payment:", error);
       addNotification({
-        title: 'Erreur',
-        message: 'Impossible d\'enregistrer le paiement',
-        type: 'error'
+        title: "Erreur",
+        message: "Impossible d'enregistrer le paiement",
+        type: "error",
       });
     }
   };
@@ -376,7 +420,7 @@ const Payments = () => {
 
     try {
       const { error } = await supabase
-        .from('payments')
+        .from("payments")
         .update({
           member_id: data.memberId,
           amount: data.amount,
@@ -384,9 +428,9 @@ const Payments = () => {
           due_date: data.dueDate.toISOString(),
           status: data.status,
           payment_method: data.paymentMethod,
-          notes: data.notes || null
+          notes: data.notes || null,
         })
-        .eq('id', selectedPayment.id);
+        .eq("id", selectedPayment.id);
 
       if (error) throw error;
 
@@ -394,73 +438,70 @@ const Payments = () => {
       setIsEditDialogOpen(false);
       setSelectedPayment(null);
       addNotification({
-        title: 'Succes',
-        message: 'Paiement mis a jour avec succes',
-        type: 'success'
+        title: "Succes",
+        message: "Paiement mis a jour avec succes",
+        type: "success",
       });
     } catch (error) {
-      console.error('Error updating payment:', error);
+      console.error("Error updating payment:", error);
       addNotification({
-        title: 'Erreur',
-        message: 'Impossible de mettre a jour le paiement',
-        type: 'error'
+        title: "Erreur",
+        message: "Impossible de mettre a jour le paiement",
+        type: "error",
       });
     }
   };
 
   const handleDeletePayment = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('payments')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from("payments").delete().eq("id", id);
 
       if (error) throw error;
 
-      setPayments(prev => prev.filter(payment => payment.id !== id));
+      setPayments((prev) => prev.filter((payment) => payment.id !== id));
       addNotification({
-        title: 'Succes',
-        message: 'Paiement supprime avec succes',
-        type: 'success'
+        title: "Succes",
+        message: "Paiement supprime avec succes",
+        type: "success",
       });
     } catch (error) {
-      console.error('Error deleting payment:', error);
+      console.error("Error deleting payment:", error);
       addNotification({
-        title: 'Erreur',
-        message: 'Impossible de supprimer le paiement',
-        type: 'error'
+        title: "Erreur",
+        message: "Impossible de supprimer le paiement",
+        type: "error",
       });
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'paid':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'overdue':
-        return 'bg-red-100 text-red-800';
-      case 'near_overdue':
-        return 'bg-orange-100 text-orange-800';
-      case 'cancelled':
-        return 'bg-gray-100 text-gray-800';
+      case "paid":
+        return "bg-green-100 text-green-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "overdue":
+        return "bg-red-100 text-red-800";
+      case "near_overdue":
+        return "bg-orange-100 text-orange-800";
+      case "cancelled":
+        return "bg-gray-100 text-gray-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   // Helper function to safely format dates
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return '-';
-    
+    if (!dateString) return "-";
+
     try {
       const date = parseISO(dateString);
-      if (!isValid(date)) return '-';
-      return format(date, 'MMM d, yyyy');
+      if (!isValid(date)) return "-";
+      return format(date, "MMM d, yyyy");
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return '-';
+      console.error("Error formatting date:", error);
+      return "-";
     }
   };
 
@@ -536,15 +577,13 @@ const Payments = () => {
                 const updatedPayment = updatePaymentStatus(payment);
                 return (
                   <TableRow key={payment.id}>
-                    <TableCell 
+                    <TableCell
                       className="cursor-pointer hover:text-blue-600"
                       onClick={() => navigate(`/members/${payment.member_id}`)}
                     >
                       {`${payment.member.first_name} ${payment.member.last_name}`}
                     </TableCell>
-                    <TableCell>
-                      {payment.amount.toFixed(2)} MAD
-                    </TableCell>
+                    <TableCell>{payment.amount.toFixed(2)} MAD</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-gray-400" />
@@ -553,37 +592,57 @@ const Payments = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
-                          {updatedPayment.status === 'paid' ? 'Payé' :
-                           updatedPayment.status === 'pending' ? 'En Attente' :
-                           updatedPayment.status === 'cancelled' ? 'Annulé' : 
-                           updatedPayment.status === 'overdue' ? 'En Retard' :
-                           updatedPayment.status === 'near_overdue' ? 'Échéance Proche' :
-                           updatedPayment.status}
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            payment.status
+                          )}`}
+                        >
+                          {updatedPayment.status === "paid"
+                            ? "Payé"
+                            : updatedPayment.status === "pending"
+                            ? "En Attente"
+                            : updatedPayment.status === "cancelled"
+                            ? "Annulé"
+                            : updatedPayment.status === "overdue"
+                            ? "En Retard"
+                            : updatedPayment.status === "near_overdue"
+                            ? "Échéance Proche"
+                            : updatedPayment.status}
                         </span>
-                        {(payment.status === 'overdue' || payment.status === 'near_overdue') && 
-                         getDaysDifference(payment.due_date) !== 0 && (
-                          <span className={`
+                        {(payment.status === "overdue" ||
+                          payment.status === "near_overdue") &&
+                          getDaysDifference(payment.due_date) !== 0 && (
+                            <span
+                              className={`
                             inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
-                            ${payment.status === 'overdue' 
-                              ? 'bg-red-50 text-red-700 border border-red-200' 
-                              : 'bg-orange-50 text-orange-700 border border-orange-200'
+                            ${
+                              payment.status === "overdue"
+                                ? "bg-red-50 text-red-700 border border-red-200"
+                                : "bg-orange-50 text-orange-700 border border-orange-200"
                             }
-                          `}>
-                            {payment.status === 'overdue' 
-                              ? `${Math.abs(getDaysDifference(payment.due_date))}j`
-                              : `${Math.abs(getDaysDifference(payment.due_date))}j`
-                            }
-                          </span>
-                        )}
+                          `}
+                            >
+                              {payment.status === "overdue"
+                                ? `${Math.abs(
+                                    getDaysDifference(payment.due_date)
+                                  )}j`
+                                : `${Math.abs(
+                                    getDaysDifference(payment.due_date)
+                                  )}j`}
+                            </span>
+                          )}
                       </div>
                     </TableCell>
                     <TableCell className="capitalize">
-                      {payment.payment_method === 'cash' ? 'Especes' :
-                       payment.payment_method === 'credit_card' ? 'Carte de Credit' :
-                       payment.payment_method === 'debit_card' ? 'Carte de Debit' :
-                       payment.payment_method === 'bank_transfer' ? 'Virement Bancaire' :
-                       'Autre'}
+                      {payment.payment_method === "cash"
+                        ? "Especes"
+                        : payment.payment_method === "credit_card"
+                        ? "Carte de Credit"
+                        : payment.payment_method === "debit_card"
+                        ? "Carte de Debit"
+                        : payment.payment_method === "bank_transfer"
+                        ? "Virement Bancaire"
+                        : "Autre"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -594,12 +653,17 @@ const Payments = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                            <Dialog
+                              open={isEditDialogOpen}
+                              onOpenChange={setIsEditDialogOpen}
+                            >
                               <DialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => {
-                                  e.preventDefault();
-                                  setSelectedPayment(payment);
-                                }}>
+                                <DropdownMenuItem
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                    setSelectedPayment(payment);
+                                  }}
+                                >
                                   <Edit className="h-4 w-4 mr-2" />
                                   Modifier
                                 </DropdownMenuItem>
@@ -607,20 +671,28 @@ const Payments = () => {
                               {selectedPayment && (
                                 <DialogContent>
                                   <DialogHeader>
-                                    <DialogTitle>Modifier le Paiement</DialogTitle>
+                                    <DialogTitle>
+                                      Modifier le Paiement
+                                    </DialogTitle>
                                     <DialogDescription>
-                                      Mettez a jour les details du paiement ci-dessous.
+                                      Mettez a jour les details du paiement
+                                      ci-dessous.
                                     </DialogDescription>
                                   </DialogHeader>
                                   <PaymentForm
                                     defaultValues={{
                                       memberId: selectedPayment.member_id,
                                       amount: selectedPayment.amount,
-                                      paymentDate: new Date(selectedPayment.payment_date),
-                                      dueDate: new Date(selectedPayment.due_date),
+                                      paymentDate: new Date(
+                                        selectedPayment.payment_date
+                                      ),
+                                      dueDate: new Date(
+                                        selectedPayment.due_date
+                                      ),
                                       status: selectedPayment.status,
-                                      paymentMethod: selectedPayment.payment_method,
-                                      notes: selectedPayment.notes || ''
+                                      paymentMethod:
+                                        selectedPayment.payment_method,
+                                      notes: selectedPayment.notes || "",
                                     }}
                                     onSubmit={handleUpdatePayment}
                                     isEditing
@@ -655,7 +727,7 @@ const Payments = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
             >
               Précédent
@@ -663,7 +735,9 @@ const Payments = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+              }
               disabled={currentPage === totalPages}
             >
               Suivant
