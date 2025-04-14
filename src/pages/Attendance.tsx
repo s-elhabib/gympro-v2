@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Search, Clock, MoreVertical, Trash, AlertCircle, Edit } from 'lucide-react';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Plus,
+  Search,
+  Clock,
+  MoreVertical,
+  Trash,
+  AlertCircle,
+  Edit,
+} from "lucide-react";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { fr } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -27,8 +35,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import {
   Form,
   FormControl,
@@ -36,27 +44,32 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '../components/ui/form';
-import { attendanceSchema, type AttendanceFormValues } from '../lib/validations/attendance';
-import { supabase } from '../lib/supabase';
-import MemberSearch from '../components/MemberSearch';
-import { useNotifications } from '../context/NotificationContext';
-import { searchByFullName } from '../lib/utils';
-import { AttendanceEditForm } from '../components/AttendanceEditForm';
+} from "../components/ui/form";
+import {
+  attendanceSchema,
+  type AttendanceFormValues,
+} from "../lib/validations/attendance";
+import { supabase } from "../lib/supabase";
+import MemberSearch from "../components/MemberSearch";
+import { useNotifications } from "../context/NotificationContext";
+import { searchByFullName } from "../lib/utils";
+import { AttendanceEditForm } from "../components/AttendanceEditForm";
 
 const ITEMS_PER_PAGE = 10;
 
-const AttendanceForm = ({ 
+const AttendanceForm = ({
   defaultValues,
   onSubmit,
-  isEditing = false
-}: { 
-  defaultValues?: Partial<AttendanceFormValues>,
-  onSubmit: (data: AttendanceFormValues) => void,
-  isEditing?: boolean 
+  isEditing = false,
+}: {
+  defaultValues?: Partial<AttendanceFormValues>;
+  onSubmit: (data: AttendanceFormValues) => void;
+  isEditing?: boolean;
 }) => {
   const { addNotification } = useNotifications();
-  const [selectedMemberId, setSelectedMemberId] = React.useState<string | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = React.useState<string | null>(
+    null
+  );
   const [memberStatus, setMemberStatus] = React.useState<{
     isActive: boolean;
     hasValidPayment: boolean;
@@ -64,16 +77,16 @@ const AttendanceForm = ({
   }>({
     isActive: false,
     hasValidPayment: false,
-    membershipType: null
+    membershipType: null,
   });
 
   const form = useForm<AttendanceFormValues>({
     resolver: zodResolver(attendanceSchema),
     defaultValues: {
-      memberId: '',
+      memberId: "",
       checkInTime: new Date(),
-      type: 'gym',
-      notes: '',
+      type: "gym",
+      notes: "",
       ...defaultValues,
     },
   });
@@ -82,63 +95,64 @@ const AttendanceForm = ({
     try {
       // Get member status and membership type
       const { data: member } = await supabase
-        .from('members')
-        .select('status, membership_type')
-        .eq('id', memberId)
+        .from("members")
+        .select("status, membership_type")
+        .eq("id", memberId)
         .single();
 
       if (!member) {
-        throw new Error('Membre non trouvé');
+        throw new Error("Membre non trouvé");
       }
 
       // Check for valid payments
       const { data: payments } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('member_id', memberId)
-        .eq('status', 'paid')
-        .order('due_date', { ascending: false })
+        .from("payments")
+        .select("*")
+        .eq("member_id", memberId)
+        .eq("status", "paid")
+        .order("due_date", { ascending: false })
         .limit(1);
 
-      const hasValidPayment = payments && payments.length > 0 && 
+      const hasValidPayment =
+        payments &&
+        payments.length > 0 &&
         new Date(payments[0].due_date) > new Date();
 
       setMemberStatus({
-        isActive: member.status === 'active',
+        isActive: member.status === "active",
         hasValidPayment: hasValidPayment,
-        membershipType: member.membership_type
+        membershipType: member.membership_type,
       });
 
       // Show warnings if there are issues
-      if (member.status !== 'active') {
+      if (member.status !== "active") {
         addNotification({
-          title: 'Adhésion Inactive',
-          message: 'L\'adhésion de ce membre n\'est pas active.',
-          type: 'warning'
+          title: "Adhésion Inactive",
+          message: "L'adhésion de ce membre n'est pas active.",
+          type: "warning",
         });
       }
 
       if (!hasValidPayment) {
         addNotification({
-          title: 'Paiement Requis',
-          message: 'Ce membre n\'a pas de paiement valide enregistré.',
-          type: 'warning'
+          title: "Paiement Requis",
+          message: "Ce membre n'a pas de paiement valide enregistré.",
+          type: "warning",
         });
       }
-
     } catch (error) {
-      console.error('Error checking member status:', error);
+      console.error("Error checking member status:", error);
       addNotification({
-        title: 'Erreur',
-        message: 'Échec de la vérification du statut du membre',
-        type: 'error'
+        title: "Erreur",
+        message: "Échec de la vérification du statut du membre",
+        type: "error",
       });
     }
   };
 
   const handleMemberSelect = (member: { id: string }) => {
     setSelectedMemberId(member.id);
-    form.setValue('memberId', member.id);
+    form.setValue("memberId", member.id);
     checkMemberStatus(member.id);
   };
 
@@ -152,9 +166,10 @@ const AttendanceForm = ({
   const handleSubmit = async (data: AttendanceFormValues) => {
     if (!memberStatus.hasValidPayment) {
       addNotification({
-        title: 'Impossible d\'Enregistrer la Présence',
-        message: 'Le membre doit avoir un paiement valide pour enregistrer la présence.',
-        type: 'error'
+        title: "Impossible d'Enregistrer la Présence",
+        message:
+          "Le membre doit avoir un paiement valide pour enregistrer la présence.",
+        type: "error",
       });
       return;
     }
@@ -171,9 +186,9 @@ const AttendanceForm = ({
             <FormItem>
               <FormLabel>Membre</FormLabel>
               <FormControl>
-                <MemberSearch 
-                  onSelect={handleMemberSelect} 
-                  defaultValue={field.value} 
+                <MemberSearch
+                  onSelect={handleMemberSelect}
+                  defaultValue={field.value}
                   showSelectedOnly={isEditing}
                 />
               </FormControl>
@@ -185,32 +200,39 @@ const AttendanceForm = ({
         {selectedMemberId && (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${
-                memberStatus.isActive ? 'bg-green-500' : 'bg-red-500'
-              }`} />
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  memberStatus.isActive ? "bg-green-500" : "bg-red-500"
+                }`}
+              />
               <span className="text-sm">
-                Statut d'Adhésion: <span className="font-medium capitalize">{
-                  memberStatus.isActive ? 'Actif' : 'Inactif'
-                }</span>
+                Statut d'Adhésion:{" "}
+                <span className="font-medium capitalize">
+                  {memberStatus.isActive ? "Actif" : "Inactif"}
+                </span>
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${
-                memberStatus.hasValidPayment ? 'bg-green-500' : 'bg-red-500'
-              }`} />
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  memberStatus.hasValidPayment ? "bg-green-500" : "bg-red-500"
+                }`}
+              />
               <span className="text-sm">
-                Statut de Paiement: <span className="font-medium">{
-                  memberStatus.hasValidPayment ? 'Valide' : 'Paiement Requis'
-                }</span>
+                Statut de Paiement:{" "}
+                <span className="font-medium">
+                  {memberStatus.hasValidPayment ? "Valide" : "Paiement Requis"}
+                </span>
               </span>
             </div>
             {memberStatus.membershipType && (
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
                 <span className="text-sm">
-                  Type d'Adhésion: <span className="font-medium capitalize">{
-                    memberStatus.membershipType
-                  }</span>
+                  Type d'Adhésion:{" "}
+                  <span className="font-medium capitalize">
+                    {memberStatus.membershipType}
+                  </span>
                 </span>
               </div>
             )}
@@ -229,7 +251,9 @@ const AttendanceForm = ({
               >
                 <option value="gym">Salle de Sport</option>
                 <option value="class">Cours</option>
-                <option value="personal_training">Entraînement Personnel</option>
+                <option value="personal_training">
+                  Entraînement Personnel
+                </option>
               </select>
               <FormMessage />
             </FormItem>
@@ -250,20 +274,25 @@ const AttendanceForm = ({
           )}
         />
 
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           className="w-full"
           disabled={!memberStatus.hasValidPayment}
         >
-          {isEditing ? 'Mettre à Jour la Présence' : 'Enregistrer la Présence'}
+          {isEditing ? "Mettre à Jour la Présence" : "Enregistrer la Présence"}
         </Button>
 
         {selectedMemberId && !memberStatus.hasValidPayment && (
           <div className="flex items-start gap-2 p-3 bg-red-50 text-red-800 rounded-md">
             <AlertCircle className="h-5 w-5 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium">Impossible d'enregistrer la présence</p>
-              <p>Le membre doit avoir un paiement valide pour enregistrer la présence.</p>
+              <p className="font-medium">
+                Impossible d'enregistrer la présence
+              </p>
+              <p>
+                Le membre doit avoir un paiement valide pour enregistrer la
+                présence.
+              </p>
             </div>
           </div>
         )}
@@ -274,7 +303,7 @@ const AttendanceForm = ({
 
 const Attendance = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = React.useState('');
+  const [searchTerm, setSearchTerm] = React.useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [attendance, setAttendance] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -288,43 +317,46 @@ const Attendance = () => {
   const fetchAttendance = async () => {
     try {
       setIsLoading(true);
-      
+
       // Calculate date range based on current page
       const targetDate = subDays(new Date(), currentPage - 1);
       const dayStart = startOfDay(targetDate);
       const dayEnd = endOfDay(targetDate);
-      
-  
 
       // Fetch attendance for the specific date
       const { data: attendanceData, error } = await supabase
-        .from('attendance')
-        .select(`
+        .from("attendance")
+        .select(
+          `
           *,
-          member:members(first_name, last_name)
-        `)
-        .gte('check_in_time', dayStart.toISOString())
-        .lt('check_in_time', dayEnd.toISOString())
-        .order('check_in_time', { ascending: false });
+          member:members!attendance_member_id_fkey(first_name, last_name)
+        `
+        )
+        .gte("check_in_time", dayStart.toISOString())
+        .lt("check_in_time", dayEnd.toISOString())
+        .order("check_in_time", { ascending: false });
 
       if (error) throw error;
 
       // Filter based on search term if provided
-      const filteredData = searchTerm 
-        ? attendanceData?.filter(record => 
-            searchByFullName(searchTerm, record.member.first_name, record.member.last_name)
+      const filteredData = searchTerm
+        ? attendanceData?.filter((record) =>
+            searchByFullName(
+              searchTerm,
+              record.member.first_name,
+              record.member.last_name
+            )
           )
         : attendanceData;
 
       setAttendance(filteredData || []);
       setTotalRecords(filteredData?.length || 0);
-
     } catch (error) {
-      console.error('Error fetching attendance:', error);
+      console.error("Error fetching attendance:", error);
       addNotification({
-        title: 'Erreur',
-        message: 'Échec de la récupération des enregistrements de présence',
-        type: 'error'
+        title: "Erreur",
+        message: "Échec de la récupération des enregistrements de présence",
+        type: "error",
       });
     } finally {
       setIsLoading(false);
@@ -337,28 +369,30 @@ const Attendance = () => {
 
   const handleCreateAttendance = async (data: AttendanceFormValues) => {
     try {
-      const { error } = await supabase.from('attendance').insert([{
-        member_id: data.memberId,
-        check_in_time: data.checkInTime.toISOString(),
-        type: data.type,
-        notes: data.notes
-      }]);
+      const { error } = await supabase.from("attendance").insert([
+        {
+          member_id: data.memberId,
+          check_in_time: data.checkInTime.toISOString(),
+          type: data.type,
+          notes: data.notes,
+        },
+      ]);
 
       if (error) throw error;
 
       await fetchAttendance();
       setIsAddDialogOpen(false);
       addNotification({
-        title: 'Succès',
-        message: 'Présence enregistrée avec succès',
-        type: 'success'
+        title: "Succès",
+        message: "Présence enregistrée avec succès",
+        type: "success",
       });
     } catch (error) {
-      console.error('Error creating attendance:', error);
+      console.error("Error creating attendance:", error);
       addNotification({
-        title: 'Erreur',
-        message: 'Échec de l\'enregistrement de la présence',
-        type: 'error'
+        title: "Erreur",
+        message: "Échec de l'enregistrement de la présence",
+        type: "error",
       });
     }
   };
@@ -366,58 +400,57 @@ const Attendance = () => {
   const handleCheckOut = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('attendance')
+        .from("attendance")
         .update({ check_out_time: new Date().toISOString() })
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
 
       // Update only the specific record
-      setAttendance(prev => prev.map(record => 
-        record.id === id 
-          ? { ...record, check_out_time: new Date().toISOString() }
-          : record
-      ));
+      setAttendance((prev) =>
+        prev.map((record) =>
+          record.id === id
+            ? { ...record, check_out_time: new Date().toISOString() }
+            : record
+        )
+      );
 
       addNotification({
-        title: 'Succès',
-        message: 'Départ enregistré avec succès',
-        type: 'success'
+        title: "Succès",
+        message: "Départ enregistré avec succès",
+        type: "success",
       });
     } catch (error) {
-      console.error('Error checking out:', error);
+      console.error("Error checking out:", error);
       addNotification({
-        title: 'Erreur',
-        message: 'Échec de l\'enregistrement du départ',
-        type: 'error'
+        title: "Erreur",
+        message: "Échec de l'enregistrement du départ",
+        type: "error",
       });
     }
   };
 
   const handleDeleteAttendance = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('attendance')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from("attendance").delete().eq("id", id);
 
       if (error) throw error;
 
       // Remove the deleted record from the state
-      setAttendance(prev => prev.filter(record => record.id !== id));
-      setTotalRecords(prev => prev - 1);
+      setAttendance((prev) => prev.filter((record) => record.id !== id));
+      setTotalRecords((prev) => prev - 1);
 
       addNotification({
-        title: 'Succès',
-        message: 'Présence supprimée avec succès',
-        type: 'success'
+        title: "Succès",
+        message: "Présence supprimée avec succès",
+        type: "success",
       });
     } catch (error) {
-      console.error('Error deleting attendance:', error);
+      console.error("Error deleting attendance:", error);
       addNotification({
-        title: 'Erreur',
-        message: 'Échec de la suppression de la présence',
-        type: 'error'
+        title: "Erreur",
+        message: "Échec de la suppression de la présence",
+        type: "error",
       });
     }
   };
@@ -425,14 +458,14 @@ const Attendance = () => {
   const handleEditAttendance = async (data: any) => {
     try {
       const { error } = await supabase
-        .from('attendance')
+        .from("attendance")
         .update({
           check_in_time: new Date(data.checkInTime).toISOString(),
           type: data.type,
           notes: data.notes,
-          check_out_time: null // Reset checkout when editing
+          check_out_time: null, // Reset checkout when editing
         })
-        .eq('id', selectedAttendance.id);
+        .eq("id", selectedAttendance.id);
 
       if (error) throw error;
 
@@ -440,28 +473,30 @@ const Attendance = () => {
       setIsEditDialogOpen(false);
       setSelectedAttendance(null);
       addNotification({
-        title: 'Succès',
-        message: 'Présence mise à jour avec succès',
-        type: 'success'
+        title: "Succès",
+        message: "Présence mise à jour avec succès",
+        type: "success",
       });
     } catch (error) {
-      console.error('Error updating attendance:', error);
+      console.error("Error updating attendance:", error);
       addNotification({
-        title: 'Erreur',
-        message: 'Échec de la mise à jour de la présence',
-        type: 'error'
+        title: "Erreur",
+        message: "Échec de la mise à jour de la présence",
+        type: "error",
       });
     }
   };
 
   const formatTime = (date: string) => {
-    return format(new Date(date), 'h:mm a');
+    return format(new Date(date), "h:mm a");
   };
 
   const formatDuration = (checkIn: string, checkOut: string | null) => {
-    if (!checkOut) return 'En Cours';
-    
-    const duration = (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60);
+    if (!checkOut) return "En Cours";
+
+    const duration =
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
+      (1000 * 60);
     const hours = Math.floor(duration / 60);
     const minutes = Math.floor(duration % 60);
     return `${hours}h ${minutes}m`;
@@ -474,10 +509,9 @@ const Attendance = () => {
     } else if (page === 2) {
       return "Hier";
     } else {
-      return format(date, 'dd MMMM yyyy', { locale: fr });
+      return format(date, "dd MMMM yyyy", { locale: fr });
     }
   };
-
 
   const isToday = currentPage === 1;
 
@@ -550,7 +584,7 @@ const Attendance = () => {
             ) : (
               attendance.map((record) => (
                 <TableRow key={record.id}>
-                  <TableCell 
+                  <TableCell
                     className="cursor-pointer hover:text-blue-600"
                     onClick={() => navigate(`/members/${record.member_id}`)}
                   >
@@ -565,11 +599,18 @@ const Attendance = () => {
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <Clock className="h-4 w-4 text-gray-400" />
-                      <span>{record.check_out_time ? formatTime(record.check_out_time) : '-'}</span>
+                      <span>
+                        {record.check_out_time
+                          ? formatTime(record.check_out_time)
+                          : "-"}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    {formatDuration(record.check_in_time, record.check_out_time)}
+                    {formatDuration(
+                      record.check_in_time,
+                      record.check_out_time
+                    )}
                   </TableCell>
                   <TableCell className="capitalize">{record.type}</TableCell>
                   <TableCell>
@@ -590,9 +631,12 @@ const Attendance = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                          <Dialog
+                            open={isEditDialogOpen}
+                            onOpenChange={setIsEditDialogOpen}
+                          >
                             <DialogTrigger asChild>
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onSelect={(e) => {
                                   e.preventDefault();
                                   setSelectedAttendance(record);
@@ -605,16 +649,20 @@ const Attendance = () => {
                             {selectedAttendance && (
                               <DialogContent>
                                 <DialogHeader>
-                                  <DialogTitle>Modifier la Présence</DialogTitle>
+                                  <DialogTitle>
+                                    Modifier la Présence
+                                  </DialogTitle>
                                   <DialogDescription>
-                                    Mettez à jour les détails de présence ci-dessous.
+                                    Mettez à jour les détails de présence
+                                    ci-dessous.
                                   </DialogDescription>
                                 </DialogHeader>
                                 <AttendanceEditForm
                                   defaultValues={{
-                                    checkInTime: selectedAttendance.check_in_time,
+                                    checkInTime:
+                                      selectedAttendance.check_in_time,
                                     type: selectedAttendance.type,
-                                    notes: selectedAttendance.notes
+                                    notes: selectedAttendance.notes,
                                   }}
                                   onSubmit={handleEditAttendance}
                                 />
@@ -655,7 +703,7 @@ const Attendance = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
               Plus Récent
@@ -663,7 +711,7 @@ const Attendance = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(p => p + 1)}
+              onClick={() => setCurrentPage((p) => p + 1)}
             >
               Plus Ancien
             </Button>

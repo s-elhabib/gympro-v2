@@ -18,6 +18,7 @@ A modern, full-featured gym management system built with React, Supabase, and Ty
 ## Tech Stack
 
 - Frontend:
+
   - React 18
   - TypeScript
   - Tailwind CSS
@@ -35,6 +36,7 @@ A modern, full-featured gym management system built with React, Supabase, and Ty
 ## Prerequisites
 
 Before you begin, ensure you have installed:
+
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - [Node.js](https://nodejs.org/) (v18 or higher)
@@ -43,20 +45,23 @@ Before you begin, ensure you have installed:
 ## Local Development Setup
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/your-username/gym-management-spa.git
    cd gym-management-spa
    ```
 
 2. Create a `.env` file in the root directory:
+
    ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
 3. Create a `docker-compose.yml` file:
+
    ```yaml
-   version: '3.8'
+   version: "3.8"
    services:
      app:
        build:
@@ -75,6 +80,7 @@ Before you begin, ensure you have installed:
    ```
 
 4. Create a `Dockerfile`:
+
    ```dockerfile
    FROM node:18-alpine
 
@@ -108,6 +114,7 @@ The application will be available at `http://localhost:5173`
 1. Create a Supabase project at [supabase.com](https://supabase.com)
 
 2. Run the database migrations:
+
    ```bash
    # Install Supabase CLI
    npm install -g supabase
@@ -127,6 +134,7 @@ The application will be available at `http://localhost:5173`
 ## Development Workflow
 
 1. Start the development server:
+
    ```bash
    docker-compose up
    ```
@@ -134,6 +142,7 @@ The application will be available at `http://localhost:5173`
 2. Make your changes and see them live-reload
 
 3. Run tests:
+
    ```bash
    docker-compose exec app npm test
    ```
@@ -147,9 +156,9 @@ The application will be available at `http://localhost:5173`
 
 Required environment variables:
 
-| Variable | Description |
-|----------|-------------|
-| VITE_SUPABASE_URL | Your Supabase project URL |
+| Variable               | Description                 |
+| ---------------------- | --------------------------- |
+| VITE_SUPABASE_URL      | Your Supabase project URL   |
 | VITE_SUPABASE_ANON_KEY | Your Supabase anonymous key |
 
 ## Project Structure
@@ -175,6 +184,48 @@ gym-management-spa/
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
+
+## Deployment to Vercel
+
+### Prerequisites
+
+1. A [Vercel](https://vercel.com) account
+2. Your project pushed to a GitHub repository
+
+### Steps
+
+1. Connect your GitHub repository to Vercel:
+
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Click "Add New" > "Project"
+   - Select your GitHub repository
+
+2. Configure the project:
+
+   - Framework Preset: Vite
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+   - Install Command: `npm install`
+
+3. Add Environment Variables:
+
+   - `VITE_SUPABASE_URL`: Your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+
+4. Click "Deploy"
+
+### Troubleshooting
+
+If you encounter routing issues, make sure the `vercel.json` file is properly configured with the following content:
+
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite"
+}
+```
 
 ## License
 
