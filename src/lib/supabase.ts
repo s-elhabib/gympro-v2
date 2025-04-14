@@ -17,5 +17,12 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
   db: {
     schema: 'public'
+  },
+  global: {
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
   }
 });
