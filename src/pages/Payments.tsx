@@ -1,26 +1,12 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Plus,
-  Search,
-  MoreVertical,
-  Edit,
-  Trash,
-  Calendar,
-  CalendarPlus,
-} from "lucide-react";
-import {
-  format,
-  isAfter,
-  parseISO,
-  addMonths,
-  isValid,
-  isBefore,
-  addDays,
-  differenceInDays,
-} from "date-fns";
+import { Plus, Search, CalendarPlus } from "lucide-react";
+import { format, parseISO, addMonths, isValid } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { Payment, PaymentWithDisplayStatus } from "../types";
+import { enhancePaymentWithDisplayStatus } from "../lib/utils/payment";
+import SimplePaymentsList from "../components/SimplePaymentsList";
 import {
   Table,
   TableBody,
@@ -69,7 +55,7 @@ import MemberSearch from "../components/MemberSearch";
 import { searchByFullName } from "../lib/utils";
 import { useNotifications } from "../context/NotificationContext";
 
-const ITEMS_PER_PAGE = 10; // Or whatever number you prefer
+const ITEMS_PER_PAGE = 20; // Number of items to load at once
 
 const PaymentForm = ({
   defaultValues,
@@ -297,78 +283,96 @@ const Payments = () => {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
-  const [payments, setPayments] = React.useState<any[]>([]);
-  const [selectedPayment, setSelectedPayment] = React.useState<any>(null);
+  const [payments, setPayments] = React.useState<PaymentWithDisplayStatus[]>(
+    []
+  );
+  const [selectedPayment, setSelectedPayment] = React.useState<Payment | null>(
+    null
+  );
   const [isLoading, setIsLoading] = React.useState(true);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [totalRecords, setTotalRecords] = React.useState(0);
+  const [hasNextPage, setHasNextPage] = React.useState(true);
+  const [allPaymentsLoaded, setAllPaymentsLoaded] = React.useState(false);
 
-  const updatePaymentStatus = (payment: any) => {
-    const today = new Date();
-    const dueDate = parseISO(payment.due_date);
-    const sevenDaysFromNow = addDays(today, 7);
+  // Reference to all payments for virtual scrolling
+  const [allPayments, setAllPayments] = React.useState<
+    PaymentWithDisplayStatus[]
+  >([]);
 
-    // If payment is cancelled, don't change status
-    if (payment.status === "cancelled") {
-      return payment;
-    }
+  // Track the current page for loading more items
+  const [currentPage, setCurrentPage] = React.useState(0);
 
-    // Check if payment is overdue
-    if (isBefore(dueDate, today)) {
-      return { ...payment, status: "overdue" };
-    }
-
-    // Check if due date is within next 7 days
-    if (isBefore(dueDate, sevenDaysFromNow)) {
-      return { ...payment, status: "near_overdue" };
-    }
-
-    // If due date is in the future and not near, status is pending
-    return { ...payment, status: "paid" };
-  };
-
+  // Initial fetch to get all payments and sort them
   const fetchPayments = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from("payments")
-        .select(
-          `
+      setCurrentPage(0);
+      setPayments([]);
+
+      // Fetch all payments to determine status and sort them properly
+      let query = supabase.from("payments").select(
+        `
           *,
           member:members!payments_member_id_fkey(first_name, last_name)
         `
-        )
-        .order("created_at", { ascending: false });
+      );
+
+      // Add search filter if search term exists
+      if (searchTerm) {
+        // Join the members table and filter by name
+        query = query.or(
+          `member.first_name.ilike.%${searchTerm}%,member.last_name.ilike.%${searchTerm}%`
+        );
+      }
+
+      // Execute the query
+      const { data, error } = await query;
 
       if (error) throw error;
 
-      // Filter based on search term
-      const filteredData =
-        data?.filter((payment) =>
-          searchByFullName(
-            searchTerm,
-            payment.member.first_name,
-            payment.member.last_name
-          )
-        ) || [];
-
-      // Update payment statuses based on dates
-      const updatedPayments = filteredData.map((payment) =>
-        updatePaymentStatus(payment)
+      // Enhance payments with display status
+      const enhancedPayments = (data || []).map((payment) =>
+        enhancePaymentWithDisplayStatus(payment as Payment)
       );
 
-      // Update total count based on filtered data
-      setTotalRecords(updatedPayments.length);
+      // Sort payments by status priority: overdue first, then near_overdue, then others
+      const sortedPayments = [...enhancedPayments].sort((a, b) => {
+        // Define status priority (lower number = higher priority)
+        const getPriority = (status: string): number => {
+          switch (status) {
+            case "overdue":
+              return 1;
+            case "near_overdue":
+              return 2;
+            case "pending":
+              return 3;
+            case "paid":
+              return 4;
+            case "cancelled":
+              return 5;
+            default:
+              return 6;
+          }
+        };
 
-      // Paginate the filtered data
-      const start = (currentPage - 1) * ITEMS_PER_PAGE;
-      const end = start + ITEMS_PER_PAGE;
-      setPayments(updatedPayments.slice(start, end));
+        // Compare by priority
+        return getPriority(a.displayStatus) - getPriority(b.displayStatus);
+      });
+
+      // Store all sorted payments for virtual scrolling
+      setAllPayments(sortedPayments);
+      setAllPaymentsLoaded(true);
+
+      // Load initial batch
+      const initialItems = sortedPayments.slice(0, ITEMS_PER_PAGE);
+      setPayments(initialItems);
+
+      // Set hasNextPage based on whether there are more items to load
+      setHasNextPage(sortedPayments.length > ITEMS_PER_PAGE);
     } catch (error) {
       console.error("Error fetching payments:", error);
       addNotification({
         title: "Erreur",
-        message: "Impossible de recuperer les paiements",
+        message: "Impossible de récupérer les paiements",
         type: "error",
       });
     } finally {
@@ -376,33 +380,64 @@ const Payments = () => {
     }
   };
 
+  // Load more items for infinite scrolling
+  const loadMoreItems = async () => {
+    if (!hasNextPage || !allPaymentsLoaded) return Promise.resolve();
+
+    return new Promise<void>((resolve) => {
+      // Simulate a delay to show loading indicator
+      setTimeout(() => {
+        const nextPage = currentPage + 1;
+        const startIndex = nextPage * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+
+        // Get the next batch of items
+        const newItems = allPayments.slice(startIndex, endIndex);
+
+        if (newItems.length > 0) {
+          // Append new items to the current list
+          setPayments((prev) => [...prev, ...newItems]);
+          setCurrentPage(nextPage);
+
+          // Check if we've loaded all items
+          setHasNextPage(endIndex < allPayments.length);
+        } else {
+          setHasNextPage(false);
+        }
+
+        resolve();
+      }, 500); // Small delay for better UX
+    });
+  };
+
+  // Fetch payments when search term changes
   React.useEffect(() => {
     fetchPayments();
-  }, [currentPage, searchTerm]); // Add dependencies
-
-  const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
+  }, [searchTerm]);
 
   const handleCreatePayment = async (data: PaymentFormValues) => {
     try {
-      const { error } = await supabase.from("payments").insert([
-        {
-          member_id: data.memberId,
-          amount: data.amount,
-          payment_date: data.paymentDate.toISOString(),
-          due_date: data.dueDate.toISOString(),
-          status: data.status,
-          payment_method: data.paymentMethod,
-          notes: data.notes || null,
-        },
-      ]);
+      const newPayment = {
+        member_id: data.memberId,
+        amount: data.amount,
+        payment_date: data.paymentDate.toISOString(),
+        due_date: data.dueDate.toISOString(),
+        status: data.status,
+        payment_method: data.paymentMethod,
+        notes: data.notes || null,
+      };
+
+      const { error } = await supabase.from("payments").insert([newPayment]);
 
       if (error) throw error;
 
+      // Refresh data to include the new payment
       await fetchPayments();
       setIsAddDialogOpen(false);
+
       addNotification({
-        title: "Succes",
-        message: "Paiement enregistre avec succes",
+        title: "Succès",
+        message: "Paiement enregistré avec succès",
         type: "success",
       });
     } catch (error) {
@@ -419,34 +454,38 @@ const Payments = () => {
     if (!selectedPayment) return;
 
     try {
+      const updatedPayment = {
+        member_id: data.memberId,
+        amount: data.amount,
+        payment_date: data.paymentDate.toISOString(),
+        due_date: data.dueDate.toISOString(),
+        status: data.status,
+        payment_method: data.paymentMethod,
+        notes: data.notes || null,
+      };
+
       const { error } = await supabase
         .from("payments")
-        .update({
-          member_id: data.memberId,
-          amount: data.amount,
-          payment_date: data.paymentDate.toISOString(),
-          due_date: data.dueDate.toISOString(),
-          status: data.status,
-          payment_method: data.paymentMethod,
-          notes: data.notes || null,
-        })
+        .update(updatedPayment)
         .eq("id", selectedPayment.id);
 
       if (error) throw error;
 
+      // Refresh all payments to reflect the update
       await fetchPayments();
       setIsEditDialogOpen(false);
       setSelectedPayment(null);
+
       addNotification({
-        title: "Succes",
-        message: "Paiement mis a jour avec succes",
+        title: "Succès",
+        message: "Paiement mis à jour avec succès",
         type: "success",
       });
     } catch (error) {
       console.error("Error updating payment:", error);
       addNotification({
         title: "Erreur",
-        message: "Impossible de mettre a jour le paiement",
+        message: "Impossible de mettre à jour le paiement",
         type: "error",
       });
     }
@@ -458,10 +497,12 @@ const Payments = () => {
 
       if (error) throw error;
 
-      setPayments((prev) => prev.filter((payment) => payment.id !== id));
+      // Refresh data after deletion
+      await fetchPayments();
+
       addNotification({
-        title: "Succes",
-        message: "Paiement supprime avec succes",
+        title: "Succès",
+        message: "Paiement supprimé avec succès",
         type: "success",
       });
     } catch (error) {
@@ -474,21 +515,11 @@ const Payments = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "paid":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "overdue":
-        return "bg-red-100 text-red-800";
-      case "near_overdue":
-        return "bg-orange-100 text-orange-800";
-      case "cancelled":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  // Helper function to calculate days difference for overdue payments
+  const getDaysDifference = (dueDate: string) => {
+    const today = new Date();
+    const due = parseISO(dueDate);
+    return differenceInDays(today, due);
   };
 
   // Helper function to safely format dates
@@ -503,13 +534,6 @@ const Payments = () => {
       console.error("Error formatting date:", error);
       return "-";
     }
-  };
-
-  const getDaysDifference = (dueDate: string) => {
-    const today = new Date();
-    const due = parseISO(dueDate);
-    const diffInDays = differenceInDays(today, due);
-    return diffInDays;
   };
 
   return (
@@ -545,206 +569,19 @@ const Payments = () => {
         />
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Membre</TableHead>
-              <TableHead>Montant</TableHead>
-              <TableHead>Date d'Echeance</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Mode de Paiement</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : payments.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  Aucun paiement trouve
-                </TableCell>
-              </TableRow>
-            ) : (
-              payments.map((payment) => {
-                const updatedPayment = updatePaymentStatus(payment);
-                return (
-                  <TableRow key={payment.id}>
-                    <TableCell
-                      className="cursor-pointer hover:text-blue-600"
-                      onClick={() => navigate(`/members/${payment.member_id}`)}
-                    >
-                      {`${payment.member.first_name} ${payment.member.last_name}`}
-                    </TableCell>
-                    <TableCell>{payment.amount.toFixed(2)} MAD</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <span>{formatDate(payment.due_date)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            payment.status
-                          )}`}
-                        >
-                          {updatedPayment.status === "paid"
-                            ? "Payé"
-                            : updatedPayment.status === "pending"
-                            ? "En Attente"
-                            : updatedPayment.status === "cancelled"
-                            ? "Annulé"
-                            : updatedPayment.status === "overdue"
-                            ? "En Retard"
-                            : updatedPayment.status === "near_overdue"
-                            ? "Échéance Proche"
-                            : updatedPayment.status}
-                        </span>
-                        {(payment.status === "overdue" ||
-                          payment.status === "near_overdue") &&
-                          getDaysDifference(payment.due_date) !== 0 && (
-                            <span
-                              className={`
-                            inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
-                            ${
-                              payment.status === "overdue"
-                                ? "bg-red-50 text-red-700 border border-red-200"
-                                : "bg-orange-50 text-orange-700 border border-orange-200"
-                            }
-                          `}
-                            >
-                              {payment.status === "overdue"
-                                ? `${Math.abs(
-                                    getDaysDifference(payment.due_date)
-                                  )}j`
-                                : `${Math.abs(
-                                    getDaysDifference(payment.due_date)
-                                  )}j`}
-                            </span>
-                          )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="capitalize">
-                      {payment.payment_method === "cash"
-                        ? "Especes"
-                        : payment.payment_method === "credit_card"
-                        ? "Carte de Credit"
-                        : payment.payment_method === "debit_card"
-                        ? "Carte de Debit"
-                        : payment.payment_method === "bank_transfer"
-                        ? "Virement Bancaire"
-                        : "Autre"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <Dialog
-                              open={isEditDialogOpen}
-                              onOpenChange={setIsEditDialogOpen}
-                            >
-                              <DialogTrigger asChild>
-                                <DropdownMenuItem
-                                  onSelect={(e) => {
-                                    e.preventDefault();
-                                    setSelectedPayment(payment);
-                                  }}
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Modifier
-                                </DropdownMenuItem>
-                              </DialogTrigger>
-                              {selectedPayment && (
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle>
-                                      Modifier le Paiement
-                                    </DialogTitle>
-                                    <DialogDescription>
-                                      Mettez a jour les details du paiement
-                                      ci-dessous.
-                                    </DialogDescription>
-                                  </DialogHeader>
-                                  <PaymentForm
-                                    defaultValues={{
-                                      memberId: selectedPayment.member_id,
-                                      amount: selectedPayment.amount,
-                                      paymentDate: new Date(
-                                        selectedPayment.payment_date
-                                      ),
-                                      dueDate: new Date(
-                                        selectedPayment.due_date
-                                      ),
-                                      status: selectedPayment.status,
-                                      paymentMethod:
-                                        selectedPayment.payment_method,
-                                      notes: selectedPayment.notes || "",
-                                    }}
-                                    onSubmit={handleUpdatePayment}
-                                    isEditing
-                                  />
-                                </DialogContent>
-                              )}
-                            </Dialog>
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onSelect={() => handleDeletePayment(payment.id)}
-                            >
-                              <Trash className="h-4 w-4 mr-2" />
-                              Supprimer
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-
-        {/* Add pagination controls */}
-        <div className="flex items-center justify-between px-4 py-3 border-t">
-          <div className="text-sm text-gray-500">
-            Page {currentPage} sur {totalPages}
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              Précédent
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-              }
-              disabled={currentPage === totalPages}
-            >
-              Suivant
-            </Button>
-          </div>
-        </div>
-      </div>
+      <SimplePaymentsList
+        payments={payments}
+        isLoading={isLoading}
+        hasNextPage={hasNextPage}
+        loadMoreItems={loadMoreItems}
+        isEditDialogOpen={isEditDialogOpen}
+        setIsEditDialogOpen={setIsEditDialogOpen}
+        selectedPayment={selectedPayment}
+        setSelectedPayment={setSelectedPayment}
+        handleUpdatePayment={handleUpdatePayment}
+        handleDeletePayment={handleDeletePayment}
+        PaymentForm={PaymentForm}
+      />
     </div>
   );
 };
