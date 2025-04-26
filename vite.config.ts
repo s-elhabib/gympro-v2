@@ -11,7 +11,7 @@ export default defineConfig({
   },
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['lucide-react'],
+    // Remove the exclude for lucide-react to fix loading issues
   },
   resolve: {
     alias: {

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { 
-  Save, 
+import React, { useState } from "react";
+import {
+  Save,
   Upload,
   Bell,
   Mail,
@@ -15,11 +15,11 @@ import {
   ChevronRight,
   Shield,
   Database,
-  CheckCircle2
-} from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
+  CheckCircle2,
+} from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 import {
   Card,
   CardContent,
@@ -45,61 +45,64 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
-import { supabase } from '../lib/supabase';
-import { useNotifications } from '../context/NotificationContext';
-import { useAuth } from '../context/AuthContext';
+import { supabase } from "../lib/supabase";
+import { useNotifications } from "../context/NotificationContext";
+import { useAuth } from "../context/AuthContext";
 
 const CURRENCY_OPTIONS = [
-  { value: 'MAD', label: 'MAD - Dirham Marocain (DH)' },
-  { value: 'EUR', label: 'EUR - Euro (€)' },
-  { value: 'GBP', label: 'GBP - Livre Sterling (£)' },
-  { value: 'GBP', label: 'GBP - British Pound (£)' },
-  { value: 'CAD', label: 'CAD - Canadian Dollar (C$)' },
-  { value: 'AUD', label: 'AUD - Australian Dollar (A$)' },
+  { value: "MAD", label: "MAD - Dirham Marocain (DH)" },
+  { value: "EUR", label: "EUR - Euro (€)" },
+  { value: "GBP", label: "GBP - Livre Sterling (£)" },
+  { value: "GBP", label: "GBP - British Pound (£)" },
+  { value: "CAD", label: "CAD - Canadian Dollar (C$)" },
+  { value: "AUD", label: "AUD - Australian Dollar (A$)" },
 ];
 
 const LANGUAGE_OPTIONS = [
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Español (Spanish)' },
-  { value: 'fr', label: 'Français (French)' },
-  { value: 'de', label: 'Deutsch (German)' },
-  { value: 'it', label: 'Italiano (Italian)' },
+  { value: "en", label: "English" },
+  { value: "es", label: "Español (Spanish)" },
+  { value: "fr", label: "Français (French)" },
+  { value: "de", label: "Deutsch (German)" },
+  { value: "it", label: "Italiano (Italian)" },
 ];
 
 const TIMEZONE_OPTIONS = [
-  { value: 'UTC', label: 'UTC - Coordinated Universal Time' },
-  { value: 'America/New_York', label: 'EST - Eastern Standard Time (UTC-5)' },
-  { value: 'America/Chicago', label: 'CST - Central Standard Time (UTC-6)' },
-  { value: 'America/Denver', label: 'MST - Mountain Standard Time (UTC-7)' },
-  { value: 'America/Los_Angeles', label: 'PST - Pacific Standard Time (UTC-8)' },
-  { value: 'Europe/London', label: 'GMT - Greenwich Mean Time (UTC+0)' },
-  { value: 'Europe/Paris', label: 'CET - Central European Time (UTC+1)' },
-  { value: 'Asia/Tokyo', label: 'JST - Japan Standard Time (UTC+9)' },
+  { value: "UTC", label: "UTC - Coordinated Universal Time" },
+  { value: "America/New_York", label: "EST - Eastern Standard Time (UTC-5)" },
+  { value: "America/Chicago", label: "CST - Central Standard Time (UTC-6)" },
+  { value: "America/Denver", label: "MST - Mountain Standard Time (UTC-7)" },
+  {
+    value: "America/Los_Angeles",
+    label: "PST - Pacific Standard Time (UTC-8)",
+  },
+  { value: "Europe/London", label: "GMT - Greenwich Mean Time (UTC+0)" },
+  { value: "Europe/Paris", label: "CET - Central European Time (UTC+1)" },
+  { value: "Asia/Tokyo", label: "JST - Japan Standard Time (UTC+9)" },
 ];
 
 const DATE_FORMAT_OPTIONS = [
-  { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
-  { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
-  { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' },
+  { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
+  { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
+  { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
 ];
 
 const THEME_OPTIONS = [
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-  { value: 'system', label: 'System' },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "system", label: "System" },
 ];
 
 const BACKUP_FREQUENCY_OPTIONS = [
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'monthly', label: 'Monthly' },
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
 ];
 
 const MEMBERSHIP_TYPE_OPTIONS = [
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'quarterly', label: 'Quarterly' },
-  { value: 'annual', label: 'Annual' },
-  { value: 'day_pass', label: 'Day Pass' },
+  { value: "monthly", label: "Monthly" },
+  { value: "quarterly", label: "Quarterly" },
+  { value: "annual", label: "Annual" },
+  { value: "day_pass", label: "Day Pass" },
 ];
 
 const GeneralSettings = ({ settings, updateSettings }) => {
@@ -114,95 +117,117 @@ const GeneralSettings = ({ settings, updateSettings }) => {
       <CardContent className="space-y-4">
         <div>
           <Label htmlFor="gym_name">Gym Name</Label>
-          <Input 
-            id="gym_name" 
-            value={settings.gymName} 
-            onChange={(e) => updateSettings({ ...settings, gymName: e.target.value })} 
+          <Input
+            id="gym_name"
+            value={settings.gymName}
+            onChange={(e) =>
+              updateSettings({ ...settings, gymName: e.target.value })
+            }
           />
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="phone">Phone Number</Label>
-            <Input 
-              id="phone" 
-              value={settings.phone} 
-              onChange={(e) => updateSettings({ ...settings, phone: e.target.value })} 
+            <Input
+              id="phone"
+              value={settings.phone}
+              onChange={(e) =>
+                updateSettings({ ...settings, phone: e.target.value })
+              }
             />
           </div>
           <div>
             <Label htmlFor="email">Business Email</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              value={settings.email} 
-              onChange={(e) => updateSettings({ ...settings, email: e.target.value })} 
+            <Input
+              id="email"
+              type="email"
+              value={settings.email}
+              onChange={(e) =>
+                updateSettings({ ...settings, email: e.target.value })
+              }
             />
           </div>
         </div>
-        
+
         <div>
           <Label htmlFor="address">Address</Label>
-          <Input 
-            id="address" 
-            value={settings.address} 
-            onChange={(e) => updateSettings({ ...settings, address: e.target.value })} 
+          <Input
+            id="address"
+            value={settings.address}
+            onChange={(e) =>
+              updateSettings({ ...settings, address: e.target.value })
+            }
           />
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="city">City</Label>
-            <Input 
-              id="city" 
-              value={settings.city} 
-              onChange={(e) => updateSettings({ ...settings, city: e.target.value })} 
+            <Input
+              id="city"
+              value={settings.city}
+              onChange={(e) =>
+                updateSettings({ ...settings, city: e.target.value })
+              }
             />
           </div>
           <div>
             <Label htmlFor="state">State/Province</Label>
-            <Input 
-              id="state" 
-              value={settings.state} 
-              onChange={(e) => updateSettings({ ...settings, state: e.target.value })} 
+            <Input
+              id="state"
+              value={settings.state}
+              onChange={(e) =>
+                updateSettings({ ...settings, state: e.target.value })
+              }
             />
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="zipcode">Postal/Zip Code</Label>
-            <Input 
-              id="zipcode" 
-              value={settings.zipCode} 
-              onChange={(e) => updateSettings({ ...settings, zipCode: e.target.value })} 
+            <Input
+              id="zipcode"
+              value={settings.zipCode}
+              onChange={(e) =>
+                updateSettings({ ...settings, zipCode: e.target.value })
+              }
             />
           </div>
           <div>
             <Label htmlFor="country">Country</Label>
-            <Input 
-              id="country" 
-              value={settings.country} 
-              onChange={(e) => updateSettings({ ...settings, country: e.target.value })} 
+            <Input
+              id="country"
+              value={settings.country}
+              onChange={(e) =>
+                updateSettings({ ...settings, country: e.target.value })
+              }
             />
           </div>
         </div>
-        
+
         <div>
           <Label htmlFor="website">Website</Label>
-          <Input 
-            id="website" 
-            value={settings.website} 
-            onChange={(e) => updateSettings({ ...settings, website: e.target.value })} 
+          <Input
+            id="website"
+            value={settings.website}
+            onChange={(e) =>
+              updateSettings({ ...settings, website: e.target.value })
+            }
           />
         </div>
-        
+
         <div>
           <Label htmlFor="logo">Logo</Label>
           <div className="flex items-center space-x-4 mt-2">
             <div className="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-md flex items-center justify-center">
               {settings.logo ? (
-                <img src={settings.logo} alt="Gym Logo" className="max-h-full max-w-full" />
+                <img
+                  src={settings.logo}
+                  alt="Gym Logo"
+                  className="max-h-full max-w-full"
+                />
               ) : (
                 <Building className="h-8 w-8 text-gray-400" />
               )}
@@ -234,99 +259,125 @@ const BusinessSettings = ({ settings, updateSettings }) => {
             id="currency"
             className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
             value={settings.currency}
-            onChange={(e) => updateSettings({ ...settings, currency: e.target.value })}
+            onChange={(e) =>
+              updateSettings({ ...settings, currency: e.target.value })
+            }
           >
-            {CURRENCY_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
+            {CURRENCY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
             ))}
           </select>
         </div>
-        
+
         <div>
           <Label htmlFor="taxRate">Tax Rate (%)</Label>
-          <Input 
-            id="taxRate" 
+          <Input
+            id="taxRate"
             type="number"
             min="0"
-            max="100" 
-            value={settings.taxRate} 
-            onChange={(e) => updateSettings({ ...settings, taxRate: e.target.value })} 
+            max="100"
+            value={settings.taxRate}
+            onChange={(e) =>
+              updateSettings({ ...settings, taxRate: e.target.value })
+            }
           />
         </div>
-        
+
         <div>
           <Label>Payment Methods</Label>
           <div className="grid grid-cols-2 gap-2 mt-2">
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 id="payment_credit"
-                checked={settings.paymentMethods.includes('credit_card')}
+                checked={settings.paymentMethods.includes("credit_card")}
                 onChange={(e) => {
-                  const newMethods = e.target.checked 
-                    ? [...settings.paymentMethods, 'credit_card'] 
-                    : settings.paymentMethods.filter(m => m !== 'credit_card');
+                  const newMethods = e.target.checked
+                    ? [...settings.paymentMethods, "credit_card"]
+                    : settings.paymentMethods.filter(
+                        (m) => m !== "credit_card"
+                      );
                   updateSettings({ ...settings, paymentMethods: newMethods });
                 }}
                 className="rounded"
               />
-              <label htmlFor="payment_credit" className="text-sm">Credit Card</label>
+              <label htmlFor="payment_credit" className="text-sm">
+                Credit Card
+              </label>
             </div>
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 id="payment_cash"
-                checked={settings.paymentMethods.includes('cash')}
+                checked={settings.paymentMethods.includes("cash")}
                 onChange={(e) => {
-                  const newMethods = e.target.checked 
-                    ? [...settings.paymentMethods, 'cash'] 
-                    : settings.paymentMethods.filter(m => m !== 'cash');
+                  const newMethods = e.target.checked
+                    ? [...settings.paymentMethods, "cash"]
+                    : settings.paymentMethods.filter((m) => m !== "cash");
                   updateSettings({ ...settings, paymentMethods: newMethods });
                 }}
                 className="rounded"
               />
-              <label htmlFor="payment_cash" className="text-sm">Cash</label>
+              <label htmlFor="payment_cash" className="text-sm">
+                Cash
+              </label>
             </div>
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 id="payment_bank"
-                checked={settings.paymentMethods.includes('bank_transfer')}
+                checked={settings.paymentMethods.includes("bank_transfer")}
                 onChange={(e) => {
-                  const newMethods = e.target.checked 
-                    ? [...settings.paymentMethods, 'bank_transfer'] 
-                    : settings.paymentMethods.filter(m => m !== 'bank_transfer');
+                  const newMethods = e.target.checked
+                    ? [...settings.paymentMethods, "bank_transfer"]
+                    : settings.paymentMethods.filter(
+                        (m) => m !== "bank_transfer"
+                      );
                   updateSettings({ ...settings, paymentMethods: newMethods });
                 }}
                 className="rounded"
               />
-              <label htmlFor="payment_bank" className="text-sm">Bank Transfer</label>
+              <label htmlFor="payment_bank" className="text-sm">
+                Bank Transfer
+              </label>
             </div>
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 id="payment_paypal"
-                checked={settings.paymentMethods.includes('paypal')}
+                checked={settings.paymentMethods.includes("paypal")}
                 onChange={(e) => {
-                  const newMethods = e.target.checked 
-                    ? [...settings.paymentMethods, 'paypal'] 
-                    : settings.paymentMethods.filter(m => m !== 'paypal');
+                  const newMethods = e.target.checked
+                    ? [...settings.paymentMethods, "paypal"]
+                    : settings.paymentMethods.filter((m) => m !== "paypal");
                   updateSettings({ ...settings, paymentMethods: newMethods });
                 }}
                 className="rounded"
               />
-              <label htmlFor="payment_paypal" className="text-sm">PayPal</label>
+              <label htmlFor="payment_paypal" className="text-sm">
+                PayPal
+              </label>
             </div>
           </div>
         </div>
-        
+
         <div>
           <Label>Default Membership Types</Label>
           <div className="space-y-4 mt-2">
             {settings.membershipTypes.map((membership, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center border border-gray-200 rounded-md p-3">
+              <div
+                key={index}
+                className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center border border-gray-200 rounded-md p-3"
+              >
                 <div>
-                  <Label htmlFor={`membership_type_${index}`} className="text-xs">Type</Label>
+                  <Label
+                    htmlFor={`membership_type_${index}`}
+                    className="text-xs"
+                  >
+                    Type
+                  </Label>
                   <select
                     id={`membership_type_${index}`}
                     className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
@@ -334,51 +385,75 @@ const BusinessSettings = ({ settings, updateSettings }) => {
                     onChange={(e) => {
                       const newTypes = [...settings.membershipTypes];
                       newTypes[index].type = e.target.value;
-                      updateSettings({ ...settings, membershipTypes: newTypes });
+                      updateSettings({
+                        ...settings,
+                        membershipTypes: newTypes,
+                      });
                     }}
                   >
-                    {MEMBERSHIP_TYPE_OPTIONS.map(option => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
+                    {MEMBERSHIP_TYPE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor={`membership_price_${index}`} className="text-xs">Price</Label>
-                  <Input 
-                    id={`membership_price_${index}`} 
+                  <Label
+                    htmlFor={`membership_price_${index}`}
+                    className="text-xs"
+                  >
+                    Price
+                  </Label>
+                  <Input
+                    id={`membership_price_${index}`}
                     type="number"
                     min="0"
-                    value={membership.price} 
+                    value={membership.price}
                     onChange={(e) => {
                       const newTypes = [...settings.membershipTypes];
                       newTypes[index].price = e.target.value;
-                      updateSettings({ ...settings, membershipTypes: newTypes });
-                    }} 
+                      updateSettings({
+                        ...settings,
+                        membershipTypes: newTypes,
+                      });
+                    }}
                   />
                 </div>
                 <div>
-                  <Label htmlFor={`membership_duration_${index}`} className="text-xs">Duration (days)</Label>
-                  <Input 
-                    id={`membership_duration_${index}`} 
+                  <Label
+                    htmlFor={`membership_duration_${index}`}
+                    className="text-xs"
+                  >
+                    Duration (days)
+                  </Label>
+                  <Input
+                    id={`membership_duration_${index}`}
                     type="number"
                     min="1"
-                    value={membership.duration} 
+                    value={membership.duration}
                     onChange={(e) => {
                       const newTypes = [...settings.membershipTypes];
                       newTypes[index].duration = e.target.value;
-                      updateSettings({ ...settings, membershipTypes: newTypes });
-                    }} 
+                      updateSettings({
+                        ...settings,
+                        membershipTypes: newTypes,
+                      });
+                    }}
                   />
                 </div>
               </div>
             ))}
-            <Button 
+            <Button
               variant="outline"
               size="sm"
               onClick={() => {
                 updateSettings({
                   ...settings,
-                  membershipTypes: [...settings.membershipTypes, { type: 'monthly', price: 0, duration: 30 }]
+                  membershipTypes: [
+                    ...settings.membershipTypes,
+                    { type: "monthly", price: 0, duration: 30 },
+                  ],
                 });
               }}
             >
@@ -406,8 +481,8 @@ const NotificationSettings = ({ settings, updateSettings }) => {
           <div className="space-y-2 mt-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="email_new_member"
                   checked={settings.emailNotifications.newMember}
                   onChange={(e) => {
@@ -415,19 +490,21 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                       ...settings,
                       emailNotifications: {
                         ...settings.emailNotifications,
-                        newMember: e.target.checked
-                      }
+                        newMember: e.target.checked,
+                      },
                     });
                   }}
                   className="rounded"
                 />
-                <label htmlFor="email_new_member" className="text-sm">New member sign up</label>
+                <label htmlFor="email_new_member" className="text-sm">
+                  New member sign up
+                </label>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="email_payment"
                   checked={settings.emailNotifications.payment}
                   onChange={(e) => {
@@ -435,19 +512,21 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                       ...settings,
                       emailNotifications: {
                         ...settings.emailNotifications,
-                        payment: e.target.checked
-                      }
+                        payment: e.target.checked,
+                      },
                     });
                   }}
                   className="rounded"
                 />
-                <label htmlFor="email_payment" className="text-sm">Payment received</label>
+                <label htmlFor="email_payment" className="text-sm">
+                  Payment received
+                </label>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="email_payment_failed"
                   checked={settings.emailNotifications.paymentFailed}
                   onChange={(e) => {
@@ -455,19 +534,21 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                       ...settings,
                       emailNotifications: {
                         ...settings.emailNotifications,
-                        paymentFailed: e.target.checked
-                      }
+                        paymentFailed: e.target.checked,
+                      },
                     });
                   }}
                   className="rounded"
                 />
-                <label htmlFor="email_payment_failed" className="text-sm">Payment failed</label>
+                <label htmlFor="email_payment_failed" className="text-sm">
+                  Payment failed
+                </label>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="email_membership_expiring"
                   checked={settings.emailNotifications.membershipExpiring}
                   onChange={(e) => {
@@ -475,25 +556,27 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                       ...settings,
                       emailNotifications: {
                         ...settings.emailNotifications,
-                        membershipExpiring: e.target.checked
-                      }
+                        membershipExpiring: e.target.checked,
+                      },
                     });
                   }}
                   className="rounded"
                 />
-                <label htmlFor="email_membership_expiring" className="text-sm">Membership expiring</label>
+                <label htmlFor="email_membership_expiring" className="text-sm">
+                  Membership expiring
+                </label>
               </div>
             </div>
           </div>
         </div>
-        
+
         <div>
           <Label className="text-base">System Notifications</Label>
           <div className="space-y-2 mt-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="system_new_member"
                   checked={settings.systemNotifications.newMember}
                   onChange={(e) => {
@@ -501,19 +584,21 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                       ...settings,
                       systemNotifications: {
                         ...settings.systemNotifications,
-                        newMember: e.target.checked
-                      }
+                        newMember: e.target.checked,
+                      },
                     });
                   }}
                   className="rounded"
                 />
-                <label htmlFor="system_new_member" className="text-sm">New member sign up</label>
+                <label htmlFor="system_new_member" className="text-sm">
+                  New member sign up
+                </label>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="system_payment"
                   checked={settings.systemNotifications.payment}
                   onChange={(e) => {
@@ -521,19 +606,21 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                       ...settings,
                       systemNotifications: {
                         ...settings.systemNotifications,
-                        payment: e.target.checked
-                      }
+                        payment: e.target.checked,
+                      },
                     });
                   }}
                   className="rounded"
                 />
-                <label htmlFor="system_payment" className="text-sm">Payment received</label>
+                <label htmlFor="system_payment" className="text-sm">
+                  Payment received
+                </label>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="system_checkin"
                   checked={settings.systemNotifications.checkin}
                   onChange={(e) => {
@@ -541,19 +628,21 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                       ...settings,
                       systemNotifications: {
                         ...settings.systemNotifications,
-                        checkin: e.target.checked
-                      }
+                        checkin: e.target.checked,
+                      },
                     });
                   }}
                   className="rounded"
                 />
-                <label htmlFor="system_checkin" className="text-sm">Member check-in</label>
+                <label htmlFor="system_checkin" className="text-sm">
+                  Member check-in
+                </label>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="system_capacity"
                   checked={settings.systemNotifications.capacity}
                   onChange={(e) => {
@@ -561,13 +650,15 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                       ...settings,
                       systemNotifications: {
                         ...settings.systemNotifications,
-                        capacity: e.target.checked
-                      }
+                        capacity: e.target.checked,
+                      },
                     });
                   }}
                   className="rounded"
                 />
-                <label htmlFor="system_capacity" className="text-sm">Class capacity reached</label>
+                <label htmlFor="system_capacity" className="text-sm">
+                  Class capacity reached
+                </label>
               </div>
             </div>
           </div>
@@ -577,6 +668,8 @@ const NotificationSettings = ({ settings, updateSettings }) => {
   );
 };
 
+// Appearance Settings component commented out for future implementation
+/*
 const AppearanceSettings = ({ settings, updateSettings }) => {
   return (
     <Card className="mb-6">
@@ -591,7 +684,7 @@ const AppearanceSettings = ({ settings, updateSettings }) => {
           <Label htmlFor="theme">Theme</Label>
           <div className="grid grid-cols-3 gap-4 mt-2">
             {THEME_OPTIONS.map(option => (
-              <div 
+              <div
                 key={option.value}
                 className={`
                   border rounded-md p-4 flex flex-col items-center justify-center cursor-pointer transition-all
@@ -612,7 +705,7 @@ const AppearanceSettings = ({ settings, updateSettings }) => {
             ))}
           </div>
         </div>
-        
+
         <div>
           <Label htmlFor="language">Language</Label>
           <select
@@ -626,7 +719,7 @@ const AppearanceSettings = ({ settings, updateSettings }) => {
             ))}
           </select>
         </div>
-        
+
         <div>
           <Label htmlFor="timezone">Timezone</Label>
           <select
@@ -640,7 +733,7 @@ const AppearanceSettings = ({ settings, updateSettings }) => {
             ))}
           </select>
         </div>
-        
+
         <div>
           <Label htmlFor="dateFormat">Date Format</Label>
           <select
@@ -654,24 +747,24 @@ const AppearanceSettings = ({ settings, updateSettings }) => {
             ))}
           </select>
         </div>
-        
+
         <div>
           <Label htmlFor="primaryColor">Primary Color</Label>
           <div className="flex items-center mt-2 space-x-4">
-            <input 
-              type="color" 
-              id="primaryColor" 
-              value={settings.primaryColor} 
+            <input
+              type="color"
+              id="primaryColor"
+              value={settings.primaryColor}
               onChange={(e) => updateSettings({ ...settings, primaryColor: e.target.value })}
               className="w-10 h-10 p-1 rounded border border-gray-300"
             />
-            <Input 
+            <Input
               value={settings.primaryColor}
               onChange={(e) => updateSettings({ ...settings, primaryColor: e.target.value })}
               className="w-32"
             />
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => updateSettings({ ...settings, primaryColor: '#3B82F6' })}
             >
@@ -683,11 +776,12 @@ const AppearanceSettings = ({ settings, updateSettings }) => {
     </Card>
   );
 };
+*/
 
 const SecuritySettings = ({ settings, updateSettings }) => {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
-  
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -700,62 +794,68 @@ const SecuritySettings = ({ settings, updateSettings }) => {
         <div>
           <Label htmlFor="twoFactorAuth">Two-Factor Authentication</Label>
           <div className="flex items-center space-x-2 mt-2">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               id="twoFactorAuth"
               checked={settings.twoFactorAuth}
-              onChange={(e) => updateSettings({ ...settings, twoFactorAuth: e.target.checked })}
+              onChange={(e) =>
+                updateSettings({ ...settings, twoFactorAuth: e.target.checked })
+              }
               className="rounded"
             />
-            <label htmlFor="twoFactorAuth" className="text-sm">Require two-factor authentication for all staff accounts</label>
+            <label htmlFor="twoFactorAuth" className="text-sm">
+              Require two-factor authentication for all staff accounts
+            </label>
           </div>
         </div>
-        
+
         <div>
           <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
-          <Input 
-            id="sessionTimeout" 
+          <Input
+            id="sessionTimeout"
             type="number"
             min="5"
             max="1440"
-            value={settings.sessionTimeout} 
-            onChange={(e) => updateSettings({ ...settings, sessionTimeout: e.target.value })} 
+            value={settings.sessionTimeout}
+            onChange={(e) =>
+              updateSettings({ ...settings, sessionTimeout: e.target.value })
+            }
           />
-          <p className="text-xs text-gray-500 mt-1">Automatically log out after period of inactivity</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Automatically log out after period of inactivity
+          </p>
         </div>
-        
+
         <div>
           <Label htmlFor="backupFrequency">Automatic Backup Frequency</Label>
           <select
             id="backupFrequency"
             className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
             value={settings.backupFrequency}
-            onChange={(e) => updateSettings({ ...settings, backupFrequency: e.target.value })}
+            onChange={(e) =>
+              updateSettings({ ...settings, backupFrequency: e.target.value })
+            }
           >
-            {BACKUP_FREQUENCY_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
+            {BACKUP_FREQUENCY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
             ))}
           </select>
         </div>
-        
+
         <div className="flex justify-between pt-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowExportDialog(true)}
-          >
+          <Button variant="outline" onClick={() => setShowExportDialog(true)}>
             <Database className="h-4 w-4 mr-2" />
             Export Data
           </Button>
-          <Button 
-            variant="outline"
-            onClick={() => setShowImportDialog(true)}
-          >
+          <Button variant="outline" onClick={() => setShowImportDialog(true)}>
             <Upload className="h-4 w-4 mr-2" />
             Import Data
           </Button>
         </div>
       </CardContent>
-      
+
       {/* Export Data Dialog */}
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
         <DialogContent>
@@ -770,24 +870,59 @@ const SecuritySettings = ({ settings, updateSettings }) => {
               <Label>Select data to export</Label>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="export_members" className="rounded" defaultChecked />
-                  <label htmlFor="export_members" className="text-sm">Members</label>
+                  <input
+                    type="checkbox"
+                    id="export_members"
+                    className="rounded"
+                    defaultChecked
+                  />
+                  <label htmlFor="export_members" className="text-sm">
+                    Members
+                  </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="export_attendance" className="rounded" defaultChecked />
-                  <label htmlFor="export_attendance" className="text-sm">Attendance</label>
+                  <input
+                    type="checkbox"
+                    id="export_attendance"
+                    className="rounded"
+                    defaultChecked
+                  />
+                  <label htmlFor="export_attendance" className="text-sm">
+                    Attendance
+                  </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="export_payments" className="rounded" defaultChecked />
-                  <label htmlFor="export_payments" className="text-sm">Payments</label>
+                  <input
+                    type="checkbox"
+                    id="export_payments"
+                    className="rounded"
+                    defaultChecked
+                  />
+                  <label htmlFor="export_payments" className="text-sm">
+                    Payments
+                  </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="export_classes" className="rounded" defaultChecked />
-                  <label htmlFor="export_classes" className="text-sm">Classes</label>
+                  <input
+                    type="checkbox"
+                    id="export_classes"
+                    className="rounded"
+                    defaultChecked
+                  />
+                  <label htmlFor="export_classes" className="text-sm">
+                    Classes
+                  </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="export_settings" className="rounded" defaultChecked />
-                  <label htmlFor="export_settings" className="text-sm">Settings</label>
+                  <input
+                    type="checkbox"
+                    id="export_settings"
+                    className="rounded"
+                    defaultChecked
+                  />
+                  <label htmlFor="export_settings" className="text-sm">
+                    Settings
+                  </label>
                 </div>
               </div>
             </div>
@@ -795,17 +930,37 @@ const SecuritySettings = ({ settings, updateSettings }) => {
               <Label>Format</Label>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <input type="radio" id="format_json" name="format" defaultChecked className="rounded" />
-                  <label htmlFor="format_json" className="text-sm">JSON</label>
+                  <input
+                    type="radio"
+                    id="format_json"
+                    name="format"
+                    defaultChecked
+                    className="rounded"
+                  />
+                  <label htmlFor="format_json" className="text-sm">
+                    JSON
+                  </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input type="radio" id="format_csv" name="format" className="rounded" />
-                  <label htmlFor="format_csv" className="text-sm">CSV</label>
+                  <input
+                    type="radio"
+                    id="format_csv"
+                    name="format"
+                    className="rounded"
+                  />
+                  <label htmlFor="format_csv" className="text-sm">
+                    CSV
+                  </label>
                 </div>
               </div>
             </div>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowExportDialog(false)}>Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowExportDialog(false)}
+              >
+                Cancel
+              </Button>
               <Button>
                 <Download className="h-4 w-4 mr-2" />
                 Export
@@ -814,7 +969,7 @@ const SecuritySettings = ({ settings, updateSettings }) => {
           </div>
         </DialogContent>
       </Dialog>
-      
+
       {/* Import Data Dialog */}
       <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
         <DialogContent>
@@ -829,15 +984,32 @@ const SecuritySettings = ({ settings, updateSettings }) => {
               <Label>Import Options</Label>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <input type="radio" id="import_merge" name="import_mode" defaultChecked className="rounded" />
-                  <label htmlFor="import_merge" className="text-sm">Merge with existing data</label>
+                  <input
+                    type="radio"
+                    id="import_merge"
+                    name="import_mode"
+                    defaultChecked
+                    className="rounded"
+                  />
+                  <label htmlFor="import_merge" className="text-sm">
+                    Merge with existing data
+                  </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input type="radio" id="import_replace" name="import_mode" className="rounded" />
-                  <label htmlFor="import_replace" className="text-sm">Replace existing data</label>
+                  <input
+                    type="radio"
+                    id="import_replace"
+                    name="import_mode"
+                    className="rounded"
+                  />
+                  <label htmlFor="import_replace" className="text-sm">
+                    Replace existing data
+                  </label>
                 </div>
               </div>
-              <p className="text-xs text-red-500 mt-1">Warning: Replacing existing data will delete all current data.</p>
+              <p className="text-xs text-red-500 mt-1">
+                Warning: Replacing existing data will delete all current data.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Upload File</Label>
@@ -849,7 +1021,12 @@ const SecuritySettings = ({ settings, updateSettings }) => {
               </div>
             </div>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowImportDialog(false)}>Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowImportDialog(false)}
+              >
+                Cancel
+              </Button>
               <Button disabled>
                 <Upload className="h-4 w-4 mr-2" />
                 Import
@@ -865,103 +1042,106 @@ const SecuritySettings = ({ settings, updateSettings }) => {
 const Settings = () => {
   const { addNotification } = useNotifications();
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState('general');
+  const [activeSection, setActiveSection] = useState("general");
   const [isSaving, setIsSaving] = useState(false);
   const [isChangesSaved, setIsChangesSaved] = useState(false);
-  
+
   // Default settings data
   const [settings, setSettings] = useState({
-    gymName: 'Fitness Pro Gym',
-    phone: '(123) 456-7890',
-    email: 'info@fitnessprogym.com',
-    address: '123 Fitness Street',
-    city: 'Gymville',
-    state: 'CA',
-    zipCode: '90210',
-    country: 'United States',
-    website: 'www.fitnessprogym.com',
-    logo: '',
-    currency: 'USD',
+    gymName: "Fitness Pro Gym",
+    phone: "(123) 456-7890",
+    email: "info@fitnessprogym.com",
+    address: "123 Fitness Street",
+    city: "Gymville",
+    state: "CA",
+    zipCode: "90210",
+    country: "United States",
+    website: "www.fitnessprogym.com",
+    logo: "",
+    currency: "USD",
     taxRate: 8.5,
-    paymentMethods: ['credit_card', 'cash', 'bank_transfer'],
+    paymentMethods: ["credit_card", "cash", "bank_transfer"],
     membershipTypes: [
-      { type: 'monthly', price: 49.99, duration: 30 },
-      { type: 'quarterly', price: 129.99, duration: 90 },
-      { type: 'annual', price: 499.99, duration: 365 },
-      { type: 'day_pass', price: 15, duration: 1 }
+      { type: "monthly", price: 49.99, duration: 30 },
+      { type: "quarterly", price: 129.99, duration: 90 },
+      { type: "annual", price: 499.99, duration: 365 },
+      { type: "day_pass", price: 15, duration: 1 },
     ],
     emailNotifications: {
       newMember: true,
       payment: true,
       paymentFailed: true,
-      membershipExpiring: true
+      membershipExpiring: true,
     },
     systemNotifications: {
       newMember: true,
       payment: true,
       checkin: false,
-      capacity: true
+      capacity: true,
     },
-    theme: 'light',
-    language: 'en',
-    timezone: 'America/New_York',
-    dateFormat: 'MM/DD/YYYY',
-    primaryColor: '#3B82F6',
+    theme: "light",
+    language: "en",
+    timezone: "America/New_York",
+    dateFormat: "MM/DD/YYYY",
+    primaryColor: "#3B82F6",
     twoFactorAuth: false,
     sessionTimeout: 30,
-    backupFrequency: 'daily'
+    backupFrequency: "daily",
   });
-  
+
   // Save settings
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
       // In a real app, you would save to Supabase
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulating API call
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulating API call
+
       addNotification({
-        title: 'Settings Saved',
-        message: 'Your settings have been saved successfully.',
-        type: 'success'
+        title: "Settings Saved",
+        message: "Your settings have been saved successfully.",
+        type: "success",
       });
-      
+
       setIsChangesSaved(true);
       setTimeout(() => setIsChangesSaved(false), 3000); // Hide checkmark after 3 seconds
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error("Error saving settings:", error);
       addNotification({
-        title: 'Error',
-        message: 'Failed to save settings. Please try again.',
-        type: 'error'
+        title: "Error",
+        message: "Failed to save settings. Please try again.",
+        type: "error",
       });
     } finally {
       setIsSaving(false);
     }
   };
-  
+
   const updateSettings = (newSettings) => {
     setSettings(newSettings);
     setIsChangesSaved(false);
   };
-  
+
   const sections = [
-    { id: 'general', label: 'General', icon: Building },
-    { id: 'business', label: 'Business', icon: CreditCard },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'appearance', label: 'Appearance', icon: Sun },
-    { id: 'security', label: 'Security', icon: Shield },
+    { id: "general", label: "General", icon: Building },
+    { id: "business", label: "Business", icon: CreditCard },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    // Appearance section commented out for future implementation
+    // { id: "appearance", label: "Appearance", icon: Sun },
+    { id: "security", label: "Security", icon: Shield },
   ];
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your gym management system settings</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage your gym management system settings
+          </p>
         </div>
-        
-        <Button 
-          onClick={handleSaveSettings} 
+
+        <Button
+          onClick={handleSaveSettings}
           disabled={isSaving || isChangesSaved}
           className="relative"
         >
@@ -983,24 +1163,28 @@ const Settings = () => {
           )}
         </Button>
       </div>
-      
+
       <div className="flex flex-col md:flex-row gap-6">
         <div className="md:w-64 flex-shrink-0">
           <div className="bg-white rounded-lg shadow-sm">
             <nav className="space-y-1 p-3">
-              {sections.map(section => (
+              {sections.map((section) => (
                 <button
                   key={section.id}
                   className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    activeSection === section.id 
-                      ? 'bg-blue-50 text-blue-700' 
-                      : 'text-gray-700 hover:bg-gray-100'
+                    activeSection === section.id
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                   onClick={() => setActiveSection(section.id)}
                 >
-                  <section.icon className={`h-5 w-5 mr-3 ${
-                    activeSection === section.id ? 'text-blue-500' : 'text-gray-400'
-                  }`} />
+                  <section.icon
+                    className={`h-5 w-5 mr-3 ${
+                      activeSection === section.id
+                        ? "text-blue-500"
+                        : "text-gray-400"
+                    }`}
+                  />
                   {section.label}
                   <ChevronRight className="ml-auto h-4 w-4 text-gray-400" />
                 </button>
@@ -1008,13 +1192,40 @@ const Settings = () => {
             </nav>
           </div>
         </div>
-        
+
         <div className="flex-1 min-w-0">
-          {activeSection === 'general' && <GeneralSettings settings={settings} updateSettings={updateSettings} />}
-          {activeSection === 'business' && <BusinessSettings settings={settings} updateSettings={updateSettings} />}
-          {activeSection === 'notifications' && <NotificationSettings settings={settings} updateSettings={updateSettings} />}
-          {activeSection === 'appearance' && <AppearanceSettings settings={settings} updateSettings={updateSettings} />}
-          {activeSection === 'security' && <SecuritySettings settings={settings} updateSettings={updateSettings} />}
+          {activeSection === "general" && (
+            <GeneralSettings
+              settings={settings}
+              updateSettings={updateSettings}
+            />
+          )}
+          {activeSection === "business" && (
+            <BusinessSettings
+              settings={settings}
+              updateSettings={updateSettings}
+            />
+          )}
+          {activeSection === "notifications" && (
+            <NotificationSettings
+              settings={settings}
+              updateSettings={updateSettings}
+            />
+          )}
+          {/* Appearance section commented out for future implementation
+          {activeSection === "appearance" && (
+            <AppearanceSettings
+              settings={settings}
+              updateSettings={updateSettings}
+            />
+          )}
+          */}
+          {activeSection === "security" && (
+            <SecuritySettings
+              settings={settings}
+              updateSettings={updateSettings}
+            />
+          )}
         </div>
       </div>
     </div>
