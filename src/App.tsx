@@ -1,24 +1,29 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'sonner';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { NotificationProvider } from './context/NotificationContext';
-import Sidebar from './components/layout/Sidebar';
-import Navbar from './components/layout/Navbar';
-import Login from './pages/Login';
-import SignUp from './pages/SignUp';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { Toaster } from "sonner";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { NotificationProvider } from "./context/NotificationContext";
+import Sidebar from "./components/layout/Sidebar";
+import Navbar from "./components/layout/Navbar";
+import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 
 // Lazy load pages
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Members = React.lazy(() => import('./pages/Members'));
-const MemberProfile = React.lazy(() => import('./pages/MemberProfile'));
-const Payments = React.lazy(() => import('./pages/Payments'));
-const Attendance = React.lazy(() => import('./pages/Attendance'));
-const Staff = React.lazy(() => import('./pages/Staff'));
-const Reports = React.lazy(() => import('./pages/Reportsold'));
-const Settings = React.lazy(() => import('./pages/Settings'));
-const Classes = React.lazy(() => import('./pages/Classes'));
-
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const Members = React.lazy(() => import("./pages/Members"));
+const MemberProfile = React.lazy(() => import("./pages/MemberProfile"));
+const Payments = React.lazy(() => import("./pages/Payments"));
+const Attendance = React.lazy(() => import("./pages/Attendance"));
+const Staff = React.lazy(() => import("./pages/Staff"));
+const Reports = React.lazy(() => import("./pages/Reportsold"));
+const ReportsNew = React.lazy(() => import("./pages/ReportsNew"));
+const Settings = React.lazy(() => import("./pages/Settings"));
+const Classes = React.lazy(() => import("./pages/Classes"));
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
@@ -45,8 +50,18 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} />
-      <Route path="/signup" element={!isAuthenticated ? <SignUp /> : <Navigate to="/dashboard" replace />} />
+      <Route
+        path="/login"
+        element={
+          !isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          !isAuthenticated ? <SignUp /> : <Navigate to="/dashboard" replace />
+        }
+      />
       <Route
         path="/*"
         element={
@@ -67,7 +82,8 @@ const AppRoutes = () => {
                 <Route path="/attendance/*" element={<Attendance />} />
                 <Route path="/classes/*" element={<Classes />} />
                 <Route path="/staff/*" element={<Staff />} />
-                <Route path="/reports/*" element={<Reports />} />
+                <Route path="/reports/*" element={<ReportsNew />} />
+                <Route path="/reports-old/*" element={<Reports />} />
                 <Route path="/settings/*" element={<Settings />} />
               </Routes>
             </React.Suspense>

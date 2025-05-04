@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 
 type TabsContextType = {
   activeTab: string;
@@ -27,7 +27,7 @@ const Tabs = ({
 
   // Use the controlled value if provided
   const activeTab = value !== undefined ? value : activeTabState;
-  
+
   const setActiveTab = (id: string) => {
     if (value === undefined) {
       setActiveTabState(id);
@@ -74,11 +74,11 @@ const TabsTrigger = ({
   disabled = false,
 }: TabsTriggerProps) => {
   const context = useContext(TabsContext);
-  
+
   if (!context) {
     throw new Error("TabsTrigger must be used within a Tabs component");
   }
-  
+
   const { activeTab, setActiveTab } = context;
   const isActive = activeTab === value;
 
@@ -90,8 +90,8 @@ const TabsTrigger = ({
       disabled={disabled}
       className={cn(
         "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50",
-        isActive 
-          ? "bg-white text-slate-950 shadow-sm" 
+        isActive
+          ? "bg-white text-slate-950 shadow-sm"
           : "text-slate-500 hover:text-slate-900",
         className
       )}
@@ -110,21 +110,18 @@ interface TabsContentProps {
 
 const TabsContent = ({ value, children, className }: TabsContentProps) => {
   const context = useContext(TabsContext);
-  
+
   if (!context) {
     throw new Error("TabsContent must be used within a Tabs component");
   }
-  
+
   const { activeTab } = context;
   const isActive = activeTab === value;
 
   if (!isActive) return null;
 
   return (
-    <div
-      role="tabpanel"
-      className={cn("mt-2", className)}
-    >
+    <div role="tabpanel" className={cn("mt-2", className)}>
       {children}
     </div>
   );
