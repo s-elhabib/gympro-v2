@@ -323,6 +323,7 @@ const Attendance = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const pageSize = 10;
 
   const fetchAttendance = async () => {
@@ -514,6 +515,17 @@ const Attendance = () => {
 
   const isTodaySelected = isToday(selectedDate);
 
+  // Filter attendance records based on search term
+  const filteredAttendance = React.useMemo(() => {
+    if (!searchTerm.trim()) return attendance;
+
+    return attendance.filter((record) => {
+      const fullName =
+        `${record.member.first_name} ${record.member.last_name}`.toLowerCase();
+      return fullName.includes(searchTerm.toLowerCase());
+    });
+  }, [attendance, searchTerm]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -550,17 +562,44 @@ const Attendance = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm">
-        <div className="px-4 py-3 border-b flex justify-between items-center">
-          <h2 className="text-lg font-medium">{formatDateHeader()}</h2>
-          {!isTodaySelected && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setSelectedDate(new Date())}
-            >
-              Aujourd'hui
-            </Button>
-          )}
+        <div className="px-4 py-3 border-b flex flex-col md:flex-row gap-3 justify-between">
+          <div className="flex items-center justify-between w-full md:w-auto">
+            <h2 className="text-lg font-medium">{formatDateHeader()}</h2>
+            <div className="md:hidden">
+              {!isTodaySelected && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setSelectedDate(new Date())}
+                >
+                  Aujourd'hui
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:max-w-xs">
+              <Input
+                placeholder="Rechercher un membre..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 bg-white"
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            </div>
+            <div className="hidden md:block">
+              {!isTodaySelected && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setSelectedDate(new Date())}
+                >
+                  Aujourd'hui
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
         <Table>
@@ -583,14 +622,16 @@ const Attendance = () => {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : attendance.length === 0 ? (
+            ) : filteredAttendance.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
-                  Aucun enregistrement de présence trouvé
+                  {attendance.length === 0
+                    ? "Aucun enregistrement de présence trouvé"
+                    : "Aucun résultat pour cette recherche"}
                 </TableCell>
               </TableRow>
             ) : (
-              attendance.map((record) => (
+              filteredAttendance.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell
                     className="cursor-pointer hover:text-blue-600"
@@ -696,9 +737,12 @@ const Attendance = () => {
 
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <div className="text-sm text-gray-500">
-            {attendance.length} enregistrement
-            {attendance.length !== 1 ? "s" : ""} trouvé
-            {attendance.length !== 1 ? "s" : ""}
+            {filteredAttendance.length} enregistrement
+            {filteredAttendance.length !== 1 ? "s" : ""} trouvé
+            {filteredAttendance.length !== 1 ? "s" : ""}
+            {searchTerm && attendance.length !== filteredAttendance.length && (
+              <span className="ml-1">sur {attendance.length} au total</span>
+            )}
           </div>
         </div>
       </div>
