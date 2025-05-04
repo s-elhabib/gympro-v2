@@ -9,9 +9,20 @@ import {
   Trash,
   AlertCircle,
   Edit,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import {
+  format,
+  subDays,
+  startOfDay,
+  endOfDay,
+  isToday,
+  isYesterday,
+} from "date-fns";
 import { fr } from "date-fns/locale";
+import { DatePicker } from "../components/ui/date-picker";
 import { useNavigate } from "react-router-dom";
 import {
   Table,
@@ -303,7 +314,6 @@ const AttendanceForm = ({
 
 const Attendance = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = React.useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [attendance, setAttendance] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -312,16 +322,16 @@ const Attendance = () => {
   const { addNotification } = useNotifications();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState<any>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const pageSize = 10;
 
   const fetchAttendance = async () => {
     try {
       setIsLoading(true);
 
-      // Calculate date range based on current page
-      const targetDate = subDays(new Date(), currentPage - 1);
-      const dayStart = startOfDay(targetDate);
-      const dayEnd = endOfDay(targetDate);
+      // Use the selected date for filtering
+      const dayStart = startOfDay(selectedDate);
+      const dayEnd = endOfDay(selectedDate);
 
       // Fetch attendance for the specific date
       const { data: attendanceData, error } = await supabase
@@ -338,19 +348,9 @@ const Attendance = () => {
 
       if (error) throw error;
 
-      // Filter based on search term if provided
-      const filteredData = searchTerm
-        ? attendanceData?.filter((record) =>
-            searchByFullName(
-              searchTerm,
-              record.member.first_name,
-              record.member.last_name
-            )
-          )
-        : attendanceData;
-
-      setAttendance(filteredData || []);
-      setTotalRecords(filteredData?.length || 0);
+      // Set the attendance data
+      setAttendance(attendanceData || []);
+      setTotalRecords(attendanceData?.length || 0);
     } catch (error) {
       console.error("Error fetching attendance:", error);
       addNotification({
@@ -365,7 +365,7 @@ const Attendance = () => {
 
   React.useEffect(() => {
     fetchAttendance();
-  }, [currentPage, searchTerm]);
+  }, [selectedDate]);
 
   const handleCreateAttendance = async (data: AttendanceFormValues) => {
     try {
@@ -502,57 +502,65 @@ const Attendance = () => {
     return `${hours}h ${minutes}m`;
   };
 
-  const formatDateHeader = (page: number) => {
-    const date = subDays(new Date(), page - 1);
-    if (page === 1) {
+  const formatDateHeader = () => {
+    if (isToday(selectedDate)) {
       return "Aujourd'hui";
-    } else if (page === 2) {
+    } else if (isYesterday(selectedDate)) {
       return "Hier";
     } else {
-      return format(date, "dd MMMM yyyy", { locale: fr });
+      return format(selectedDate, "dd MMMM yyyy", { locale: fr });
     }
   };
 
-  const isToday = currentPage === 1;
+  const isTodaySelected = isToday(selectedDate);
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl font-semibold text-gray-900">Présence</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Enregistrer la Présence
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Enregistrer la Présence</DialogTitle>
-              <DialogDescription>
-                Enregistrez les détails de présence du membre ci-dessous.
-              </DialogDescription>
-            </DialogHeader>
-            <AttendanceForm onSubmit={handleCreateAttendance} />
-          </DialogContent>
-        </Dialog>
-      </div>
 
-      <div className="flex items-center space-x-2">
-        <Search className="h-5 w-5 text-gray-400" />
-        <Input
-          placeholder="Rechercher les enregistrements de présence..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          <DatePicker
+            date={selectedDate}
+            setDate={(date) => date && setSelectedDate(date)}
+            placeholder="Sélectionner une date"
+            className="w-full md:w-auto min-w-[240px]"
+            inputClassName="bg-white shadow-sm"
+            showNavigation={true}
+          />
+
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Enregistrer la Présence
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Enregistrer la Présence</DialogTitle>
+                <DialogDescription>
+                  Enregistrez les détails de présence du membre ci-dessous.
+                </DialogDescription>
+              </DialogHeader>
+              <AttendanceForm onSubmit={handleCreateAttendance} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm">
-        <div className="px-4 py-3 border-b">
-          <h2 className="text-lg font-medium">
-            {formatDateHeader(currentPage)}
-          </h2>
+        <div className="px-4 py-3 border-b flex justify-between items-center">
+          <h2 className="text-lg font-medium">{formatDateHeader()}</h2>
+          {!isTodaySelected && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setSelectedDate(new Date())}
+            >
+              Aujourd'hui
+            </Button>
+          )}
         </div>
 
         <Table>
@@ -688,33 +696,9 @@ const Attendance = () => {
 
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <div className="text-sm text-gray-500">
-            {formatDateHeader(currentPage)}
-          </div>
-          <div className="flex items-center space-x-2">
-            {!isToday && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setCurrentPage(1)}
-              >
-                Aujourd'hui
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              Plus Récent
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => p + 1)}
-            >
-              Plus Ancien
-            </Button>
+            {attendance.length} enregistrement
+            {attendance.length !== 1 ? "s" : ""} trouvé
+            {attendance.length !== 1 ? "s" : ""}
           </div>
         </div>
       </div>

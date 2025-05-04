@@ -1,48 +1,82 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
-import { 
-  Users, 
-  CreditCard, 
-  Calendar, 
-  UserCog, 
-  BarChart3, 
+import React, { useState, useEffect } from "react";
+import { NavLink } from "react-router-dom";
+import {
+  Users,
+  CreditCard,
+  Calendar,
+  UserCog,
+  BarChart3,
   Settings,
   Dumbbell,
   Menu,
   LayoutDashboard,
-  X
-} from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { cn } from '../../lib/utils';
-import { Button } from '../ui/button';
-import { supabase } from '../../lib/supabase';
+  X,
+} from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { cn } from "../../lib/utils";
+import { Button } from "../ui/button";
+import { supabase } from "../../lib/supabase";
 
 const Sidebar = () => {
   const { user } = useAuth();
   const [collapsed, setCollapsed] = React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [checkoutCount, setCheckoutCount] = useState(0);
-  
+
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', roles: ['admin', 'staff', 'manager'] },
-    { icon: Users, label: 'Membres', path: '/members', roles: ['admin', 'staff', 'manager'] },
-    { icon: CreditCard, label: 'Paiements', path: '/payments', roles: ['admin', 'staff', 'manager'] },
-    { 
-      icon: Calendar, 
-      label: 'Presence', 
-      path: '/attendance', 
-      roles: ['admin', 'staff', 'trainer'],
-      notificationCount: checkoutCount  // Using the real count from state
+    {
+      icon: LayoutDashboard,
+      label: "Dashboard",
+      path: "/dashboard",
+      roles: ["admin", "staff", "manager"],
     },
-    { icon: Dumbbell, label: 'Cours', path: '/classes', roles: ['admin', 'trainer', 'manager'] },
-    { icon: UserCog, label: 'Personnel', path: '/staff', roles: ['admin', 'manager'] },
-    { icon: BarChart3, label: 'Rapports', path: '/reports', roles: ['admin', 'manager'] },
-    { icon: Settings, label: 'Parametres', path: '/settings', roles: ['admin'] }
+    {
+      icon: Users,
+      label: "Membres",
+      path: "/members",
+      roles: ["admin", "staff", "manager"],
+    },
+    {
+      icon: CreditCard,
+      label: "Paiements",
+      path: "/payments",
+      roles: ["admin", "staff", "manager"],
+    },
+    {
+      icon: Calendar,
+      label: "Presence",
+      path: "/attendance",
+      roles: ["admin", "staff", "trainer"],
+      notificationCount: checkoutCount, // Using the real count from state
+    },
+    {
+      icon: Dumbbell,
+      label: "Cours",
+      path: "/classes",
+      roles: ["admin", "trainer", "manager"],
+    },
+    {
+      icon: UserCog,
+      label: "Personnel",
+      path: "/staff",
+      roles: ["admin", "manager"],
+    },
+    {
+      icon: BarChart3,
+      label: "Rapports & Analyses",
+      path: "/reports",
+      roles: ["admin", "manager"],
+    },
+    {
+      icon: Settings,
+      label: "Parametres",
+      path: "/settings",
+      roles: ["admin"],
+    },
   ];
 
- 
-  const filteredMenuItems = menuItems.filter(item => 
-    item.roles.includes(user?.role || '')
+  const filteredMenuItems = menuItems.filter((item) =>
+    item.roles.includes(user?.role || "")
   );
 
   useEffect(() => {
@@ -51,21 +85,19 @@ const Sidebar = () => {
         const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
 
         const { data, error } = await supabase
-          .from('attendance')
-          .select('*')
-          .is('check_out_time', null) // Not checked out
-          .lt('check_in_time', fiveHoursAgo.toISOString()) // Check-in time more than 5 hours ago
-
-    
+          .from("attendance")
+          .select("*")
+          .is("check_out_time", null) // Not checked out
+          .lt("check_in_time", fiveHoursAgo.toISOString()); // Check-in time more than 5 hours ago
 
         if (error) {
-          console.error('Error fetching overdue checkouts:', error);
+          console.error("Error fetching overdue checkouts:", error);
           return;
         }
 
         setCheckoutCount(data?.length || 0);
       } catch (error) {
-        console.error('Error in fetchOverdueCheckouts:', error);
+        console.error("Error in fetchOverdueCheckouts:", error);
       }
     };
 
@@ -101,12 +133,14 @@ const Sidebar = () => {
       )}
 
       {/* Sidebar */}
-      <div className={cn(
-        "fixed md:sticky top-0 left-0 h-[100dvh] bg-gray-900 text-white transition-all duration-300 z-40",
-        collapsed ? "w-16" : "w-64",
-        "md:translate-x-0",
-        isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-      )}>
+      <div
+        className={cn(
+          "fixed md:sticky top-0 left-0 h-[100dvh] bg-gray-900 text-white transition-all duration-300 z-40",
+          collapsed ? "w-16" : "w-64",
+          "md:translate-x-0",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+      >
         <div className="flex items-center justify-between p-4">
           {!collapsed && <h1 className="text-xl font-bold">Gym Manager</h1>}
           <Button
@@ -127,8 +161,8 @@ const Sidebar = () => {
               className={({ isActive }) =>
                 cn(
                   "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors relative",
-                  isActive 
-                    ? "bg-blue-600 text-white" 
+                  isActive
+                    ? "bg-blue-600 text-white"
                     : "text-gray-300 hover:bg-gray-800",
                   collapsed && "justify-center"
                 )
@@ -137,24 +171,22 @@ const Sidebar = () => {
               <div className="relative">
                 <item.icon size={20} />
                 {item.notificationCount > 0 && (
-                  <span className={cn(
-                    "absolute -top-2 -right-2 min-w-[20px] h-5 px-1",
-                    "flex items-center justify-center",
-                    "rounded-full text-xs font-medium",
-                    "bg-red-500 text-white",
-                    "border-2 border-gray-900",
-                    
-                    collapsed ? "-right-1" : "-right-2"
-                  )}>
+                  <span
+                    className={cn(
+                      "absolute -top-2 -right-2 min-w-[20px] h-5 px-1",
+                      "flex items-center justify-center",
+                      "rounded-full text-xs font-medium",
+                      "bg-red-500 text-white",
+                      "border-2 border-gray-900",
+
+                      collapsed ? "-right-1" : "-right-2"
+                    )}
+                  >
                     {item.notificationCount}
                   </span>
                 )}
               </div>
-              {!collapsed && (
-                <span className="flex-1">
-                  {item.label}
-                </span>
-              )}
+              {!collapsed && <span className="flex-1">{item.label}</span>}
             </NavLink>
           ))}
         </nav>
