@@ -104,9 +104,8 @@ const Dashboard = () => {
           *,
           member:members!payments_member_id_fkey(first_name, last_name)
         `
-        )
-        .order("payment_date", { ascending: false });
-
+        );
+      // Don't order by payment_date initially, we'll sort after updating statuses
       if (paymentsError) throw paymentsError;
 
       if (paymentsData) {
@@ -128,7 +127,9 @@ const Dashboard = () => {
         });
 
         // Sort payments by status priority and due date
+        // Prioritize overdue payments and sort them by how late they are (most late first)
         const sortedPayments = updatedPayments.sort((a, b) => {
+          // Define status priority (lower number = higher priority)
           const statusPriority = {
             overdue: 1,
             "due-soon": 2,
@@ -141,13 +142,34 @@ const Dashboard = () => {
           const priorityB =
             statusPriority[b.status as keyof typeof statusPriority];
 
-          if (priorityA === priorityB) {
+          // First sort by status priority
+          if (priorityA !== priorityB) {
+            return priorityA - priorityB;
+          }
+
+          // If both are overdue, sort by due date (oldest/most late first)
+          if (a.status === "overdue" && b.status === "overdue") {
+            // For overdue payments, the one with the earlier due date is more overdue
             return (
               parseISO(a.due_date).getTime() - parseISO(b.due_date).getTime()
             );
           }
-          return priorityA - priorityB;
+
+          // For other statuses with same priority, sort by due date (soonest first)
+          return (
+            parseISO(a.due_date).getTime() - parseISO(b.due_date).getTime()
+          );
         });
+
+        // Log the sorted payments for debugging
+        console.log(
+          "Sorted payments:",
+          sortedPayments.map((p) => ({
+            member: `${p.member.first_name} ${p.member.last_name}`,
+            status: p.status,
+            due_date: p.due_date,
+          }))
+        );
 
         setAllPayments(sortedPayments);
         setTotalRecords(sortedPayments.length);
@@ -525,7 +547,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
-
 
 export default Dashboard;

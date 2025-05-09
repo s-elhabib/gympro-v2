@@ -257,23 +257,27 @@ const QRAttendance = () => {
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto py-4 px-4 sm:px-6 max-w-5xl">
+      {/* Mobile-friendly header */}
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate("/attendance")}
             className="mr-2"
+            aria-label="Back to attendance"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold">QR Code Attendance</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">QR Attendance</h1>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
+      {/* Main content with responsive layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Scanner section */}
+        <div className="order-1">
           <Tabs
             value={activeTab}
             onValueChange={(value) =>
@@ -282,13 +286,19 @@ const QRAttendance = () => {
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="check-in" className="flex items-center">
-                <UserCheck className="h-4 w-4 mr-2" />
-                Check-in
+              <TabsTrigger
+                value="check-in"
+                className="flex items-center justify-center"
+              >
+                <UserCheck className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="text-sm sm:text-base">Check-in</span>
               </TabsTrigger>
-              <TabsTrigger value="check-out" className="flex items-center">
-                <LogOut className="h-4 w-4 mr-2" />
-                Check-out
+              <TabsTrigger
+                value="check-out"
+                className="flex items-center justify-center"
+              >
+                <LogOut className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="text-sm sm:text-base">Check-out</span>
               </TabsTrigger>
             </TabsList>
 
@@ -313,12 +323,15 @@ const QRAttendance = () => {
             </TabsContent>
           </Tabs>
 
+          {/* Last scanned member - shows on mobile and desktop */}
           {lastScannedMember && (
-            <Card className="mt-6">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Last Scanned Member</CardTitle>
+            <Card className="mt-4 sm:mt-6">
+              <CardHeader className="pb-2 px-4 py-3 sm:px-6 sm:py-4">
+                <CardTitle className="text-base sm:text-lg">
+                  Last Scanned Member
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 py-3 sm:px-6">
                 <div className="flex items-start">
                   {lastScannedMember.success ? (
                     <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
@@ -327,14 +340,14 @@ const QRAttendance = () => {
                   )}
                   <div>
                     <p className="font-medium">{lastScannedMember.name}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500">
                       {format(
                         lastScannedMember.timestamp,
                         "HH:mm:ss - dd/MM/yyyy"
                       )}
                     </p>
                     <p
-                      className={`text-sm ${
+                      className={`text-xs sm:text-sm ${
                         lastScannedMember.success
                           ? "text-green-600"
                           : "text-amber-600"
@@ -349,23 +362,28 @@ const QRAttendance = () => {
           )}
         </div>
 
-        <div>
+        {/* Recent activity section - shows below scanner on mobile, beside on desktop */}
+        <div className="order-2">
           <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>
-                Latest check-ins and check-outs via QR code
+            <CardHeader className="px-4 py-3 sm:px-6 sm:py-4">
+              <CardTitle className="text-base sm:text-lg">
+                Recent Activity
+              </CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Latest check-ins and check-outs
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 py-3 sm:px-6">
               {recentActivity.length === 0 ? (
-                <div className="text-center py-6 text-gray-500">
-                  <QrCode className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                  <p>No recent activity</p>
-                  <p className="text-sm">Scanned members will appear here</p>
+                <div className="text-center py-4 sm:py-6 text-gray-500">
+                  <QrCode className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm">No recent activity</p>
+                  <p className="text-xs sm:text-sm">
+                    Scanned members will appear here
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4 max-h-[300px] sm:max-h-[400px] overflow-y-auto">
                   {recentActivity.map((activity, index) => (
                     <div
                       key={`${activity.id}-${index}`}
@@ -376,11 +394,13 @@ const QRAttendance = () => {
                       ) : (
                         <LogOut className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
                       )}
-                      <div>
-                        <p className="font-medium">{activity.name}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm sm:text-base truncate">
+                          {activity.name}
+                        </p>
                         <div className="flex items-center">
                           <Clock className="h-3 w-3 text-gray-400 mr-1" />
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 truncate">
                             {format(
                               activity.timestamp,
                               "HH:mm:ss - dd/MM/yyyy"

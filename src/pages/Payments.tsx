@@ -309,25 +309,36 @@ const Payments = () => {
       setPayments([]);
 
       // Fetch all payments to determine status and sort them properly
-      let query = supabase.from("payments").select(
+      let { data, error } = await supabase.from("payments").select(
         `
           *,
           member:members!payments_member_id_fkey(first_name, last_name)
         `
       );
 
-      // Add search filter if search term exists
-      if (searchTerm) {
-        // Join the members table and filter by name
-        query = query.or(
-          `member.first_name.ilike.%${searchTerm}%,member.last_name.ilike.%${searchTerm}%`
-        );
+      if (error) {
+        console.error("Supabase query error:", error);
+        throw new Error(`Error fetching payments: ${error.message}`);
       }
 
-      // Execute the query
-      const { data, error } = await query;
+      // Filter by search term on the client side if needed
+      // This is more reliable than using the Supabase filter for nested objects
+      if (searchTerm && data) {
+        const searchTermLower = searchTerm.toLowerCase();
+        data = data.filter((payment) => {
+          const firstName = payment.member?.first_name?.toLowerCase() || "";
+          const lastName = payment.member?.last_name?.toLowerCase() || "";
+          const fullName = `${firstName} ${lastName}`;
 
-      if (error) throw error;
+          return (
+            firstName.includes(searchTermLower) ||
+            lastName.includes(searchTermLower) ||
+            fullName.includes(searchTermLower)
+          );
+        });
+      }
+
+      // No need to execute the query again as we already have the data
 
       // Enhance payments with display status
       const enhancedPayments = (data || []).map((payment) =>
@@ -368,13 +379,22 @@ const Payments = () => {
 
       // Set hasNextPage based on whether there are more items to load
       setHasNextPage(sortedPayments.length > ITEMS_PER_PAGE);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching payments:", error);
+
+      // Show a more detailed error message
       addNotification({
         title: "Erreur",
-        message: "Impossible de récupérer les paiements",
+        message: `Impossible de récupérer les paiements: ${
+          error.message || "Erreur inconnue"
+        }`,
         type: "error",
       });
+
+      // Clear the search term if it caused the error
+      if (searchTerm) {
+        setSearchTerm("");
+      }
     } finally {
       setIsLoading(false);
     }

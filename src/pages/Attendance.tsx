@@ -532,17 +532,22 @@ const Attendance = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl font-semibold text-gray-900">Présence</h1>
 
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <DatePicker
-            date={selectedDate}
-            setDate={(date) => date && setSelectedDate(date)}
-            placeholder="Sélectionner une date"
-            className="w-full md:w-auto min-w-[240px]"
-            inputClassName="bg-white shadow-sm"
-            showNavigation={true}
-          />
+        {/* Responsive layout for date picker and buttons */}
+        <div className="flex flex-col sm:flex-row w-full md:w-auto gap-4">
+          {/* Date picker in its own row on mobile */}
+          <div className="w-full sm:w-auto">
+            <DatePicker
+              date={selectedDate}
+              setDate={(date) => date && setSelectedDate(date)}
+              placeholder="Sélectionner une date"
+              className="w-full sm:min-w-[240px]"
+              inputClassName="bg-white shadow-sm"
+              showNavigation={true}
+            />
+          </div>
 
-          <div className="flex gap-2">
+          {/* Action buttons in their own row on mobile */}
+          <div className="flex gap-2 mt-2 sm:mt-0">
             <Button
               variant="outline"
               onClick={() => navigate("/qr-attendance")}

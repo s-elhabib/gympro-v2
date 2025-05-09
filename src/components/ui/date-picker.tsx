@@ -91,10 +91,11 @@ export function DatePicker({
 
   return (
     <div className={cn("flex flex-col space-y-2", className)}>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-center gap-2">
+        {/* Calendar Popover */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <div className={cn("relative flex-1", className)}>
+            <div className={cn("relative flex-1 w-full", className)}>
               <Input
                 readOnly
                 value={
@@ -129,8 +130,8 @@ export function DatePicker({
                   caption: { display: "none" }, // Hide default caption since we're using custom navigation
                   day: {
                     margin: "2px",
-                    width: "40px",
-                    height: "40px",
+                    width: "36px", // Slightly smaller on mobile
+                    height: "36px", // Slightly smaller on mobile
                     borderRadius: "8px",
                     fontSize: "0.875rem",
                     transition: "background-color 0.2s, color 0.2s",
@@ -185,8 +186,9 @@ export function DatePicker({
           </PopoverContent>
         </Popover>
 
+        {/* Navigation Buttons - Positioned below on mobile, beside on larger screens */}
         {showNavigation && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 mt-2 sm:mt-0 w-full sm:w-auto justify-center sm:justify-start">
             <Button
               variant="outline"
               size="icon"

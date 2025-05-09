@@ -188,16 +188,24 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         }
       };
 
-      // Configure the scanner for better performance and reliability
+      // Determine if we're on a mobile device
+      const isMobile = window.innerWidth < 640; // sm breakpoint in Tailwind is 640px
+
+      // Configure the scanner for better performance and reliability on mobile
       const config = {
-        fps: 15, // Higher FPS for better scanning
-        qrbox: { width: 250, height: 250 },
+        fps: 10, // Lower FPS for mobile to save battery
+        qrbox: {
+          width: isMobile ? 200 : 250,
+          height: isMobile ? 200 : 250,
+        },
         aspectRatio: 1.0,
-        // Remove the formatsToSupport property as FORMATS is not available
         disableFlip: false, // Allow mirrored QR codes
         experimentalFeatures: {
           useBarCodeDetectorIfSupported: true, // Use the built-in detector if available
         },
+        // Optimize for mobile devices
+        rememberLastUsedCamera: true,
+        showTorchButtonIfSupported: true,
       };
 
       await html5QrCode.start(
@@ -238,68 +246,94 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-xl font-bold">
-          <QrCode className="h-5 w-5 inline mr-2" />
-          QR Code Scanner
+    <Card className="w-full mx-auto">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 px-4 py-3 sm:px-6 sm:py-4">
+        <CardTitle className="text-base sm:text-lg font-bold">
+          <QrCode className="h-4 w-4 sm:h-5 sm:w-5 inline mr-1 sm:mr-2" />
+          QR Scanner
         </CardTitle>
         <Button
           variant="ghost"
           size="icon"
           onClick={handleClose}
-          className="h-8 w-8"
+          className="h-7 w-7 sm:h-8 sm:w-8"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3 w-3 sm:h-4 sm:w-4" />
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 py-3 sm:px-6 sm:py-4">
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 sm:px-4 sm:py-3 rounded text-xs sm:text-sm mb-3 sm:mb-4">
             {error}
           </div>
         )}
 
         {!scanning && !scanResult && (
-          <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg mb-4">
-            <QrCode className="h-12 w-12 text-gray-400 mb-2" />
-            <p className="text-gray-500 text-center mb-4">
-              Scan a member's QR code to record attendance
+          <div className="flex flex-col items-center justify-center p-4 sm:p-6 border-2 border-dashed border-gray-300 rounded-lg mb-3 sm:mb-4">
+            <QrCode className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-2" />
+            <p className="text-gray-500 text-center text-sm sm:text-base mb-3 sm:mb-4">
+              Scan a member's QR code
             </p>
-            <Button onClick={startScanner}>Start Scanning</Button>
+            <Button
+              onClick={startScanner}
+              size="sm"
+              className="sm:text-base sm:h-10"
+            >
+              Start Scanning
+            </Button>
           </div>
         )}
 
-        <div className={`mb-4 ${scanning ? "block" : "hidden"}`}>
+        <div className={`mb-3 sm:mb-4 ${scanning ? "block" : "hidden"}`}>
+          {/* Responsive scanner container - adjust height based on screen size */}
           <div
             id={scannerContainerId.current}
-            className="w-full h-[300px]"
+            className="w-full h-[250px] sm:h-[300px] rounded overflow-hidden"
+            style={{
+              maxWidth: "100%",
+              aspectRatio: "1/1",
+              margin: "0 auto",
+            }}
           ></div>
-          <div className="flex justify-center mt-4">
-            <Button variant="outline" onClick={stopScanner}>
-              Cancel Scanning
+          <div className="flex justify-center mt-3 sm:mt-4">
+            <Button
+              variant="outline"
+              onClick={stopScanner}
+              size="sm"
+              className="sm:text-base"
+            >
+              Cancel
             </Button>
           </div>
         </div>
 
         {loading && (
-          <div className="flex justify-center items-center p-6">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            <span className="ml-2">Loading member details...</span>
+          <div className="flex justify-center items-center p-4 sm:p-6">
+            <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-blue-500" />
+            <span className="ml-2 text-sm sm:text-base">
+              Loading member details...
+            </span>
           </div>
         )}
 
         {memberDetails && (
-          <div className="border rounded-lg p-4 mt-4">
-            <h3 className="font-semibold text-lg mb-2">
+          <div className="border rounded-lg p-3 sm:p-4 mt-3 sm:mt-4">
+            <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2">
               {memberDetails.first_name} {memberDetails.last_name}
             </h3>
-            <p className="text-gray-600 mb-1">
+            <p className="text-gray-600 text-xs sm:text-sm mb-1">
               Membership: {memberDetails.membership_type}
             </p>
-            <p className="text-gray-600 mb-1">Status: {memberDetails.status}</p>
-            <div className="flex justify-end mt-4">
-              <Button variant="outline" onClick={resetScanner} className="mr-2">
+            <p className="text-gray-600 text-xs sm:text-sm mb-1">
+              Status: {memberDetails.status}
+            </p>
+            <div className="flex justify-end mt-3 sm:mt-4">
+              <Button
+                variant="outline"
+                onClick={resetScanner}
+                size="sm"
+                className="sm:text-base"
+              >
                 Scan Another
               </Button>
             </div>
