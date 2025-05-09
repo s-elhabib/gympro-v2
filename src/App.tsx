@@ -19,6 +19,7 @@ const Members = React.lazy(() => import("./pages/Members"));
 const MemberProfile = React.lazy(() => import("./pages/MemberProfile"));
 const Payments = React.lazy(() => import("./pages/Payments"));
 const Attendance = React.lazy(() => import("./pages/Attendance"));
+const QRAttendance = React.lazy(() => import("./pages/QRAttendance"));
 const Staff = React.lazy(() => import("./pages/Staff"));
 const Reports = React.lazy(() => import("./pages/Reportsold"));
 const ReportsNew = React.lazy(() => import("./pages/ReportsNew"));
@@ -80,6 +81,7 @@ const AppRoutes = () => {
                 <Route path="/members/:id" element={<MemberProfile />} />
                 <Route path="/payments/*" element={<Payments />} />
                 <Route path="/attendance/*" element={<Attendance />} />
+                <Route path="/qr-attendance" element={<QRAttendance />} />
                 <Route path="/classes/*" element={<Classes />} />
                 <Route path="/staff/*" element={<Staff />} />
                 <Route path="/reports/*" element={<ReportsNew />} />

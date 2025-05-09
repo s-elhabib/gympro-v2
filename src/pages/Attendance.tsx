@@ -12,6 +12,7 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
+  QrCode,
 } from "lucide-react";
 import {
   format,
@@ -541,23 +542,34 @@ const Attendance = () => {
             showNavigation={true}
           />
 
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Enregistrer la Présence
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Enregistrer la Présence</DialogTitle>
-                <DialogDescription>
-                  Enregistrez les détails de présence du membre ci-dessous.
-                </DialogDescription>
-              </DialogHeader>
-              <AttendanceForm onSubmit={handleCreateAttendance} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/qr-attendance")}
+              className="flex items-center"
+            >
+              <QrCode className="h-4 w-4 mr-2" />
+              QR Code
+            </Button>
+
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Enregistrer la Présence
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Enregistrer la Présence</DialogTitle>
+                  <DialogDescription>
+                    Enregistrez les détails de présence du membre ci-dessous.
+                  </DialogDescription>
+                </DialogHeader>
+                <AttendanceForm onSubmit={handleCreateAttendance} />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
 
