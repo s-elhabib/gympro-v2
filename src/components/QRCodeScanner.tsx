@@ -88,16 +88,42 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
           // Parse the QR code data
           let qrData: QRData;
           try {
-            qrData = JSON.parse(decodedText) as QRData;
-            if (
-              !qrData.id ||
-              !qrData.type ||
-              qrData.type !== "gym-attendance"
-            ) {
-              throw new Error("Invalid QR code format");
+            // Log the raw decoded text for debugging
+            console.log("Raw QR code data:", decodedText);
+
+            // Try to parse the JSON
+            try {
+              qrData = JSON.parse(decodedText) as QRData;
+              console.log("Parsed QR data:", qrData);
+            } catch (parseError) {
+              console.error("JSON parse error:", parseError);
+
+              // Try to handle non-JSON QR codes that might contain just the ID
+              if (
+                decodedText.match(
+                  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+                )
+              ) {
+                // This looks like a UUID, let's use it directly
+                console.log("Detected UUID format, using as member ID");
+                qrData = {
+                  id: decodedText,
+                  name: "Unknown", // We'll fetch the name from the database
+                  type: "gym-attendance",
+                };
+              } else {
+                throw new Error("Could not parse QR code data as JSON or UUID");
+              }
             }
+
+            // Validate the QR data
+            if (!qrData.id) {
+              throw new Error("QR code missing member ID");
+            }
+
             setScanResult(qrData);
           } catch (err) {
+            console.error("QR code validation error:", err);
             setError(
               "Invalid QR code format. Please scan a valid gym attendance QR code."
             );
@@ -142,16 +168,36 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
 
       const qrCodeErrorCallback = (error: any) => {
         console.error("QR Code scanning error:", error);
-        // Don't set error for permission errors as they're handled by the library
-        if (error?.name !== "NotAllowedError") {
+
+        // Handle different types of errors
+        if (error?.name === "NotAllowedError") {
+          // Camera permission error - handled by the library
+          return;
+        } else if (error?.name === "NotFoundError") {
+          setError(
+            "Camera not found. Please make sure your device has a camera."
+          );
+        } else if (error?.name === "NotReadableError") {
+          setError(
+            "Camera not accessible. Please try again or use a different device."
+          );
+        } else {
+          // Generic error
+          console.log("Error details:", error);
           setError("Error scanning QR code. Please try again.");
         }
       };
 
+      // Configure the scanner for better performance and reliability
       const config = {
-        fps: 10,
+        fps: 15, // Higher FPS for better scanning
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1.0,
+        // Remove the formatsToSupport property as FORMATS is not available
+        disableFlip: false, // Allow mirrored QR codes
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true, // Use the built-in detector if available
+        },
       };
 
       await html5QrCode.start(

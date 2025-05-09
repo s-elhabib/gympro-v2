@@ -18,11 +18,16 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   showControls = true,
 }) => {
   // The QR code value will be a JSON string containing the member ID
-  const qrValue = JSON.stringify({
+  // Make sure to use a clean JSON format that can be easily parsed
+  const qrData = {
     id: memberId,
     name: memberName,
     type: "gym-attendance",
-  });
+  };
+  const qrValue = JSON.stringify(qrData);
+
+  // Log the QR code value for debugging
+  console.log("Generated QR code value:", qrValue);
 
   // Function to download QR code as SVG
   const downloadQRCode = () => {
@@ -30,9 +35,11 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     if (!svg) return;
 
     const svgData = new XMLSerializer().serializeToString(svg);
-    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const svgBlob = new Blob([svgData], {
+      type: "image/svg+xml;charset=utf-8",
+    });
     const svgUrl = URL.createObjectURL(svgBlob);
-    
+
     const downloadLink = document.createElement("a");
     downloadLink.href = svgUrl;
     downloadLink.download = `${memberName.replace(/\s+/g, "_")}_qrcode.svg`;
@@ -51,7 +58,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     if (!svg) return;
 
     const svgData = new XMLSerializer().serializeToString(svg);
-    
+
     printWindow.document.write(`
       <html>
         <head>
@@ -93,7 +100,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         </body>
       </html>
     `);
-    
+
     printWindow.document.close();
   };
 
@@ -109,7 +116,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
             title={`QR Code for ${memberName}`}
           />
         </div>
-        
+
         {showControls && (
           <div className="flex gap-2 mt-2">
             <Button

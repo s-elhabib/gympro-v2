@@ -450,16 +450,6 @@ const Dashboard = () => {
             Un aperçu des performances de votre salle de sport
           </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" size="sm" className="flex items-center">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtres
-          </Button>
-          <Button variant="outline" size="sm" className="flex items-center">
-            <Download className="h-4 w-4 mr-2" />
-            Télécharger
-          </Button>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
