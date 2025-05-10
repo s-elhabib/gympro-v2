@@ -129,6 +129,26 @@ export interface Database {
           transaction_id?: string | null
         }
       }
+      gym_settings: {
+        Row: {
+          id: string
+          auto_checkout_minutes: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          auto_checkout_minutes: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          auto_checkout_minutes?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

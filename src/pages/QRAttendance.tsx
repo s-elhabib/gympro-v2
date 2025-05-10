@@ -65,12 +65,12 @@ const QRAttendance = () => {
           timestamp: new Date(),
           success: false,
           message:
-            "Member already has an active check-in. Please use check-out instead.",
+            "Ce membre a déjà une entrée active. Veuillez utiliser la sortie à la place.",
         });
 
         addNotification({
-          title: "Already Checked In",
-          message: `${memberName} already has an active check-in. Please use check-out instead.`,
+          title: "Déjà Enregistré",
+          message: `${memberName} a déjà une entrée active. Veuillez utiliser la sortie à la place.`,
           type: "warning",
         });
 
@@ -121,7 +121,7 @@ const QRAttendance = () => {
         name: memberName,
         timestamp: new Date(),
         success: true,
-        message: "Check-in successful!",
+        message: "Entrée enregistrée avec succès !",
       });
 
       // Add to recent activity
@@ -136,8 +136,8 @@ const QRAttendance = () => {
       ]);
 
       addNotification({
-        title: "Check-in Successful",
-        message: `${memberName} has been checked in successfully.`,
+        title: "Entrée Réussie",
+        message: `L'entrée de ${memberName} a été enregistrée avec succès.`,
         type: "success",
       });
     } catch (error: any) {
@@ -148,12 +148,16 @@ const QRAttendance = () => {
         name: memberName,
         timestamp: new Date(),
         success: false,
-        message: error.message || "Failed to check in. Please try again.",
+        message:
+          error.message ||
+          "Échec de l'enregistrement d'entrée. Veuillez réessayer.",
       });
 
       addNotification({
-        title: "Check-in Failed",
-        message: error.message || "Failed to check in. Please try again.",
+        title: "Échec de l'Entrée",
+        message:
+          error.message ||
+          "Échec de l'enregistrement d'entrée. Veuillez réessayer.",
         type: "error",
       });
     }
@@ -183,12 +187,12 @@ const QRAttendance = () => {
           timestamp: new Date(),
           success: false,
           message:
-            "No active check-in found for this member. Please check in first.",
+            "Aucun enregistrement d'entrée trouvé pour ce membre. Veuillez d'abord enregistrer l'entrée.",
         });
 
         addNotification({
-          title: "No Active Check-in",
-          message: `${memberName} has no active check-in. Please check in first.`,
+          title: "Pas d'Entrée Active",
+          message: `${memberName} n'a pas d'entrée active. Veuillez d'abord enregistrer l'entrée.`,
           type: "warning",
         });
 
@@ -209,7 +213,7 @@ const QRAttendance = () => {
         name: memberName,
         timestamp: new Date(),
         success: true,
-        message: "Check-out successful!",
+        message: "Sortie enregistrée avec succès !",
       });
 
       // Add to recent activity
@@ -224,8 +228,8 @@ const QRAttendance = () => {
       ]);
 
       addNotification({
-        title: "Check-out Successful",
-        message: `${memberName} has been checked out successfully.`,
+        title: "Sortie Réussie",
+        message: `La sortie de ${memberName} a été enregistrée avec succès.`,
         type: "success",
       });
     } catch (error: any) {
@@ -236,12 +240,16 @@ const QRAttendance = () => {
         name: memberName,
         timestamp: new Date(),
         success: false,
-        message: error.message || "Failed to check out. Please try again.",
+        message:
+          error.message ||
+          "Échec de l'enregistrement de sortie. Veuillez réessayer.",
       });
 
       addNotification({
-        title: "Check-out Failed",
-        message: error.message || "Failed to check out. Please try again.",
+        title: "Échec de la Sortie",
+        message:
+          error.message ||
+          "Échec de l'enregistrement de sortie. Veuillez réessayer.",
         type: "error",
       });
     }
@@ -250,7 +258,7 @@ const QRAttendance = () => {
   // Handle QR code scan error
   const handleScanError = (errorMessage: string) => {
     addNotification({
-      title: "Scan Error",
+      title: "Erreur de Scan",
       message: errorMessage,
       type: "error",
     });
@@ -270,7 +278,9 @@ const QRAttendance = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl sm:text-2xl font-bold">QR Attendance</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">
+            Présence par QR Code
+          </h1>
         </div>
       </div>
 
@@ -291,14 +301,14 @@ const QRAttendance = () => {
                 className="flex items-center justify-center"
               >
                 <UserCheck className="h-4 w-4 mr-1 sm:mr-2" />
-                <span className="text-sm sm:text-base">Check-in</span>
+                <span className="text-sm sm:text-base">Entrée</span>
               </TabsTrigger>
               <TabsTrigger
                 value="check-out"
                 className="flex items-center justify-center"
               >
                 <LogOut className="h-4 w-4 mr-1 sm:mr-2" />
-                <span className="text-sm sm:text-base">Check-out</span>
+                <span className="text-sm sm:text-base">Sortie</span>
               </TabsTrigger>
             </TabsList>
 
@@ -328,7 +338,7 @@ const QRAttendance = () => {
             <Card className="mt-4 sm:mt-6">
               <CardHeader className="pb-2 px-4 py-3 sm:px-6 sm:py-4">
                 <CardTitle className="text-base sm:text-lg">
-                  Last Scanned Member
+                  Dernier Membre Scanné
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4 py-3 sm:px-6">
@@ -367,19 +377,19 @@ const QRAttendance = () => {
           <Card>
             <CardHeader className="px-4 py-3 sm:px-6 sm:py-4">
               <CardTitle className="text-base sm:text-lg">
-                Recent Activity
+                Activité Récente
               </CardTitle>
               <CardDescription className="text-xs sm:text-sm">
-                Latest check-ins and check-outs
+                Dernières entrées et sorties
               </CardDescription>
             </CardHeader>
             <CardContent className="px-4 py-3 sm:px-6">
               {recentActivity.length === 0 ? (
                 <div className="text-center py-4 sm:py-6 text-gray-500">
                   <QrCode className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm">No recent activity</p>
+                  <p className="text-sm">Aucune activité récente</p>
                   <p className="text-xs sm:text-sm">
-                    Scanned members will appear here
+                    Les membres scannés apparaîtront ici
                   </p>
                 </div>
               ) : (
@@ -409,8 +419,8 @@ const QRAttendance = () => {
                         </div>
                         <p className="text-xs text-gray-600 mt-1">
                           {activity.type === "check-in"
-                            ? "Checked in"
-                            : "Checked out"}
+                            ? "Entrée enregistrée"
+                            : "Sortie enregistrée"}
                         </p>
                       </div>
                     </div>

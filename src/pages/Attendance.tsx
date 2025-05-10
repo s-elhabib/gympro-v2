@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -365,7 +365,81 @@ const Attendance = () => {
     }
   };
 
-  React.useEffect(() => {
+  // Function to perform automatic checkout
+  const performAutoCheckout = useCallback(async () => {
+    try {
+      // Fetch the auto-checkout setting
+      const { data: settingsData, error: settingsError } = await supabase
+        .from("gym_settings")
+        .select("auto_checkout_minutes")
+        .limit(1);
+
+      if (settingsError) throw settingsError;
+
+      // Default to 4 hours (240 minutes) if no setting is found
+      const autoCheckoutMinutes =
+        settingsData && settingsData.length > 0
+          ? settingsData[0].auto_checkout_minutes
+          : 240;
+
+      // Calculate the cutoff time
+      const cutoffTime = new Date();
+      cutoffTime.setMinutes(cutoffTime.getMinutes() - autoCheckoutMinutes);
+
+      // Find members who need to be checked out
+      const { data: overdueAttendance, error: attendanceError } = await supabase
+        .from("attendance")
+        .select("id, member_id, check_in_time")
+        .is("check_out_time", null) // Not checked out
+        .lt("check_in_time", cutoffTime.toISOString()); // Check-in time older than cutoff
+
+      if (attendanceError) throw attendanceError;
+
+      if (overdueAttendance && overdueAttendance.length > 0) {
+        // Perform batch update to check out all overdue members
+        const { error: updateError } = await supabase
+          .from("attendance")
+          .update({ check_out_time: new Date().toISOString() })
+          .in(
+            "id",
+            overdueAttendance.map((record) => record.id)
+          );
+
+        if (updateError) throw updateError;
+
+        // If any records were updated and we're viewing today's attendance, refresh the list
+        if (isToday(selectedDate)) {
+          fetchAttendance();
+
+          // Show notification only if records were updated
+          if (overdueAttendance.length > 0) {
+            addNotification({
+              title: "Départ Automatique",
+              message: `${overdueAttendance.length} membre(s) ont été automatiquement enregistrés comme partis après ${autoCheckoutMinutes} minutes.`,
+              type: "info",
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error performing automatic checkout:", error);
+    }
+  }, [selectedDate, addNotification]);
+
+  // Set up interval for automatic checkout
+  useEffect(() => {
+    // Run once on component mount
+    performAutoCheckout();
+
+    // Set up interval (every 5 minutes)
+    const interval = setInterval(performAutoCheckout, 5 * 60 * 1000);
+
+    // Clean up interval on component unmount
+    return () => clearInterval(interval);
+  }, [performAutoCheckout]);
+
+  // Fetch attendance when selected date changes
+  useEffect(() => {
     fetchAttendance();
   }, [selectedDate]);
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Save,
   Upload,
@@ -16,6 +16,7 @@ import {
   Shield,
   Database,
   CheckCircle2,
+  Download,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -53,17 +54,17 @@ const CURRENCY_OPTIONS = [
   { value: "MAD", label: "MAD - Dirham Marocain (DH)" },
   { value: "EUR", label: "EUR - Euro (€)" },
   { value: "GBP", label: "GBP - Livre Sterling (£)" },
-  { value: "GBP", label: "GBP - British Pound (£)" },
-  { value: "CAD", label: "CAD - Canadian Dollar (C$)" },
-  { value: "AUD", label: "AUD - Australian Dollar (A$)" },
+  { value: "USD", label: "USD - Dollar Américain ($)" },
+  { value: "CAD", label: "CAD - Dollar Canadien (C$)" },
+  { value: "AUD", label: "AUD - Dollar Australien (A$)" },
 ];
 
 const LANGUAGE_OPTIONS = [
-  { value: "en", label: "English" },
-  { value: "es", label: "Español (Spanish)" },
+  { value: "en", label: "Anglais (English)" },
+  { value: "es", label: "Espagnol (Español)" },
   { value: "fr", label: "Français (French)" },
-  { value: "de", label: "Deutsch (German)" },
-  { value: "it", label: "Italiano (Italian)" },
+  { value: "de", label: "Allemand (Deutsch)" },
+  { value: "it", label: "Italien (Italiano)" },
 ];
 
 const TIMEZONE_OPTIONS = [
@@ -93,30 +94,31 @@ const THEME_OPTIONS = [
 ];
 
 const BACKUP_FREQUENCY_OPTIONS = [
-  { value: "daily", label: "Daily" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
+  { value: "daily", label: "Quotidien" },
+  { value: "weekly", label: "Hebdomadaire" },
+  { value: "monthly", label: "Mensuel" },
 ];
 
 const MEMBERSHIP_TYPE_OPTIONS = [
-  { value: "monthly", label: "Monthly" },
-  { value: "quarterly", label: "Quarterly" },
-  { value: "annual", label: "Annual" },
-  { value: "day_pass", label: "Day Pass" },
+  { value: "monthly", label: "Mensuel" },
+  { value: "quarterly", label: "Trimestriel" },
+  { value: "annual", label: "Annuel" },
+  { value: "day_pass", label: "Accès Journalier" },
 ];
 
 const GeneralSettings = ({ settings, updateSettings }) => {
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Gym Information</CardTitle>
+        <CardTitle>Informations de la Salle</CardTitle>
         <CardDescription>
-          Basic information about your gym and business details
+          Informations de base sur votre salle de sport et détails de
+          l'entreprise
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label htmlFor="gym_name">Gym Name</Label>
+          <Label htmlFor="gym_name">Nom de la Salle</Label>
           <Input
             id="gym_name"
             value={settings.gymName}
@@ -128,7 +130,7 @@ const GeneralSettings = ({ settings, updateSettings }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">Numéro de Téléphone</Label>
             <Input
               id="phone"
               value={settings.phone}
@@ -138,7 +140,7 @@ const GeneralSettings = ({ settings, updateSettings }) => {
             />
           </div>
           <div>
-            <Label htmlFor="email">Business Email</Label>
+            <Label htmlFor="email">Email Professionnel</Label>
             <Input
               id="email"
               type="email"
@@ -151,7 +153,7 @@ const GeneralSettings = ({ settings, updateSettings }) => {
         </div>
 
         <div>
-          <Label htmlFor="address">Address</Label>
+          <Label htmlFor="address">Adresse</Label>
           <Input
             id="address"
             value={settings.address}
@@ -163,7 +165,7 @@ const GeneralSettings = ({ settings, updateSettings }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="city">City</Label>
+            <Label htmlFor="city">Ville</Label>
             <Input
               id="city"
               value={settings.city}
@@ -173,7 +175,7 @@ const GeneralSettings = ({ settings, updateSettings }) => {
             />
           </div>
           <div>
-            <Label htmlFor="state">State/Province</Label>
+            <Label htmlFor="state">État/Province</Label>
             <Input
               id="state"
               value={settings.state}
@@ -186,7 +188,7 @@ const GeneralSettings = ({ settings, updateSettings }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="zipcode">Postal/Zip Code</Label>
+            <Label htmlFor="zipcode">Code Postal</Label>
             <Input
               id="zipcode"
               value={settings.zipCode}
@@ -196,7 +198,7 @@ const GeneralSettings = ({ settings, updateSettings }) => {
             />
           </div>
           <div>
-            <Label htmlFor="country">Country</Label>
+            <Label htmlFor="country">Pays</Label>
             <Input
               id="country"
               value={settings.country}
@@ -208,7 +210,7 @@ const GeneralSettings = ({ settings, updateSettings }) => {
         </div>
 
         <div>
-          <Label htmlFor="website">Website</Label>
+          <Label htmlFor="website">Site Web</Label>
           <Input
             id="website"
             value={settings.website}
@@ -225,7 +227,7 @@ const GeneralSettings = ({ settings, updateSettings }) => {
               {settings.logo ? (
                 <img
                   src={settings.logo}
-                  alt="Gym Logo"
+                  alt="Logo de la Salle"
                   className="max-h-full max-w-full"
                 />
               ) : (
@@ -234,7 +236,7 @@ const GeneralSettings = ({ settings, updateSettings }) => {
             </div>
             <Button variant="outline" size="sm">
               <Upload className="h-4 w-4 mr-2" />
-              Upload Logo
+              Télécharger Logo
             </Button>
           </div>
         </div>
@@ -247,14 +249,14 @@ const BusinessSettings = ({ settings, updateSettings }) => {
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Business Settings</CardTitle>
+        <CardTitle>Paramètres Commerciaux</CardTitle>
         <CardDescription>
-          Configure payment and financial settings
+          Configurer les paramètres de paiement et financiers
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label htmlFor="currency">Currency</Label>
+          <Label htmlFor="currency">Devise</Label>
           <select
             id="currency"
             className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
@@ -272,7 +274,7 @@ const BusinessSettings = ({ settings, updateSettings }) => {
         </div>
 
         <div>
-          <Label htmlFor="taxRate">Tax Rate (%)</Label>
+          <Label htmlFor="taxRate">Taux de TVA (%)</Label>
           <Input
             id="taxRate"
             type="number"
@@ -286,7 +288,7 @@ const BusinessSettings = ({ settings, updateSettings }) => {
         </div>
 
         <div>
-          <Label>Payment Methods</Label>
+          <Label>Méthodes de Paiement</Label>
           <div className="grid grid-cols-2 gap-2 mt-2">
             <div className="flex items-center space-x-2">
               <input
@@ -304,7 +306,7 @@ const BusinessSettings = ({ settings, updateSettings }) => {
                 className="rounded"
               />
               <label htmlFor="payment_credit" className="text-sm">
-                Credit Card
+                Carte de Crédit
               </label>
             </div>
             <div className="flex items-center space-x-2">
@@ -321,7 +323,7 @@ const BusinessSettings = ({ settings, updateSettings }) => {
                 className="rounded"
               />
               <label htmlFor="payment_cash" className="text-sm">
-                Cash
+                Espèces
               </label>
             </div>
             <div className="flex items-center space-x-2">
@@ -340,31 +342,15 @@ const BusinessSettings = ({ settings, updateSettings }) => {
                 className="rounded"
               />
               <label htmlFor="payment_bank" className="text-sm">
-                Bank Transfer
+                Virement Bancaire
               </label>
             </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="payment_paypal"
-                checked={settings.paymentMethods.includes("paypal")}
-                onChange={(e) => {
-                  const newMethods = e.target.checked
-                    ? [...settings.paymentMethods, "paypal"]
-                    : settings.paymentMethods.filter((m) => m !== "paypal");
-                  updateSettings({ ...settings, paymentMethods: newMethods });
-                }}
-                className="rounded"
-              />
-              <label htmlFor="payment_paypal" className="text-sm">
-                PayPal
-              </label>
-            </div>
+           
           </div>
         </div>
 
         <div>
-          <Label>Default Membership Types</Label>
+          <Label>Types d'Abonnement par Défaut</Label>
           <div className="space-y-4 mt-2">
             {settings.membershipTypes.map((membership, index) => (
               <div
@@ -403,7 +389,7 @@ const BusinessSettings = ({ settings, updateSettings }) => {
                     htmlFor={`membership_price_${index}`}
                     className="text-xs"
                   >
-                    Price
+                    Prix
                   </Label>
                   <Input
                     id={`membership_price_${index}`}
@@ -425,7 +411,7 @@ const BusinessSettings = ({ settings, updateSettings }) => {
                     htmlFor={`membership_duration_${index}`}
                     className="text-xs"
                   >
-                    Duration (days)
+                    Durée (jours)
                   </Label>
                   <Input
                     id={`membership_duration_${index}`}
@@ -457,7 +443,7 @@ const BusinessSettings = ({ settings, updateSettings }) => {
                 });
               }}
             >
-              Add Membership Type
+              Ajouter un Type d'Abonnement
             </Button>
           </div>
         </div>
@@ -472,12 +458,12 @@ const NotificationSettings = ({ settings, updateSettings }) => {
       <CardHeader>
         <CardTitle>Notifications</CardTitle>
         <CardDescription>
-          Configure when and how you receive notifications
+          Configurer quand et comment vous recevez des notifications
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label className="text-base">Email Notifications</Label>
+          <Label className="text-base">Notifications par Email</Label>
           <div className="space-y-2 mt-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -497,7 +483,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   className="rounded"
                 />
                 <label htmlFor="email_new_member" className="text-sm">
-                  New member sign up
+                  Inscription d'un nouveau membre
                 </label>
               </div>
             </div>
@@ -519,7 +505,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   className="rounded"
                 />
                 <label htmlFor="email_payment" className="text-sm">
-                  Payment received
+                  Paiement reçu
                 </label>
               </div>
             </div>
@@ -541,7 +527,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   className="rounded"
                 />
                 <label htmlFor="email_payment_failed" className="text-sm">
-                  Payment failed
+                  Échec de paiement
                 </label>
               </div>
             </div>
@@ -563,7 +549,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   className="rounded"
                 />
                 <label htmlFor="email_membership_expiring" className="text-sm">
-                  Membership expiring
+                  Abonnement expirant
                 </label>
               </div>
             </div>
@@ -571,7 +557,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
         </div>
 
         <div>
-          <Label className="text-base">System Notifications</Label>
+          <Label className="text-base">Notifications Système</Label>
           <div className="space-y-2 mt-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -591,7 +577,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   className="rounded"
                 />
                 <label htmlFor="system_new_member" className="text-sm">
-                  New member sign up
+                  Inscription d'un nouveau membre
                 </label>
               </div>
             </div>
@@ -613,7 +599,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   className="rounded"
                 />
                 <label htmlFor="system_payment" className="text-sm">
-                  Payment received
+                  Paiement reçu
                 </label>
               </div>
             </div>
@@ -635,7 +621,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   className="rounded"
                 />
                 <label htmlFor="system_checkin" className="text-sm">
-                  Member check-in
+                  Entrée d'un membre
                 </label>
               </div>
             </div>
@@ -657,7 +643,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   className="rounded"
                 />
                 <label htmlFor="system_capacity" className="text-sm">
-                  Class capacity reached
+                  Capacité du cours atteinte
                 </label>
               </div>
             </div>
@@ -785,49 +771,42 @@ const SecuritySettings = ({ settings, updateSettings }) => {
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Security & Backup</CardTitle>
+        <CardTitle>Sécurité & Sauvegarde</CardTitle>
         <CardDescription>
-          Manage security settings and data backup
+          Gérer les paramètres de sécurité et la sauvegarde des données
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="twoFactorAuth">Two-Factor Authentication</Label>
-          <div className="flex items-center space-x-2 mt-2">
-            <input
-              type="checkbox"
-              id="twoFactorAuth"
-              checked={settings.twoFactorAuth}
-              onChange={(e) =>
-                updateSettings({ ...settings, twoFactorAuth: e.target.checked })
-              }
-              className="rounded"
-            />
-            <label htmlFor="twoFactorAuth" className="text-sm">
-              Require two-factor authentication for all staff accounts
-            </label>
-          </div>
-        </div>
+
 
         <div>
-          <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+          <Label htmlFor="autoCheckoutMinutes">
+            Départ Automatique (minutes)
+          </Label>
           <Input
-            id="sessionTimeout"
+            id="autoCheckoutMinutes"
             type="number"
             min="5"
             max="1440"
-            value={settings.sessionTimeout}
-            onChange={(e) =>
-              updateSettings({ ...settings, sessionTimeout: e.target.value })
-            }
+            value={settings.autoCheckoutMinutes}
+            onChange={(e) => {
+              const value = parseInt(e.target.value);
+              updateSettings({
+                ...settings,
+                autoCheckoutMinutes: isNaN(value) ? 240 : value,
+              });
+            }}
           />
           <p className="text-xs text-gray-500 mt-1">
-            Automatically log out after period of inactivity
+            Temps après lequel un membre est automatiquement enregistré comme
+            parti (minimum: 5 minutes, par défaut: 240 minutes = 4 heures)
           </p>
         </div>
 
         <div>
-          <Label htmlFor="backupFrequency">Automatic Backup Frequency</Label>
+          <Label htmlFor="backupFrequency">
+            Fréquence de Sauvegarde Automatique
+          </Label>
           <select
             id="backupFrequency"
             className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
@@ -847,11 +826,11 @@ const SecuritySettings = ({ settings, updateSettings }) => {
         <div className="flex justify-between pt-2">
           <Button variant="outline" onClick={() => setShowExportDialog(true)}>
             <Database className="h-4 w-4 mr-2" />
-            Export Data
+            Exporter les Données
           </Button>
           <Button variant="outline" onClick={() => setShowImportDialog(true)}>
             <Upload className="h-4 w-4 mr-2" />
-            Import Data
+            Importer des Données
           </Button>
         </div>
       </CardContent>
@@ -860,14 +839,14 @@ const SecuritySettings = ({ settings, updateSettings }) => {
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Export Data</DialogTitle>
+            <DialogTitle>Exporter les Données</DialogTitle>
             <DialogDescription>
-              Download a backup of your gym management data
+              Télécharger une sauvegarde de vos données de gestion de salle
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Select data to export</Label>
+              <Label>Sélectionner les données à exporter</Label>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <input
@@ -877,7 +856,7 @@ const SecuritySettings = ({ settings, updateSettings }) => {
                     defaultChecked
                   />
                   <label htmlFor="export_members" className="text-sm">
-                    Members
+                    Membres
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -888,7 +867,7 @@ const SecuritySettings = ({ settings, updateSettings }) => {
                     defaultChecked
                   />
                   <label htmlFor="export_attendance" className="text-sm">
-                    Attendance
+                    Présences
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -899,7 +878,7 @@ const SecuritySettings = ({ settings, updateSettings }) => {
                     defaultChecked
                   />
                   <label htmlFor="export_payments" className="text-sm">
-                    Payments
+                    Paiements
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -910,7 +889,7 @@ const SecuritySettings = ({ settings, updateSettings }) => {
                     defaultChecked
                   />
                   <label htmlFor="export_classes" className="text-sm">
-                    Classes
+                    Cours
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -921,7 +900,7 @@ const SecuritySettings = ({ settings, updateSettings }) => {
                     defaultChecked
                   />
                   <label htmlFor="export_settings" className="text-sm">
-                    Settings
+                    Paramètres
                   </label>
                 </div>
               </div>
@@ -959,11 +938,11 @@ const SecuritySettings = ({ settings, updateSettings }) => {
                 variant="outline"
                 onClick={() => setShowExportDialog(false)}
               >
-                Cancel
+                Annuler
               </Button>
               <Button>
                 <Download className="h-4 w-4 mr-2" />
-                Export
+                Exporter
               </Button>
             </div>
           </div>
@@ -974,14 +953,14 @@ const SecuritySettings = ({ settings, updateSettings }) => {
       <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Import Data</DialogTitle>
+            <DialogTitle>Importer des Données</DialogTitle>
             <DialogDescription>
-              Import data from a backup file
+              Importer des données à partir d'un fichier de sauvegarde
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Import Options</Label>
+              <Label>Options d'Importation</Label>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <input
@@ -992,7 +971,7 @@ const SecuritySettings = ({ settings, updateSettings }) => {
                     className="rounded"
                   />
                   <label htmlFor="import_merge" className="text-sm">
-                    Merge with existing data
+                    Fusionner avec les données existantes
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1003,20 +982,21 @@ const SecuritySettings = ({ settings, updateSettings }) => {
                     className="rounded"
                   />
                   <label htmlFor="import_replace" className="text-sm">
-                    Replace existing data
+                    Remplacer les données existantes
                   </label>
                 </div>
               </div>
               <p className="text-xs text-red-500 mt-1">
-                Warning: Replacing existing data will delete all current data.
+                Attention: Le remplacement des données existantes supprimera
+                toutes les données actuelles.
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Upload File</Label>
+              <Label>Télécharger un Fichier</Label>
               <div className="border-2 border-dashed border-gray-300 rounded-md p-6 flex justify-center">
                 <Button variant="outline">
                   <Upload className="h-4 w-4 mr-2" />
-                  Select File
+                  Sélectionner un Fichier
                 </Button>
               </div>
             </div>
@@ -1025,11 +1005,11 @@ const SecuritySettings = ({ settings, updateSettings }) => {
                 variant="outline"
                 onClick={() => setShowImportDialog(false)}
               >
-                Cancel
+                Annuler
               </Button>
               <Button disabled>
                 <Upload className="h-4 w-4 mr-2" />
-                Import
+                Importer
               </Button>
             </div>
           </div>
@@ -1086,6 +1066,7 @@ const Settings = () => {
     primaryColor: "#3B82F6",
     twoFactorAuth: false,
     sessionTimeout: 30,
+    autoCheckoutMinutes: 240, // 4 hours in minutes
     backupFrequency: "daily",
   });
 
@@ -1093,12 +1074,38 @@ const Settings = () => {
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
-      // In a real app, you would save to Supabase
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulating API call
+      // Save auto-checkout minutes to gym_settings table
+      const { data: gymSettingsData, error: fetchError } = await supabase
+        .from("gym_settings")
+        .select("id")
+        .limit(1);
+
+      if (fetchError) throw fetchError;
+
+      if (gymSettingsData && gymSettingsData.length > 0) {
+        // Update existing settings
+        const { error: updateError } = await supabase
+          .from("gym_settings")
+          .update({ auto_checkout_minutes: settings.autoCheckoutMinutes })
+          .eq("id", gymSettingsData[0].id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Insert new settings if none exist
+        const { error: insertError } = await supabase
+          .from("gym_settings")
+          .insert([{ auto_checkout_minutes: settings.autoCheckoutMinutes }]);
+
+        if (insertError) throw insertError;
+      }
+
+      // In a real app, you would save other settings to Supabase as well
+      // For now, we're just simulating that part
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       addNotification({
-        title: "Settings Saved",
-        message: "Your settings have been saved successfully.",
+        title: "Paramètres Enregistrés",
+        message: "Vos paramètres ont été enregistrés avec succès.",
         type: "success",
       });
 
@@ -1107,8 +1114,9 @@ const Settings = () => {
     } catch (error) {
       console.error("Error saving settings:", error);
       addNotification({
-        title: "Error",
-        message: "Failed to save settings. Please try again.",
+        title: "Erreur",
+        message:
+          "Échec de l'enregistrement des paramètres. Veuillez réessayer.",
         type: "error",
       });
     } finally {
@@ -1121,22 +1129,55 @@ const Settings = () => {
     setIsChangesSaved(false);
   };
 
+  // Fetch settings from database on component mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        // Fetch gym settings
+        const { data: gymSettingsData, error: settingsError } = await supabase
+          .from("gym_settings")
+          .select("*")
+          .limit(1);
+
+        if (settingsError) throw settingsError;
+
+        if (gymSettingsData && gymSettingsData.length > 0) {
+          // Update settings state with database values
+          setSettings((prevSettings) => ({
+            ...prevSettings,
+            autoCheckoutMinutes: gymSettingsData[0].auto_checkout_minutes,
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+        addNotification({
+          title: "Erreur",
+          message:
+            "Échec du chargement des paramètres. Veuillez rafraîchir la page.",
+          type: "error",
+        });
+      }
+    };
+
+    fetchSettings();
+  }, [addNotification]);
+
   const sections = [
-    { id: "general", label: "General", icon: Building },
-    { id: "business", label: "Business", icon: CreditCard },
+    { id: "general", label: "Général", icon: Building },
+    { id: "business", label: "Entreprise", icon: CreditCard },
     { id: "notifications", label: "Notifications", icon: Bell },
     // Appearance section commented out for future implementation
-    // { id: "appearance", label: "Appearance", icon: Sun },
-    { id: "security", label: "Security", icon: Shield },
+    // { id: "appearance", label: "Apparence", icon: Sun },
+    { id: "security", label: "Sécurité", icon: Shield },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Manage your gym management system settings
+            Gérer les paramètres de votre système de gestion de salle
           </p>
         </div>
 
@@ -1148,17 +1189,17 @@ const Settings = () => {
           {isSaving ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Saving...
+              Enregistrement...
             </>
           ) : isChangesSaved ? (
             <>
               <CheckCircle2 className="h-4 w-4 mr-2" />
-              Saved
+              Enregistré
             </>
           ) : (
             <>
               <Save className="h-4 w-4 mr-2" />
-              Save Changes
+              Enregistrer les modifications
             </>
           )}
         </Button>
