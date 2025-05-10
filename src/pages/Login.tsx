@@ -147,17 +147,17 @@ const Login = () => {
             >
               {isLoading ? 'Connexion...' : 'Se connecter'}
             </Button>
-
+            {/*
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-700"></div>
               </div>
-              <div className="relative flex justify-center text-sm">
+               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-[#1C1C25] text-gray-400">Ou se connecter avec</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+              </div> 
+            </div>*/}
+            {/*
+              <div className="grid grid-cols-2 gap-4">
               <Button
                 type="button"
                 variant="outline"
@@ -183,16 +183,17 @@ const Login = () => {
                 Apple
               </Button>
             </div>
+            */}
 
             <p className="text-center text-gray-400 text-sm">
               Vous n'avez pas de compte ?{' '}
-              <Link to="/signup" className="text-blue-500 hover:text-blue-400">
+              <Link to="/#" className="text-blue-500 hover:text-blue-400">
                 S'inscrire
               </Link>
             </p>
           </form>
         </Form>
-
+            {/*
         <div className="text-center space-y-4">
           <div className="flex justify-center space-x-4 text-sm text-gray-400">
             <a href="#" className="hover:text-gray-300">Politique de confidentialité</a>
@@ -202,7 +203,9 @@ const Login = () => {
             © 2025 Gym Manager Inc. Tous droits réservés.
           </p>
         </div>
+         */}
       </div>
+
     </div>
   );
 }

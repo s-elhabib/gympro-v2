@@ -48,7 +48,7 @@ import {
 } from "../components/ui/alert-dialog";
 import { supabase } from "../lib/supabase";
 import { useNotifications } from "../context/NotificationContext";
-import { useAuth } from "../context/AuthContext";
+// import { useAuth } from "../context/AuthContext";
 
 const CURRENCY_OPTIONS = [
   { value: "MAD", label: "MAD - Dirham Marocain (DH)" },
@@ -93,11 +93,12 @@ const THEME_OPTIONS = [
   { value: "system", label: "System" },
 ];
 
-const BACKUP_FREQUENCY_OPTIONS = [
-  { value: "daily", label: "Quotidien" },
-  { value: "weekly", label: "Hebdomadaire" },
-  { value: "monthly", label: "Mensuel" },
-];
+// Backup frequency options commented out as they're not used
+// const BACKUP_FREQUENCY_OPTIONS = [
+//   { value: "daily", label: "Quotidien" },
+//   { value: "weekly", label: "Hebdomadaire" },
+//   { value: "monthly", label: "Mensuel" },
+// ];
 
 const MEMBERSHIP_TYPE_OPTIONS = [
   { value: "monthly", label: "Mensuel" },
@@ -106,7 +107,10 @@ const MEMBERSHIP_TYPE_OPTIONS = [
   { value: "day_pass", label: "Accès Journalier" },
 ];
 
-const GeneralSettings = ({ settings, updateSettings }) => {
+const GeneralSettings = ({
+  settings,
+  updateSettings,
+}: SettingsComponentProps) => {
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -121,9 +125,13 @@ const GeneralSettings = ({ settings, updateSettings }) => {
           <Label htmlFor="gym_name">Nom de la Salle</Label>
           <Input
             id="gym_name"
+            placeholder="Entrez le nom de votre salle"
             value={settings.gymName}
             onChange={(e) =>
-              updateSettings({ ...settings, gymName: e.target.value })
+              updateSettings.updateValue({
+                ...settings,
+                gymName: e.target.value,
+              })
             }
           />
         </div>
@@ -133,9 +141,13 @@ const GeneralSettings = ({ settings, updateSettings }) => {
             <Label htmlFor="phone">Numéro de Téléphone</Label>
             <Input
               id="phone"
+              placeholder="Entrez votre numéro de téléphone"
               value={settings.phone}
               onChange={(e) =>
-                updateSettings({ ...settings, phone: e.target.value })
+                updateSettings.updateValue({
+                  ...settings,
+                  phone: e.target.value,
+                })
               }
             />
           </div>
@@ -144,9 +156,13 @@ const GeneralSettings = ({ settings, updateSettings }) => {
             <Input
               id="email"
               type="email"
+              placeholder="Entrez votre email professionnel"
               value={settings.email}
               onChange={(e) =>
-                updateSettings({ ...settings, email: e.target.value })
+                updateSettings.updateValue({
+                  ...settings,
+                  email: e.target.value,
+                })
               }
             />
           </div>
@@ -156,9 +172,13 @@ const GeneralSettings = ({ settings, updateSettings }) => {
           <Label htmlFor="address">Adresse</Label>
           <Input
             id="address"
+            placeholder="Entrez l'adresse de votre salle"
             value={settings.address}
             onChange={(e) =>
-              updateSettings({ ...settings, address: e.target.value })
+              updateSettings.updateValue({
+                ...settings,
+                address: e.target.value,
+              })
             }
           />
         </div>
@@ -168,9 +188,13 @@ const GeneralSettings = ({ settings, updateSettings }) => {
             <Label htmlFor="city">Ville</Label>
             <Input
               id="city"
+              placeholder="Entrez la ville"
               value={settings.city}
               onChange={(e) =>
-                updateSettings({ ...settings, city: e.target.value })
+                updateSettings.updateValue({
+                  ...settings,
+                  city: e.target.value,
+                })
               }
             />
           </div>
@@ -178,9 +202,13 @@ const GeneralSettings = ({ settings, updateSettings }) => {
             <Label htmlFor="state">État/Province</Label>
             <Input
               id="state"
+              placeholder="Entrez l'état ou la province"
               value={settings.state}
               onChange={(e) =>
-                updateSettings({ ...settings, state: e.target.value })
+                updateSettings.updateValue({
+                  ...settings,
+                  state: e.target.value,
+                })
               }
             />
           </div>
@@ -191,9 +219,13 @@ const GeneralSettings = ({ settings, updateSettings }) => {
             <Label htmlFor="zipcode">Code Postal</Label>
             <Input
               id="zipcode"
+              placeholder="Entrez le code postal"
               value={settings.zipCode}
               onChange={(e) =>
-                updateSettings({ ...settings, zipCode: e.target.value })
+                updateSettings.updateValue({
+                  ...settings,
+                  zipCode: e.target.value,
+                })
               }
             />
           </div>
@@ -201,9 +233,13 @@ const GeneralSettings = ({ settings, updateSettings }) => {
             <Label htmlFor="country">Pays</Label>
             <Input
               id="country"
+              placeholder="Entrez le pays"
               value={settings.country}
               onChange={(e) =>
-                updateSettings({ ...settings, country: e.target.value })
+                updateSettings.updateValue({
+                  ...settings,
+                  country: e.target.value,
+                })
               }
             />
           </div>
@@ -213,9 +249,13 @@ const GeneralSettings = ({ settings, updateSettings }) => {
           <Label htmlFor="website">Site Web</Label>
           <Input
             id="website"
+            placeholder="Entrez l'URL de votre site web"
             value={settings.website}
             onChange={(e) =>
-              updateSettings({ ...settings, website: e.target.value })
+              updateSettings.updateValue({
+                ...settings,
+                website: e.target.value,
+              })
             }
           />
         </div>
@@ -223,228 +263,45 @@ const GeneralSettings = ({ settings, updateSettings }) => {
         <div>
           <Label htmlFor="logo">Logo</Label>
           <div className="flex items-center space-x-4 mt-2">
-            <div className="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-md flex items-center justify-center">
+            <div className="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
               {settings.logo ? (
                 <img
                   src={settings.logo}
                   alt="Logo de la Salle"
-                  className="max-h-full max-w-full"
+                  className="max-h-full max-w-full object-contain"
                 />
               ) : (
                 <Building className="h-8 w-8 text-gray-400" />
               )}
             </div>
-            <Button variant="outline" size="sm">
-              <Upload className="h-4 w-4 mr-2" />
-              Télécharger Logo
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const BusinessSettings = ({ settings, updateSettings }) => {
-  return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle>Paramètres Commerciaux</CardTitle>
-        <CardDescription>
-          Configurer les paramètres de paiement et financiers
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="currency">Devise</Label>
-          <select
-            id="currency"
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-            value={settings.currency}
-            onChange={(e) =>
-              updateSettings({ ...settings, currency: e.target.value })
-            }
-          >
-            {CURRENCY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <Label htmlFor="taxRate">Taux de TVA (%)</Label>
-          <Input
-            id="taxRate"
-            type="number"
-            min="0"
-            max="100"
-            value={settings.taxRate}
-            onChange={(e) =>
-              updateSettings({ ...settings, taxRate: e.target.value })
-            }
-          />
-        </div>
-
-        <div>
-          <Label>Méthodes de Paiement</Label>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            <div className="flex items-center space-x-2">
+            <div>
               <input
-                type="checkbox"
-                id="payment_credit"
-                checked={settings.paymentMethods.includes("credit_card")}
-                onChange={(e) => {
-                  const newMethods = e.target.checked
-                    ? [...settings.paymentMethods, "credit_card"]
-                    : settings.paymentMethods.filter(
-                        (m) => m !== "credit_card"
-                      );
-                  updateSettings({ ...settings, paymentMethods: newMethods });
-                }}
-                className="rounded"
+                type="file"
+                id="logo-upload"
+                className="hidden"
+                accept="image/*"
+                onChange={(e) => updateSettings.handleLogoUpload(e)}
               />
-              <label htmlFor="payment_credit" className="text-sm">
-                Carte de Crédit
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="payment_cash"
-                checked={settings.paymentMethods.includes("cash")}
-                onChange={(e) => {
-                  const newMethods = e.target.checked
-                    ? [...settings.paymentMethods, "cash"]
-                    : settings.paymentMethods.filter((m) => m !== "cash");
-                  updateSettings({ ...settings, paymentMethods: newMethods });
-                }}
-                className="rounded"
-              />
-              <label htmlFor="payment_cash" className="text-sm">
-                Espèces
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="payment_bank"
-                checked={settings.paymentMethods.includes("bank_transfer")}
-                onChange={(e) => {
-                  const newMethods = e.target.checked
-                    ? [...settings.paymentMethods, "bank_transfer"]
-                    : settings.paymentMethods.filter(
-                        (m) => m !== "bank_transfer"
-                      );
-                  updateSettings({ ...settings, paymentMethods: newMethods });
-                }}
-                className="rounded"
-              />
-              <label htmlFor="payment_bank" className="text-sm">
-                Virement Bancaire
-              </label>
-            </div>
-           
-          </div>
-        </div>
-
-        <div>
-          <Label>Types d'Abonnement par Défaut</Label>
-          <div className="space-y-4 mt-2">
-            {settings.membershipTypes.map((membership, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center border border-gray-200 rounded-md p-3"
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => document.getElementById("logo-upload")?.click()}
               >
-                <div>
-                  <Label
-                    htmlFor={`membership_type_${index}`}
-                    className="text-xs"
-                  >
-                    Type
-                  </Label>
-                  <select
-                    id={`membership_type_${index}`}
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-                    value={membership.type}
-                    onChange={(e) => {
-                      const newTypes = [...settings.membershipTypes];
-                      newTypes[index].type = e.target.value;
-                      updateSettings({
-                        ...settings,
-                        membershipTypes: newTypes,
-                      });
-                    }}
-                  >
-                    {MEMBERSHIP_TYPE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <Label
-                    htmlFor={`membership_price_${index}`}
-                    className="text-xs"
-                  >
-                    Prix
-                  </Label>
-                  <Input
-                    id={`membership_price_${index}`}
-                    type="number"
-                    min="0"
-                    value={membership.price}
-                    onChange={(e) => {
-                      const newTypes = [...settings.membershipTypes];
-                      newTypes[index].price = e.target.value;
-                      updateSettings({
-                        ...settings,
-                        membershipTypes: newTypes,
-                      });
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor={`membership_duration_${index}`}
-                    className="text-xs"
-                  >
-                    Durée (jours)
-                  </Label>
-                  <Input
-                    id={`membership_duration_${index}`}
-                    type="number"
-                    min="1"
-                    value={membership.duration}
-                    onChange={(e) => {
-                      const newTypes = [...settings.membershipTypes];
-                      newTypes[index].duration = e.target.value;
-                      updateSettings({
-                        ...settings,
-                        membershipTypes: newTypes,
-                      });
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                updateSettings({
-                  ...settings,
-                  membershipTypes: [
-                    ...settings.membershipTypes,
-                    { type: "monthly", price: 0, duration: 30 },
-                  ],
-                });
-              }}
-            >
-              Ajouter un Type d'Abonnement
-            </Button>
+                <Upload className="h-4 w-4 mr-2" />
+                Télécharger Logo
+              </Button>
+              {settings.logo && (
+                <button
+                  type="button"
+                  className="text-red-500 hover:text-red-700 font-bold text-xl p-2 rounded-full hover:bg-red-50 focus:outline-none mt-2"
+                  onClick={() => updateSettings.handleLogoRemove()}
+                  aria-label="Supprimer"
+                  title="Supprimer"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
@@ -452,7 +309,104 @@ const BusinessSettings = ({ settings, updateSettings }) => {
   );
 };
 
-const NotificationSettings = ({ settings, updateSettings }) => {
+import MembershipTypesManager from "../components/settings/MembershipTypesManager";
+
+const BusinessSettings = ({
+  settings,
+  updateSettings,
+}: SettingsComponentProps) => {
+  return (
+    <div className="space-y-6">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Paramètres Commerciaux</CardTitle>
+          <CardDescription>
+            Configurer les paramètres de paiement et financiers
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Méthodes de Paiement</Label>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="payment_credit"
+                  checked={settings.paymentMethods.includes("credit_card")}
+                  onChange={(e) => {
+                    const newMethods = e.target.checked
+                      ? [...settings.paymentMethods, "credit_card"]
+                      : settings.paymentMethods.filter(
+                          (m) => m !== "credit_card"
+                        );
+                    updateSettings.updateValue({
+                      ...settings,
+                      paymentMethods: newMethods,
+                    });
+                  }}
+                  className="rounded"
+                />
+                <label htmlFor="payment_credit" className="text-sm">
+                  Carte de Crédit
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="payment_cash"
+                  checked={settings.paymentMethods.includes("cash")}
+                  onChange={(e) => {
+                    const newMethods = e.target.checked
+                      ? [...settings.paymentMethods, "cash"]
+                      : settings.paymentMethods.filter((m) => m !== "cash");
+                    updateSettings.updateValue({
+                      ...settings,
+                      paymentMethods: newMethods,
+                    });
+                  }}
+                  className="rounded"
+                />
+                <label htmlFor="payment_cash" className="text-sm">
+                  Espèces
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="payment_bank"
+                  checked={settings.paymentMethods.includes("bank_transfer")}
+                  onChange={(e) => {
+                    const newMethods = e.target.checked
+                      ? [...settings.paymentMethods, "bank_transfer"]
+                      : settings.paymentMethods.filter(
+                          (m) => m !== "bank_transfer"
+                        );
+                    updateSettings.updateValue({
+                      ...settings,
+                      paymentMethods: newMethods,
+                    });
+                  }}
+                  className="rounded"
+                />
+                <label htmlFor="payment_bank" className="text-sm">
+                  Virement Bancaire
+                </label>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Membership Types are now managed in a separate component */}
+      <MembershipTypesManager />
+    </div>
+  );
+};
+
+const NotificationSettings = ({
+  settings,
+  updateSettings,
+}: SettingsComponentProps) => {
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -472,7 +426,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   id="email_new_member"
                   checked={settings.emailNotifications.newMember}
                   onChange={(e) => {
-                    updateSettings({
+                    updateSettings.updateValue({
                       ...settings,
                       emailNotifications: {
                         ...settings.emailNotifications,
@@ -494,7 +448,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   id="email_payment"
                   checked={settings.emailNotifications.payment}
                   onChange={(e) => {
-                    updateSettings({
+                    updateSettings.updateValue({
                       ...settings,
                       emailNotifications: {
                         ...settings.emailNotifications,
@@ -516,7 +470,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   id="email_payment_failed"
                   checked={settings.emailNotifications.paymentFailed}
                   onChange={(e) => {
-                    updateSettings({
+                    updateSettings.updateValue({
                       ...settings,
                       emailNotifications: {
                         ...settings.emailNotifications,
@@ -538,7 +492,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   id="email_membership_expiring"
                   checked={settings.emailNotifications.membershipExpiring}
                   onChange={(e) => {
-                    updateSettings({
+                    updateSettings.updateValue({
                       ...settings,
                       emailNotifications: {
                         ...settings.emailNotifications,
@@ -566,7 +520,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   id="system_new_member"
                   checked={settings.systemNotifications.newMember}
                   onChange={(e) => {
-                    updateSettings({
+                    updateSettings.updateValue({
                       ...settings,
                       systemNotifications: {
                         ...settings.systemNotifications,
@@ -588,7 +542,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   id="system_payment"
                   checked={settings.systemNotifications.payment}
                   onChange={(e) => {
-                    updateSettings({
+                    updateSettings.updateValue({
                       ...settings,
                       systemNotifications: {
                         ...settings.systemNotifications,
@@ -610,7 +564,7 @@ const NotificationSettings = ({ settings, updateSettings }) => {
                   id="system_checkin"
                   checked={settings.systemNotifications.checkin}
                   onChange={(e) => {
-                    updateSettings({
+                    updateSettings.updateValue({
                       ...settings,
                       systemNotifications: {
                         ...settings.systemNotifications,
@@ -764,7 +718,63 @@ const AppearanceSettings = ({ settings, updateSettings }) => {
 };
 */
 
-const SecuritySettings = ({ settings, updateSettings }) => {
+// MembershipType interface moved to src/services/membershipService.ts
+
+interface EmailNotifications {
+  newMember: boolean;
+  payment: boolean;
+  paymentFailed: boolean;
+  membershipExpiring: boolean;
+}
+
+interface SystemNotifications {
+  newMember: boolean;
+  payment: boolean;
+  checkin: boolean;
+  capacity: boolean;
+}
+
+interface SettingsData {
+  gymName: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  website: string;
+  logo: string;
+  currency: string;
+  taxRate: number;
+  paymentMethods: string[];
+  // membershipTypes removed - now managed in a separate table
+  emailNotifications: EmailNotifications;
+  systemNotifications: SystemNotifications;
+  theme: string;
+  language: string;
+  timezone: string;
+  dateFormat: string;
+  primaryColor: string;
+  twoFactorAuth: boolean;
+  sessionTimeout: number;
+  autoCheckoutMinutes: number;
+  backupFrequency?: string; // Made optional since it doesn't exist in the database
+}
+
+interface SettingsComponentProps {
+  settings: SettingsData;
+  updateSettings: {
+    updateValue: (newSettings: SettingsData) => void;
+    handleLogoUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    handleLogoRemove?: () => void;
+  };
+}
+
+const SecuritySettings = ({
+  settings,
+  updateSettings,
+}: SettingsComponentProps) => {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
 
@@ -777,8 +787,6 @@ const SecuritySettings = ({ settings, updateSettings }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-
-
         <div>
           <Label htmlFor="autoCheckoutMinutes">
             Départ Automatique (minutes)
@@ -791,7 +799,7 @@ const SecuritySettings = ({ settings, updateSettings }) => {
             value={settings.autoCheckoutMinutes}
             onChange={(e) => {
               const value = parseInt(e.target.value);
-              updateSettings({
+              updateSettings.updateValue({
                 ...settings,
                 autoCheckoutMinutes: isNaN(value) ? 240 : value,
               });
@@ -803,25 +811,7 @@ const SecuritySettings = ({ settings, updateSettings }) => {
           </p>
         </div>
 
-        <div>
-          <Label htmlFor="backupFrequency">
-            Fréquence de Sauvegarde Automatique
-          </Label>
-          <select
-            id="backupFrequency"
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-            value={settings.backupFrequency}
-            onChange={(e) =>
-              updateSettings({ ...settings, backupFrequency: e.target.value })
-            }
-          >
-            {BACKUP_FREQUENCY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Backup frequency section removed as it doesn't exist in the database */}
 
         <div className="flex justify-between pt-2">
           <Button variant="outline" onClick={() => setShowExportDialog(true)}>
@@ -1021,32 +1011,27 @@ const SecuritySettings = ({ settings, updateSettings }) => {
 
 const Settings = () => {
   const { addNotification } = useNotifications();
-  const { user } = useAuth();
+  // const { user } = useAuth(); // Uncomment if user info is needed
   const [activeSection, setActiveSection] = useState("general");
   const [isSaving, setIsSaving] = useState(false);
   const [isChangesSaved, setIsChangesSaved] = useState(false);
 
   // Default settings data
-  const [settings, setSettings] = useState({
-    gymName: "Fitness Pro Gym",
-    phone: "(123) 456-7890",
-    email: "info@fitnessprogym.com",
-    address: "123 Fitness Street",
-    city: "Gymville",
-    state: "CA",
-    zipCode: "90210",
-    country: "United States",
-    website: "www.fitnessprogym.com",
+  const [settings, setSettings] = useState<SettingsData>({
+    gymName: "",
+    phone: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "",
+    website: "",
     logo: "",
-    currency: "USD",
-    taxRate: 8.5,
+    currency: "MAD",
+    taxRate: 0,
     paymentMethods: ["credit_card", "cash", "bank_transfer"],
-    membershipTypes: [
-      { type: "monthly", price: 49.99, duration: 30 },
-      { type: "quarterly", price: 129.99, duration: 90 },
-      { type: "annual", price: 499.99, duration: 365 },
-      { type: "day_pass", price: 15, duration: 1 },
-    ],
+    // membershipTypes removed - now managed in a separate table
     emailNotifications: {
       newMember: true,
       payment: true,
@@ -1060,9 +1045,9 @@ const Settings = () => {
       capacity: true,
     },
     theme: "light",
-    language: "en",
-    timezone: "America/New_York",
-    dateFormat: "MM/DD/YYYY",
+    language: "fr",
+    timezone: "Europe/Paris",
+    dateFormat: "DD/MM/YYYY",
     primaryColor: "#3B82F6",
     twoFactorAuth: false,
     sessionTimeout: 30,
@@ -1070,11 +1055,132 @@ const Settings = () => {
     backupFrequency: "daily",
   });
 
+  // Handle logo upload
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!e.target.files || e.target.files.length === 0) {
+        return;
+      }
+
+      const file = e.target.files[0];
+      const fileExt = file.name.split(".").pop();
+      const fileName = `logo-${Date.now()}.${fileExt}`;
+
+      // Check if the file is an image
+      if (!file.type.startsWith("image/")) {
+        addNotification({
+          title: "Type de fichier invalide",
+          message: "Veuillez télécharger une image (JPG, PNG, etc.)",
+          type: "error",
+        });
+        return;
+      }
+
+      // Check if the file size is less than 2MB
+      if (file.size > 2 * 1024 * 1024) {
+        addNotification({
+          title: "Fichier trop volumineux",
+          message: "La taille du logo ne doit pas dépasser 2MB",
+          type: "error",
+        });
+        return;
+      }
+
+      // Create the bucket if it doesn't exist
+      const { error: bucketError } = await supabase.storage.getBucket(
+        "gym-logos"
+      );
+
+      if (bucketError && bucketError.message.includes("not found")) {
+        await supabase.storage.createBucket("gym-logos", {
+          public: true,
+          fileSizeLimit: 2097152, // 2MB
+          allowedMimeTypes: [
+            "image/png",
+            "image/jpeg",
+            "image/gif",
+            "image/webp",
+          ],
+        });
+      } else if (bucketError) {
+        throw bucketError;
+      }
+
+      // Upload the file
+      const { error: uploadError } = await supabase.storage
+        .from("gym-logos")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL
+      const { data: urlData } = supabase.storage
+        .from("gym-logos")
+        .getPublicUrl(fileName);
+
+      if (urlData) {
+        // Update the settings with the new logo URL
+        setSettings({ ...settings, logo: urlData.publicUrl });
+
+        addNotification({
+          title: "Logo téléchargé",
+          message: "Le logo a été téléchargé avec succès",
+          type: "success",
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      addNotification({
+        title: "Erreur",
+        message: "Échec du téléchargement du logo. Veuillez réessayer.",
+        type: "error",
+      });
+    }
+  };
+
+  // Handle logo removal
+  const handleLogoRemove = async () => {
+    try {
+      if (!settings.logo) return;
+
+      // Extract the file name from the URL
+      const fileName = settings.logo.split("/").pop();
+
+      if (fileName) {
+        // Delete the file from storage
+        const { error: deleteError } = await supabase.storage
+          .from("gym-logos")
+          .remove([fileName]);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // Update the settings
+      setSettings({ ...settings, logo: "" });
+
+      addNotification({
+        title: "Logo supprimé",
+        message: "Le logo a été supprimé avec succès",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Error removing logo:", error);
+      addNotification({
+        title: "Erreur",
+        message: "Échec de la suppression du logo. Veuillez réessayer.",
+        type: "error",
+      });
+    }
+  };
+
   // Save settings
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
-      // Save auto-checkout minutes to gym_settings table
+      // Save settings to gym_settings table
       const { data: gymSettingsData, error: fetchError } = await supabase
         .from("gym_settings")
         .select("id")
@@ -1082,11 +1188,41 @@ const Settings = () => {
 
       if (fetchError) throw fetchError;
 
+      // Log the error to help debug
+      console.log("Fetching gym settings data:", gymSettingsData);
+
+      // Prepare the settings data to save - only include fields that exist in the database
+      const settingsData = {
+        auto_checkout_minutes: settings.autoCheckoutMinutes,
+        gym_name: settings.gymName,
+        phone: settings.phone,
+        email: settings.email,
+        // Only include address-related fields if they exist in the database
+        // We'll comment these out for now since they're causing errors
+        // address: settings.address,
+        // city: settings.city,
+        // state: settings.state,
+        // zip_code: settings.zipCode,
+        // country: settings.country,
+        website: settings.website,
+        logo_url: settings.logo,
+        // currency: settings.currency, // Removed as it doesn't exist in the database
+        // tax_rate: settings.taxRate,
+        payment_methods: settings.paymentMethods,
+        // membership_types removed - now managed in a separate table
+        email_notifications: settings.emailNotifications,
+        system_notifications: settings.systemNotifications,
+        // backup_frequency: settings.backupFrequency, // Removed as it doesn't exist in the database
+        language: settings.language,
+        date_format: settings.dateFormat,
+        timezone: settings.timezone,
+      };
+
       if (gymSettingsData && gymSettingsData.length > 0) {
         // Update existing settings
         const { error: updateError } = await supabase
           .from("gym_settings")
-          .update({ auto_checkout_minutes: settings.autoCheckoutMinutes })
+          .update(settingsData)
           .eq("id", gymSettingsData[0].id);
 
         if (updateError) throw updateError;
@@ -1094,14 +1230,10 @@ const Settings = () => {
         // Insert new settings if none exist
         const { error: insertError } = await supabase
           .from("gym_settings")
-          .insert([{ auto_checkout_minutes: settings.autoCheckoutMinutes }]);
+          .insert([settingsData]);
 
         if (insertError) throw insertError;
       }
-
-      // In a real app, you would save other settings to Supabase as well
-      // For now, we're just simulating that part
-      await new Promise((resolve) => setTimeout(resolve, 500));
 
       addNotification({
         title: "Paramètres Enregistrés",
@@ -1124,9 +1256,13 @@ const Settings = () => {
     }
   };
 
-  const updateSettings = (newSettings) => {
-    setSettings(newSettings);
-    setIsChangesSaved(false);
+  const updateSettingsObject = {
+    handleLogoUpload,
+    handleLogoRemove,
+    updateValue: (newSettings) => {
+      setSettings(newSettings);
+      setIsChangesSaved(false);
+    },
   };
 
   // Fetch settings from database on component mount
@@ -1142,10 +1278,50 @@ const Settings = () => {
         if (settingsError) throw settingsError;
 
         if (gymSettingsData && gymSettingsData.length > 0) {
+          const dbSettings = gymSettingsData[0];
+
+          // Log the database settings to help debug
+          console.log("Database settings:", dbSettings);
+
           // Update settings state with database values
           setSettings((prevSettings) => ({
             ...prevSettings,
-            autoCheckoutMinutes: gymSettingsData[0].auto_checkout_minutes,
+            autoCheckoutMinutes: dbSettings.auto_checkout_minutes || 240,
+            gymName: dbSettings.gym_name || "",
+            phone: dbSettings.phone || "",
+            email: dbSettings.email || "",
+            // Keep the default values for address fields since they might not exist in the database
+            // address: dbSettings.address || "",
+            // city: dbSettings.city || "",
+            // state: dbSettings.state || "",
+            // zipCode: dbSettings.zip_code || "",
+            // country: dbSettings.country || "",
+            website: dbSettings.website || "",
+            logo: dbSettings.logo_url || "",
+            currency: "MAD", // Default value since it doesn't exist in the database
+            // taxRate: dbSettings.tax_rate || 0,
+            paymentMethods: dbSettings.payment_methods || [
+              "credit_card",
+              "cash",
+              "bank_transfer",
+            ],
+            // membershipTypes removed - now managed in a separate table
+            emailNotifications: dbSettings.email_notifications || {
+              newMember: true,
+              payment: true,
+              paymentFailed: true,
+              membershipExpiring: true,
+            },
+            systemNotifications: dbSettings.system_notifications || {
+              newMember: true,
+              payment: true,
+              checkin: false,
+              capacity: true,
+            },
+            // backupFrequency: dbSettings.backup_frequency || "daily", // Removed as it doesn't exist in the database
+            language: dbSettings.language || "fr",
+            dateFormat: dbSettings.date_format || "DD/MM/YYYY",
+            timezone: dbSettings.timezone || "Europe/Paris",
           }));
         }
       } catch (error) {
@@ -1238,33 +1414,41 @@ const Settings = () => {
           {activeSection === "general" && (
             <GeneralSettings
               settings={settings}
-              updateSettings={updateSettings}
+              updateSettings={updateSettingsObject}
             />
           )}
           {activeSection === "business" && (
             <BusinessSettings
               settings={settings}
-              updateSettings={updateSettings}
+              updateSettings={{
+                updateValue: updateSettingsObject.updateValue,
+              }}
             />
           )}
           {activeSection === "notifications" && (
             <NotificationSettings
               settings={settings}
-              updateSettings={updateSettings}
+              updateSettings={{
+                updateValue: updateSettingsObject.updateValue,
+              }}
             />
           )}
           {/* Appearance section commented out for future implementation
           {activeSection === "appearance" && (
             <AppearanceSettings
               settings={settings}
-              updateSettings={updateSettings}
+              updateSettings={{
+                updateValue: updateSettingsObject.updateValue
+              }}
             />
           )}
           */}
           {activeSection === "security" && (
             <SecuritySettings
               settings={settings}
-              updateSettings={updateSettings}
+              updateSettings={{
+                updateValue: updateSettingsObject.updateValue,
+              }}
             />
           )}
         </div>
