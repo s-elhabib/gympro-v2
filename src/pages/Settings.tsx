@@ -48,6 +48,14 @@ import {
 } from "../components/ui/alert-dialog";
 import { supabase } from "../lib/supabase";
 import { useNotifications } from "../context/NotificationContext";
+import {
+  MembershipType,
+  fetchMembershipTypes,
+  createMembershipType,
+  updateMembershipType,
+  deleteMembershipType,
+  createDefaultMembershipTypes,
+} from "../services/membershipService";
 // import { useAuth } from "../context/AuthContext";
 
 const CURRENCY_OPTIONS = [
@@ -314,6 +322,9 @@ import MembershipTypesManager from "../components/settings/MembershipTypesManage
 const BusinessSettings = ({
   settings,
   updateSettings,
+  membershipTypes,
+  onMembershipTypesChange,
+  isLoadingMembershipTypes,
 }: SettingsComponentProps) => {
   return (
     <div className="space-y-6">
@@ -398,7 +409,13 @@ const BusinessSettings = ({
       </Card>
 
       {/* Membership Types are now managed in a separate component */}
-      <MembershipTypesManager />
+      {membershipTypes && onMembershipTypesChange && (
+        <MembershipTypesManager
+          membershipTypes={membershipTypes}
+          onMembershipTypesChange={onMembershipTypesChange}
+          isLoading={isLoadingMembershipTypes}
+        />
+      )}
     </div>
   );
 };
@@ -769,6 +786,9 @@ interface SettingsComponentProps {
     handleLogoUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     handleLogoRemove?: () => void;
   };
+  membershipTypes?: MembershipType[];
+  onMembershipTypesChange?: (types: MembershipType[]) => void;
+  isLoadingMembershipTypes?: boolean;
 }
 
 const SecuritySettings = ({
@@ -1016,6 +1036,11 @@ const Settings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isChangesSaved, setIsChangesSaved] = useState(false);
 
+  // State for membership types
+  const [membershipTypes, setMembershipTypes] = useState<MembershipType[]>([]);
+  const [isLoadingMembershipTypes, setIsLoadingMembershipTypes] =
+    useState(true);
+
   // Default settings data
   const [settings, setSettings] = useState<SettingsData>({
     gymName: "",
@@ -1192,31 +1217,68 @@ const Settings = () => {
       console.log("Fetching gym settings data:", gymSettingsData);
 
       // Prepare the settings data to save - only include fields that exist in the database
-      const settingsData = {
-        auto_checkout_minutes: settings.autoCheckoutMinutes,
-        gym_name: settings.gymName,
-        phone: settings.phone,
-        email: settings.email,
-        // Only include address-related fields if they exist in the database
-        // We'll comment these out for now since they're causing errors
-        // address: settings.address,
-        // city: settings.city,
-        // state: settings.state,
-        // zip_code: settings.zipCode,
-        // country: settings.country,
-        website: settings.website,
-        logo_url: settings.logo,
-        // currency: settings.currency, // Removed as it doesn't exist in the database
-        // tax_rate: settings.taxRate,
-        payment_methods: settings.paymentMethods,
-        // membership_types removed - now managed in a separate table
-        email_notifications: settings.emailNotifications,
-        system_notifications: settings.systemNotifications,
-        // backup_frequency: settings.backupFrequency, // Removed as it doesn't exist in the database
-        language: settings.language,
-        date_format: settings.dateFormat,
-        timezone: settings.timezone,
-      };
+      // First, let's check which fields actually exist in the database
+      const { data: dbColumns, error: columnsError } = await supabase
+        .from("gym_settings")
+        .select("*")
+        .limit(1);
+
+      if (columnsError) {
+        console.error("Error fetching database columns:", columnsError);
+        throw columnsError;
+      }
+
+      // Get the column names from the first row
+      const columnNames =
+        dbColumns && dbColumns.length > 0 ? Object.keys(dbColumns[0]) : [];
+
+      console.log("Available columns in gym_settings:", columnNames);
+
+      // Create a settings object with only the fields that exist in the database
+      const settingsData: Record<string, unknown> = {};
+
+      // Map our settings fields to database column names with their values
+      const fieldMappings: Record<string, { column: string; value: unknown }> =
+        {
+          autoCheckoutMinutes: {
+            column: "auto_checkout_minutes",
+            value: settings.autoCheckoutMinutes,
+          },
+          gymName: { column: "gym_name", value: settings.gymName },
+          phone: { column: "phone", value: settings.phone },
+          email: { column: "email", value: settings.email },
+          address: { column: "address", value: settings.address },
+          city: { column: "city", value: settings.city },
+          state: { column: "state", value: settings.state },
+          zipCode: { column: "zip_code", value: settings.zipCode },
+          country: { column: "country", value: settings.country },
+          website: { column: "website", value: settings.website },
+          logo: { column: "logo_url", value: settings.logo },
+          paymentMethods: {
+            column: "payment_methods",
+            value: settings.paymentMethods,
+          },
+          emailNotifications: {
+            column: "email_notifications",
+            value: settings.emailNotifications,
+          },
+          systemNotifications: {
+            column: "system_notifications",
+            value: settings.systemNotifications,
+          },
+          language: { column: "language", value: settings.language },
+          dateFormat: { column: "date_format", value: settings.dateFormat },
+          timezone: { column: "timezone", value: settings.timezone },
+        };
+
+      // Only include fields that exist in the database
+      Object.values(fieldMappings).forEach((mapping) => {
+        if (columnNames.includes(mapping.column)) {
+          settingsData[mapping.column] = mapping.value;
+        }
+      });
+
+      console.log("Settings data to save:", settingsData);
 
       if (gymSettingsData && gymSettingsData.length > 0) {
         // Update existing settings
@@ -1235,6 +1297,68 @@ const Settings = () => {
         if (insertError) throw insertError;
       }
 
+      // Save membership types
+      // First, identify which types need to be created, updated, or deleted
+      const existingTypes = membershipTypes.filter(
+        (type) => type.id && type.id > 0
+      );
+      const newTypes = membershipTypes.filter(
+        (type) => !type.id || type.id < 0
+      );
+
+      // Get the current types from the database to identify deleted ones
+      const { data: currentTypes } = await supabase
+        .from("membership_types")
+        .select("id");
+
+      const currentTypeIds = currentTypes?.map((t) => t.id) || [];
+      const existingTypeIds = existingTypes.map((t) => t.id);
+
+      // Find IDs that exist in the database but not in our current state (these need to be deleted)
+      const deletedTypeIds = currentTypeIds.filter(
+        (id) => !existingTypeIds.includes(id)
+      );
+
+      // Process updates
+      for (const type of existingTypes) {
+        if (type.id) {
+          const { error } = await updateMembershipType(type.id, {
+            type: type.type,
+            price: type.price,
+            duration: type.duration,
+          });
+
+          if (error) {
+            console.error("Error updating membership type:", error);
+            throw error;
+          }
+        }
+      }
+
+      // Process creations
+      for (const type of newTypes) {
+        const { error } = await createMembershipType({
+          type: type.type,
+          price: type.price,
+          duration: type.duration,
+        });
+
+        if (error) {
+          console.error("Error creating membership type:", error);
+          throw error;
+        }
+      }
+
+      // Process deletions
+      for (const id of deletedTypeIds) {
+        const { error } = await deleteMembershipType(id);
+
+        if (error) {
+          console.error("Error deleting membership type:", error);
+          throw error;
+        }
+      }
+
       addNotification({
         title: "Paramètres Enregistrés",
         message: "Vos paramètres ont été enregistrés avec succès.",
@@ -1243,6 +1367,16 @@ const Settings = () => {
 
       setIsChangesSaved(true);
       setTimeout(() => setIsChangesSaved(false), 3000); // Hide checkmark after 3 seconds
+
+      // Refresh membership types from the database to get the updated list with proper IDs
+      const { data: refreshedTypes } = await supabase
+        .from("membership_types")
+        .select("*")
+        .order("id", { ascending: true });
+
+      if (refreshedTypes) {
+        setMembershipTypes(refreshedTypes);
+      }
     } catch (error) {
       console.error("Error saving settings:", error);
       addNotification({
@@ -1265,9 +1399,9 @@ const Settings = () => {
     },
   };
 
-  // Fetch settings from database on component mount
+  // Fetch settings and membership types from database on component mount
   useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchData = async () => {
       try {
         // Fetch gym settings
         const { data: gymSettingsData, error: settingsError } = await supabase
@@ -1324,6 +1458,30 @@ const Settings = () => {
             timezone: dbSettings.timezone || "Europe/Paris",
           }));
         }
+
+        // Fetch membership types
+        setIsLoadingMembershipTypes(true);
+        try {
+          // Try to fetch existing membership types
+          const types = await fetchMembershipTypes();
+
+          // If no types exist, create default ones
+          if (types.length === 0) {
+            const defaultTypes = await createDefaultMembershipTypes();
+            setMembershipTypes(defaultTypes);
+          } else {
+            setMembershipTypes(types);
+          }
+        } catch (error) {
+          console.error("Error loading membership types:", error);
+          addNotification({
+            title: "Erreur",
+            message: "Échec du chargement des types d'abonnement.",
+            type: "error",
+          });
+        } finally {
+          setIsLoadingMembershipTypes(false);
+        }
       } catch (error) {
         console.error("Error fetching settings:", error);
         addNotification({
@@ -1335,7 +1493,7 @@ const Settings = () => {
       }
     };
 
-    fetchSettings();
+    fetchData();
   }, [addNotification]);
 
   const sections = [
@@ -1423,6 +1581,9 @@ const Settings = () => {
               updateSettings={{
                 updateValue: updateSettingsObject.updateValue,
               }}
+              membershipTypes={membershipTypes}
+              onMembershipTypesChange={setMembershipTypes}
+              isLoadingMembershipTypes={isLoadingMembershipTypes}
             />
           )}
           {activeSection === "notifications" && (
