@@ -124,8 +124,7 @@ const GeneralSettings = ({
       <CardHeader>
         <CardTitle>Informations de la Salle</CardTitle>
         <CardDescription>
-          Informations de base sur votre salle de sport et détails de
-          l'entreprise
+          Informations de base sur votre salle de sport
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -330,7 +329,7 @@ const BusinessSettings = ({
     <div className="space-y-6">
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Paramètres Commerciaux</CardTitle>
+          <CardTitle> Paiements</CardTitle>
           <CardDescription>
             Configurer les paramètres de paiement et financiers
           </CardDescription>
@@ -1498,7 +1497,7 @@ const Settings = () => {
 
   const sections = [
     { id: "general", label: "Général", icon: Building },
-    { id: "business", label: "Entreprise", icon: CreditCard },
+    { id: "business", label: "Abonnements", icon: CreditCard },
     { id: "notifications", label: "Notifications", icon: Bell },
     // Appearance section commented out for future implementation
     // { id: "appearance", label: "Apparence", icon: Sun },
@@ -1546,18 +1545,18 @@ const Settings = () => {
               {sections.map((section) => (
                 <button
                   key={section.id}
-                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors text-gray-700 ${
                     activeSection === section.id
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-blue-50"
+                      : "hover:bg-gray-100"
                   }`}
                   onClick={() => setActiveSection(section.id)}
                 >
                   <section.icon
-                    className={`h-5 w-5 mr-3 ${
+                    className={`h-5 w-5 mr-3 text-gray-400 ${
                       activeSection === section.id
-                        ? "text-blue-500"
-                        : "text-gray-400"
+                        ? "text-gray-500"
+                        : ""
                     }`}
                   />
                   {section.label}

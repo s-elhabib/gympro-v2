@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -11,8 +11,8 @@ import {
 } from "../../components/ui/card";
 import { MembershipType } from "../../services/membershipService";
 
-// Membership type options for the dropdown
-const MEMBERSHIP_TYPE_OPTIONS = [
+// Default membership type options for the dropdown
+const DEFAULT_MEMBERSHIP_TYPE_OPTIONS = [
   { value: "monthly", label: "Mensuel" },
   { value: "quarterly", label: "Trimestriel" },
   { value: "annual", label: "Annuel" },
@@ -30,12 +30,33 @@ const MembershipTypesManager: React.FC<MembershipTypesManagerProps> = ({
   onMembershipTypesChange,
   isLoading = false,
 }) => {
+  // State to track all membership type options (default + custom)
+  const [membershipTypeOptions, setMembershipTypeOptions] = useState(DEFAULT_MEMBERSHIP_TYPE_OPTIONS);
+
+  // Update membership type options when membershipTypes changes
+  useEffect(() => {
+    // Get custom types from existing membership types
+    const customTypes = membershipTypes
+      .filter(type => {
+        // Only include types that aren't in the default options
+        return !DEFAULT_MEMBERSHIP_TYPE_OPTIONS.some(defaultType => defaultType.value === type.type);
+      })
+      .map(type => ({
+        value: type.type,
+        label: type.type
+      }));
+
+    // Combine default and custom types
+    if (customTypes.length > 0) {
+      setMembershipTypeOptions([...DEFAULT_MEMBERSHIP_TYPE_OPTIONS, ...customTypes]);
+    }
+  }, [membershipTypes]);
   // Add a new membership type (only to local state)
   const handleAddMembershipType = () => {
     const newType: MembershipType = {
       // Use a temporary negative ID to identify new items
       id: -Date.now(), // Negative timestamp to ensure uniqueness
-      type: "monthly",
+      type: "", // Empty string for custom type input
       price: 0,
       duration: 30,
     };
@@ -51,6 +72,7 @@ const MembershipTypesManager: React.FC<MembershipTypesManagerProps> = ({
   ) => {
     const updatedTypes = [...membershipTypes];
     const typeToUpdate = { ...updatedTypes[index] };
+    const oldType = typeToUpdate.type;
 
     // Update the field
     if (field === "price" || field === "duration") {
@@ -63,6 +85,19 @@ const MembershipTypesManager: React.FC<MembershipTypesManagerProps> = ({
     // Update locally
     updatedTypes[index] = typeToUpdate;
     onMembershipTypesChange(updatedTypes);
+
+    // If this is a new custom type, add it to the options
+    if (field === "type" &&
+        typeof value === "string" &&
+        value.trim() !== "" &&
+        !membershipTypeOptions.some(option => option.value === value)) {
+
+      // Add the new type to the options
+      setMembershipTypeOptions(prev => [
+        ...prev,
+        { value: value as string, label: value as string }
+      ]);
+    }
   };
 
   // Delete a membership type (only from local state)
@@ -111,20 +146,35 @@ const MembershipTypesManager: React.FC<MembershipTypesManagerProps> = ({
                   >
                     Type
                   </Label>
-                  <select
-                    id={`membership_type_${index}`}
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-                    value={membership.type}
-                    onChange={(e) =>
-                      handleUpdateMembershipType(index, "type", e.target.value)
-                    }
-                  >
-                    {MEMBERSHIP_TYPE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                  {membership.id && membership.id > 0 ? (
+                    // For existing membership types, show select dropdown
+                    <select
+                      id={`membership_type_${index}`}
+                      className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                      value={membership.type}
+                      onChange={(e) =>
+                        handleUpdateMembershipType(index, "type", e.target.value)
+                      }
+                    >
+                      {membershipTypeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    // For new membership types, show text input
+                    <Input
+                      id={`membership_type_${index}`}
+                      type="text"
+                      placeholder="Entrez le type d'abonnement"
+                      value={membership.type}
+                      onChange={(e) =>
+                        handleUpdateMembershipType(index, "type", e.target.value)
+                      }
+                      className="w-full"
+                    />
+                  )}
                 </div>
 
                 <div>
