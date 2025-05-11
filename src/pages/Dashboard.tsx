@@ -67,6 +67,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
   const [revenueLoading, setRevenueLoading] = React.useState(false);
+  const [selectedTimeRange, setSelectedTimeRange] = React.useState<TimeRange>("7d");
   const [stats, setStats] = React.useState({
     totalRevenue: { value: 0, trend: 0, isPositive: true },
     activeMembers: { value: 0, trend: 0, isPositive: true },
@@ -166,29 +167,61 @@ const Dashboard = () => {
         setAllPayments(sortedPayments);
         setTotalRecords(sortedPayments.length);
 
-        // Calculate total revenue and trend
+        // Calculate total revenue based on selected time range
+        const timeRange = getTimeRangeDate(selectedTimeRange);
         const totalRevenue = sortedPayments
-          .filter((p) => p.status === "paid")
+          .filter((p) => {
+            const paymentDate = new Date(p.payment_date);
+            return p.status === "paid" && 
+                   isAfter(paymentDate, timeRange.start) && 
+                   isBefore(paymentDate, timeRange.end);
+          })
           .reduce((sum, p) => sum + p.amount, 0);
+
+        // Calculate last period revenue for trend
+        const periodLength = differenceInDays(timeRange.end, timeRange.start);
+        const previousPeriodStart = subDays(timeRange.start, periodLength);
+        const previousPeriodEnd = timeRange.start;
+
+        const previousPeriodRevenue = sortedPayments
+          .filter((p) => {
+            const paymentDate = new Date(p.payment_date);
+            return p.status === "paid" && 
+                   isAfter(paymentDate, previousPeriodStart) && 
+                   isBefore(paymentDate, previousPeriodEnd);
+          })
+          .reduce((sum, p) => sum + p.amount, 0);
+
+        // Calculer le revenu du mois dernier
+        const lastMonth = new Date();
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+        const startOfLastMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
+        const endOfLastMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
 
         const lastMonthRevenue = sortedPayments
           .filter((p) => {
             const date = new Date(p.payment_date);
-            const lastMonth = new Date();
-            lastMonth.setMonth(lastMonth.getMonth() - 1);
-            return date >= lastMonth && p.status === "paid";
+            return (
+              date >= startOfLastMonth && 
+              date <= endOfLastMonth && 
+              p.status === "paid"
+            );
           })
           .reduce((sum, p) => sum + p.amount, 0);
+
+        // Calculer le revenu du mois précédent
+        const twoMonthsAgo = new Date(lastMonth);
+        twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 1);
+        const startOfTwoMonthsAgo = new Date(twoMonthsAgo.getFullYear(), twoMonthsAgo.getMonth(), 1);
+        const endOfTwoMonthsAgo = new Date(twoMonthsAgo.getFullYear(), twoMonthsAgo.getMonth() + 1, 0);
 
         const previousMonthRevenue = sortedPayments
           .filter((p) => {
             const date = new Date(p.payment_date);
-            const twoMonthsAgo = new Date();
-            twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-            const lastMonth = new Date();
-            lastMonth.setMonth(lastMonth.getMonth() - 1);
             return (
-              date >= twoMonthsAgo && date < lastMonth && p.status === "paid"
+              date >= startOfTwoMonthsAgo && 
+              date <= endOfTwoMonthsAgo && 
+              p.status === "paid"
             );
           })
           .reduce((sum, p) => sum + p.amount, 0);
@@ -484,10 +517,12 @@ const Dashboard = () => {
   };
 
   React.useEffect(() => {
-    fetchDashboardData();
-    // Load 30-day revenue data by default
-    handleTimeRangeChange('30d');
-  }, []);
+    if (user) {
+      fetchDashboardData();
+      // Load 30-day revenue data by default
+      handleTimeRangeChange('30d');
+    }
+  }, [user, selectedTimeRange]);
 
   React.useEffect(() => {
     // If sort config changes, re-sort all payments
@@ -614,7 +649,6 @@ const Dashboard = () => {
           format="currency"
           showTimeRangeFilter={true}
           onTimeRangeChange={handleTimeRangeChange}
-          isLocked={!isAdmin}
           isLoading={revenueLoading}
         />
         <StatCard

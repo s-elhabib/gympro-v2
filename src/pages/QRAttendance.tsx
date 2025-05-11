@@ -49,7 +49,28 @@ const QRAttendance = () => {
   // Handle successful QR code scan for check-in
   const handleCheckInSuccess = async (memberId: string, memberName: string) => {
     try {
-      // Check if member already has an active check-in
+      // Vérifier d'abord si le membre a un paiement valide
+      const memberStatus = await checkMemberPaymentStatus(memberId);
+
+      if (!memberStatus.hasValidPayment) {
+        setLastScannedMember({
+          id: memberId,
+          name: memberName,
+          timestamp: new Date(),
+          success: false,
+          message: "Paiement non valide. Le membre doit avoir un paiement à jour pour accéder à la salle.",
+        });
+
+        addNotification({
+          title: "Accès Refusé",
+          message: "Le membre doit avoir un paiement à jour pour accéder à la salle.",
+          type: "error",
+        });
+
+        return;
+      }
+
+      // Vérifier si le membre a déjà une entrée active
       const { data: existingCheckIn, error: checkError } = await supabase
         .from("attendance")
         .select("id")
@@ -74,27 +95,6 @@ const QRAttendance = () => {
           title: "Déjà Enregistré",
           message: `${memberName} a déjà une entrée active. Veuillez utiliser la sortie à la place.`,
           type: "warning",
-        });
-
-        return;
-      }
-
-      // Check if member has a valid payment
-      const memberStatus = await checkMemberPaymentStatus(memberId);
-
-      if (!memberStatus.hasValidPayment) {
-        setLastScannedMember({
-          id: memberId,
-          name: memberName,
-          timestamp: new Date(),
-          success: false,
-          message: "Impossible d'enregistrer la présence. Le membre doit avoir un paiement valide pour enregistrer la présence.",
-        });
-
-        addNotification({
-          title: "Impossible d'Enregistrer la Présence",
-          message: "Le membre doit avoir un paiement valide pour enregistrer la présence.",
-          type: "error",
         });
 
         return;
