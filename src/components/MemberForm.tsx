@@ -29,23 +29,41 @@ import {
 const getMembershipTypeLabel = (type: string): string => {
   switch (type) {
     case "monthly":
+    case "basic": // Map old enum value to new type
       return "Mensuel";
     case "quarterly":
+    case "premium": // Map old enum value to new type
       return "Trimestriel";
     case "annual":
+    case "platinum": // Map old enum value to new type
       return "Annuel";
     case "day_pass":
       return "Accès Journalier";
-    case "basic":
-      return "Basique";
-    case "premium":
-      return "Premium";
-    case "platinum":
-      return "Platinum";
     default:
       // For custom types, just capitalize the first letter and replace underscores with spaces
       return type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, " ");
   }
+};
+
+// Helper function to map old enum values to new membership types
+const mapOldEnumToNewType = (oldType: string): string => {
+  switch (oldType) {
+    case "basic":
+      return "monthly";
+    case "premium":
+      return "quarterly";
+    case "platinum":
+      return "annual";
+    default:
+      return oldType;
+  }
+};
+
+// Helper function to map new membership types to old enum values
+// Now that we've changed the database column to text, we don't need to map to enum values
+const mapNewTypeToOldEnum = (newType: string): string => {
+  // Just return the new type as is - no mapping needed
+  return newType;
 };
 
 interface MemberFormProps {
@@ -90,21 +108,7 @@ const MemberForm = ({
           return acc;
         }, [] as MembershipType[]);
 
-        // Ensure we have the basic, premium, platinum types for backward compatibility
-        const defaultTypes = ['basic', 'premium', 'platinum'];
-        const existingTypeValues = uniqueTypes.map(t => t.type);
-
-        // Add any missing default types
-        defaultTypes.forEach(defaultType => {
-          if (!existingTypeValues.includes(defaultType)) {
-            uniqueTypes.push({
-              id: -Date.now() - Math.floor(Math.random() * 1000), // Generate a unique negative ID
-              type: defaultType,
-              price: 0,
-              duration: defaultType === 'basic' ? 30 : defaultType === 'premium' ? 90 : 365
-            });
-          }
-        });
+        // No longer adding legacy membership types
 
         setMembershipTypes(uniqueTypes);
       } catch (error) {
@@ -134,13 +138,33 @@ const MemberForm = ({
 
   // Update the form's default value for membershipType when membershipTypes are loaded
   useEffect(() => {
-    if (membershipTypes.length > 0 && !form.getValues("membershipType")) {
-      form.setValue("membershipType", membershipTypes[0].type);
+    if (membershipTypes.length > 0) {
+      // If we have a default value, map it from old enum to new type for display
+      if (defaultValues?.membershipType) {
+        const mappedType = mapOldEnumToNewType(defaultValues.membershipType);
+        // Check if the mapped type exists in our membership types
+        const typeExists = membershipTypes.some(t => t.type === mappedType);
+        if (typeExists) {
+          // For display purposes only - we'll convert back when submitting
+          form.setValue("membershipType", mappedType);
+        } else {
+          // If the mapped type doesn't exist, use the first available type
+          form.setValue("membershipType", membershipTypes[0].type);
+        }
+      } else if (!form.getValues("membershipType")) {
+        // If no default value, use the first available type
+        form.setValue("membershipType", membershipTypes[0].type);
+      }
     }
-  }, [membershipTypes, form]);
+  }, [membershipTypes, form, defaultValues]);
 
   const handleSubmit = (data: MemberFormValues) => {
-    onSubmit(data);
+    // Map the selected membership type back to the enum value expected by the database
+    const mappedData = {
+      ...data,
+      membershipType: mapNewTypeToOldEnum(data.membershipType)
+    };
+    onSubmit(mappedData);
   };
 
   return (
@@ -233,18 +257,21 @@ const MemberForm = ({
                         Aucun type d'abonnement disponible
                       </SelectItem>
                     ) : (
-                      membershipTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.type}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {getMembershipTypeLabel(type.type)}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {type.price} MAD - {type.duration} jours
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))
+                      // Filter out any old enum values that might have been added
+                      membershipTypes
+                        .filter(type => !["basic", "premium", "platinum"].includes(type.type))
+                        .map((type) => (
+                          <SelectItem key={type.id} value={type.type}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {getMembershipTypeLabel(type.type)}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {type.price} MAD - {type.duration} jours
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))
                     )}
                   </SelectContent>
                 </Select>

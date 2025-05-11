@@ -132,29 +132,33 @@ const ImportMembersForm = () => {
         row["Membership Type"] ||
         "";
 
-      // Map the membership type to the correct enum value
-      let membershipType = "basic"; // Default value
+      // Use the membership type as is, or map to standard types
+      let membershipType = "monthly"; // Default value
       if (rawMembershipType) {
         const lowerCaseType = rawMembershipType.toLowerCase();
         if (
-          lowerCaseType === "premium" ||
           lowerCaseType === "mensuel" ||
-          lowerCaseType === "monthly"
+          lowerCaseType === "monthly" ||
+          lowerCaseType === "basic"
         ) {
-          membershipType = "premium";
-        } else if (
-          lowerCaseType === "platinum" ||
-          lowerCaseType === "annuel" ||
-          lowerCaseType === "annual"
-        ) {
-          membershipType = "platinum";
+          membershipType = "monthly";
         } else if (
           lowerCaseType === "trimestriel" ||
-          lowerCaseType === "quarterly"
+          lowerCaseType === "quarterly" ||
+          lowerCaseType === "premium"
         ) {
-          membershipType = "premium"; // Map quarterly to premium as a fallback
-        } else if (lowerCaseType === "basic" || lowerCaseType === "standard") {
-          membershipType = "basic";
+          membershipType = "quarterly";
+        } else if (
+          lowerCaseType === "annuel" ||
+          lowerCaseType === "annual" ||
+          lowerCaseType === "platinum"
+        ) {
+          membershipType = "annual";
+        } else if (lowerCaseType === "day_pass" || lowerCaseType === "journalier") {
+          membershipType = "day_pass";
+        } else {
+          // Use the raw value if it doesn't match any known type
+          membershipType = rawMembershipType;
         }
       }
 
@@ -257,29 +261,33 @@ const ImportMembersForm = () => {
         obj["Membership Type"] ||
         "";
 
-      // Map the membership type to the correct enum value
-      let membershipType = "basic"; // Default value
+      // Use the membership type as is, or map to standard types
+      let membershipType = "monthly"; // Default value
       if (rawMembershipType) {
         const lowerCaseType = rawMembershipType.toLowerCase();
         if (
-          lowerCaseType === "premium" ||
           lowerCaseType === "mensuel" ||
-          lowerCaseType === "monthly"
+          lowerCaseType === "monthly" ||
+          lowerCaseType === "basic"
         ) {
-          membershipType = "premium";
-        } else if (
-          lowerCaseType === "platinum" ||
-          lowerCaseType === "annuel" ||
-          lowerCaseType === "annual"
-        ) {
-          membershipType = "platinum";
+          membershipType = "monthly";
         } else if (
           lowerCaseType === "trimestriel" ||
-          lowerCaseType === "quarterly"
+          lowerCaseType === "quarterly" ||
+          lowerCaseType === "premium"
         ) {
-          membershipType = "premium"; // Map quarterly to premium as a fallback
-        } else if (lowerCaseType === "basic" || lowerCaseType === "standard") {
-          membershipType = "basic";
+          membershipType = "quarterly";
+        } else if (
+          lowerCaseType === "annuel" ||
+          lowerCaseType === "annual" ||
+          lowerCaseType === "platinum"
+        ) {
+          membershipType = "annual";
+        } else if (lowerCaseType === "day_pass" || lowerCaseType === "journalier") {
+          membershipType = "day_pass";
+        } else {
+          // Use the raw value if it doesn't match any known type
+          membershipType = rawMembershipType;
         }
       }
 
@@ -437,7 +445,7 @@ const ImportMembersForm = () => {
       "Doe",
       "john.doe@example.com",
       "0612345678",
-      "premium",
+      "monthly",
       "2023-01-15",
       "active",
       "Notes optionnelles",

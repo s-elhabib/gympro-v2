@@ -224,6 +224,7 @@ const SimplePaymentsList: React.FC<SimplePaymentsListProps> = ({
                             <PaymentForm
                               defaultValues={{
                                 memberId: selectedPayment.member_id,
+                                // membershipType will be fetched by the form when member is loaded
                                 amount: selectedPayment.amount,
                                 paymentDate: new Date(
                                   selectedPayment.payment_date
@@ -255,17 +256,17 @@ const SimplePaymentsList: React.FC<SimplePaymentsListProps> = ({
           ))}
         </TableBody>
       </Table>
-      
+
       {hasNextPage && (
-        <div 
-          ref={loaderRef} 
+        <div
+          ref={loaderRef}
           className="flex justify-center items-center p-4"
         >
           {isLoadingMore ? (
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           ) : (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => loadMoreItems()}
             >
               Charger plus

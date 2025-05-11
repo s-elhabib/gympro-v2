@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Search, CalendarPlus } from "lucide-react";
@@ -54,6 +54,7 @@ import { supabase } from "../lib/supabase";
 import MemberSearch from "../components/MemberSearch";
 import { searchByFullName } from "../lib/utils";
 import { useNotifications } from "../context/NotificationContext";
+import { MembershipType, fetchMembershipTypes } from "../services/membershipService";
 
 const ITEMS_PER_PAGE = 20; // Number of items to load at once
 
@@ -66,10 +67,16 @@ const PaymentForm = ({
   onSubmit: (data: PaymentFormValues) => void;
   isEditing?: boolean;
 }) => {
+  const { addNotification } = useNotifications();
+  const [membershipTypes, setMembershipTypes] = useState<MembershipType[]>([]);
+  const [selectedMemberType, setSelectedMemberType] = useState<string | null>(null);
+  const [isLoadingMembershipTypes, setIsLoadingMembershipTypes] = useState(false);
+
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
       memberId: "",
+      membershipType: undefined, // Use undefined instead of empty string
       amount: 0,
       paymentDate: new Date(),
       dueDate: new Date(),
@@ -80,8 +87,330 @@ const PaymentForm = ({
     },
   });
 
-  const handleMemberSelect = (member: { id: string }) => {
+  // Load membership types on component mount
+  useEffect(() => {
+    const loadMembershipTypes = async () => {
+      console.log("Loading membership types...");
+      setIsLoadingMembershipTypes(true);
+      try {
+        const types = await fetchMembershipTypes();
+        console.log("Fetched membership types:", types);
+        setMembershipTypes(types);
+
+        // If we're editing and have a memberId, fetch the member's membership type
+        if (isEditing && defaultValues?.memberId) {
+          console.log("Editing mode, fetching member data for:", defaultValues.memberId);
+          try {
+            const { data: memberData, error } = await supabase
+              .from("members")
+              .select("membership_type")
+              .eq("id", defaultValues.memberId)
+              .single();
+
+            console.log("Member data for editing:", memberData);
+            if (error) throw error;
+
+            if (memberData && memberData.membership_type) {
+              console.log("Setting membership type for editing:", memberData.membership_type);
+
+              // Find the membership type in our list
+              const membershipType = types.find(
+                (type) => type.type === memberData.membership_type
+              );
+
+              if (membershipType) {
+                // If the membership type exists in our list, use it
+                setSelectedMemberType(memberData.membership_type);
+                form.setValue("membershipType", memberData.membership_type);
+                console.log("Setting amount for editing:", membershipType.price);
+                form.setValue("amount", membershipType.price);
+              } else {
+                // If the membership type doesn't exist in our list, check if it's one of the old types
+                console.log("Membership type not found in list for editing, checking for equivalent type");
+
+                // Try to find an equivalent type based on duration
+                let equivalentType = null;
+
+                // Map old types to new types
+                if (memberData.membership_type === "basic" || memberData.membership_type === "premium" || memberData.membership_type === "platinum") {
+                  // For old types, try to find an equivalent based on common naming
+                  if (memberData.membership_type === "basic") {
+                    // Try to find monthly
+                    equivalentType = types.find(t => t.type === "monthly");
+                  } else if (memberData.membership_type === "premium") {
+                    // Try to find quarterly
+                    equivalentType = types.find(t => t.type === "quarterly");
+                  } else if (memberData.membership_type === "platinum") {
+                    // Try to find annual
+                    equivalentType = types.find(t => t.type === "annual");
+                  }
+                }
+
+                // If we found an equivalent type, use it
+                if (equivalentType) {
+                  console.log("Found equivalent type for editing:", equivalentType.type);
+                  setSelectedMemberType(equivalentType.type);
+                  form.setValue("membershipType", equivalentType.type);
+                  console.log("Setting amount for editing:", equivalentType.price);
+                  form.setValue("amount", equivalentType.price);
+
+                  // Update the member's membership type in the database
+                  console.log("Updating member's membership type to equivalent type for editing");
+                  const { error: updateError } = await supabase
+                    .from("members")
+                    .update({ membership_type: equivalentType.type })
+                    .eq("id", defaultValues.memberId);
+
+                  if (updateError) {
+                    console.error("Error updating member's membership type for editing:", updateError);
+                  } else {
+                    console.log("Member's membership type updated successfully to equivalent type for editing");
+                    addNotification({
+                      title: "Type d'abonnement mis à jour",
+                      message: `Le type d'abonnement du membre a été mis à jour vers ${equivalentType.type}`,
+                      type: "info",
+                    });
+                  }
+                } else {
+                  // If no equivalent type found, use the first available type
+                  console.log("No equivalent type found for editing, using first available type");
+                  if (types.length > 0) {
+                    const firstType = types[0];
+                    console.log("Using first available type for editing:", firstType.type);
+                    setSelectedMemberType(firstType.type);
+                    form.setValue("membershipType", firstType.type);
+                    console.log("Setting amount for editing:", firstType.price);
+                    form.setValue("amount", firstType.price);
+
+                    // Update the member's membership type in the database
+                    console.log("Updating member's membership type in the database for editing");
+                    const { error: updateError } = await supabase
+                      .from("members")
+                      .update({ membership_type: firstType.type })
+                      .eq("id", defaultValues.memberId);
+
+                    if (updateError) {
+                      console.error("Error updating member's membership type for editing:", updateError);
+                    } else {
+                      console.log("Member's membership type updated successfully for editing");
+                      addNotification({
+                        title: "Type d'abonnement mis à jour",
+                        message: `Le type d'abonnement du membre a été mis à jour vers ${firstType.type}`,
+                        type: "info",
+                      });
+                    }
+                  }
+                }
+              }
+            }
+          } catch (memberError) {
+            console.error("Error fetching member data:", memberError);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading membership types:", error);
+        addNotification({
+          title: "Erreur",
+          message: "Impossible de charger les types d'abonnement",
+          type: "error",
+        });
+      } finally {
+        setIsLoadingMembershipTypes(false);
+      }
+    };
+
+    loadMembershipTypes();
+  }, [addNotification, isEditing, defaultValues, form]);
+
+  // Update form when selectedMemberType changes
+  useEffect(() => {
+    if (selectedMemberType && selectedMemberType.trim() !== '') {
+      console.log("selectedMemberType changed to:", selectedMemberType);
+      form.setValue("membershipType", selectedMemberType);
+
+      // Find the membership type and update the amount
+      const membershipType = membershipTypes.find((t) => t.type === selectedMemberType);
+      if (membershipType) {
+        console.log("Setting amount from selectedMemberType effect:", membershipType.price);
+        form.setValue("amount", membershipType.price);
+      }
+    }
+  }, [selectedMemberType, membershipTypes, form]);
+
+  // Fetch member's current membership type when a member is selected
+  const handleMemberSelect = async (member: { id: string }) => {
+    console.log("Member selected:", member.id);
     form.setValue("memberId", member.id);
+
+    try {
+      // Fetch the member's current membership type
+      const { data: memberData, error } = await supabase
+        .from("members")
+        .select("membership_type")
+        .eq("id", member.id)
+        .single();
+
+      console.log("Member data fetched:", memberData);
+      if (error) {
+        console.error("Error fetching member data:", error);
+        throw error;
+      }
+
+      if (memberData && memberData.membership_type) {
+        console.log("Setting membership type:", memberData.membership_type);
+
+        // If membership types aren't loaded yet, fetch them first
+        let typesToUse = membershipTypes;
+        console.log("Current membership types:", membershipTypes);
+        if (membershipTypes.length === 0) {
+          try {
+            console.log("Fetching membership types...");
+            setIsLoadingMembershipTypes(true);
+            const types = await fetchMembershipTypes();
+            console.log("Fetched membership types:", types);
+            setMembershipTypes(types);
+            typesToUse = types;
+          } catch (typeError) {
+            console.error("Error loading membership types:", typeError);
+          } finally {
+            setIsLoadingMembershipTypes(false);
+          }
+        }
+
+        // Find the membership type in our list
+        const membershipType = typesToUse.find(
+          (type) => type.type === memberData.membership_type
+        );
+        console.log("Found membership type:", membershipType);
+
+        if (membershipType) {
+          // If the membership type exists in our list, use it
+          setSelectedMemberType(memberData.membership_type);
+          form.setValue("membershipType", memberData.membership_type);
+          console.log("Setting amount to:", membershipType.price);
+          form.setValue("amount", membershipType.price);
+        } else {
+          // If the membership type doesn't exist in our list, check if it's one of the old types
+          console.log("Membership type not found in list, checking for equivalent type");
+
+          // Try to find an equivalent type based on duration
+          let equivalentType = null;
+
+          // Map old types to new types
+          if (memberData.membership_type === "basic" || memberData.membership_type === "premium" || memberData.membership_type === "platinum") {
+            // For old types, try to find an equivalent based on common naming
+            if (memberData.membership_type === "basic") {
+              // Try to find monthly
+              equivalentType = typesToUse.find(t => t.type === "monthly");
+            } else if (memberData.membership_type === "premium") {
+              // Try to find quarterly
+              equivalentType = typesToUse.find(t => t.type === "quarterly");
+            } else if (memberData.membership_type === "platinum") {
+              // Try to find annual
+              equivalentType = typesToUse.find(t => t.type === "annual");
+            }
+          }
+
+          // If we found an equivalent type, use it
+          if (equivalentType) {
+            console.log("Found equivalent type:", equivalentType.type);
+            setSelectedMemberType(equivalentType.type);
+            form.setValue("membershipType", equivalentType.type);
+            console.log("Setting amount to:", equivalentType.price);
+            form.setValue("amount", equivalentType.price);
+
+            // Update the member's membership type in the database
+            console.log("Updating member's membership type to equivalent type");
+            const { error: updateError } = await supabase
+              .from("members")
+              .update({ membership_type: equivalentType.type })
+              .eq("id", member.id);
+
+            if (updateError) {
+              console.error("Error updating member's membership type:", updateError);
+            } else {
+              console.log("Member's membership type updated successfully to equivalent type");
+              addNotification({
+                title: "Type d'abonnement mis à jour",
+                message: `Le type d'abonnement du membre a été mis à jour vers ${equivalentType.type}`,
+                type: "info",
+              });
+            }
+          } else {
+            // If no equivalent type found, use the first available type
+            console.log("No equivalent type found, using first available type");
+            if (typesToUse.length > 0) {
+              const firstType = typesToUse[0];
+              console.log("Using first available type:", firstType.type);
+              setSelectedMemberType(firstType.type);
+              form.setValue("membershipType", firstType.type);
+              console.log("Setting amount to:", firstType.price);
+              form.setValue("amount", firstType.price);
+
+              // Update the member's membership type in the database
+              console.log("Updating member's membership type in the database");
+              const { error: updateError } = await supabase
+                .from("members")
+                .update({ membership_type: firstType.type })
+                .eq("id", member.id);
+
+              if (updateError) {
+                console.error("Error updating member's membership type:", updateError);
+              } else {
+                console.log("Member's membership type updated successfully");
+                addNotification({
+                  title: "Type d'abonnement mis à jour",
+                  message: `Le type d'abonnement du membre a été mis à jour vers ${firstType.type}`,
+                  type: "info",
+                });
+              }
+            } else {
+              console.log("No membership types available");
+              addNotification({
+                title: "Erreur",
+                message: "Aucun type d'abonnement disponible",
+                type: "error",
+              });
+            }
+          }
+        }
+      } else {
+        console.log("No membership type found for member");
+      }
+    } catch (error) {
+      console.error("Error in handleMemberSelect:", error);
+    }
+  };
+
+  // Update amount when membership type changes
+  const handleMembershipTypeChange = (type: string) => {
+    // Don't process empty strings
+    if (!type) {
+      console.log("Empty membership type received, ignoring");
+      return;
+    }
+
+    console.log("Membership type changed to:", type);
+    setSelectedMemberType(type);
+    form.setValue("membershipType", type);
+
+    // Find the membership type and update the amount
+    const membershipType = membershipTypes.find((t) => t.type === type);
+    console.log("Found membership type for change:", membershipType);
+
+    if (membershipType) {
+      console.log("Setting amount for change:", membershipType.price);
+      form.setValue("amount", membershipType.price);
+
+      // Force form update
+      setTimeout(() => {
+        form.trigger("membershipType");
+        form.trigger("amount");
+      }, 0);
+    } else {
+      console.warn(`Membership type "${type}" not found in available types`);
+      // Keep the current amount if no matching membership type is found
+    }
   };
 
   const handleAddOneMonth = () => {
@@ -119,6 +448,53 @@ const PaymentForm = ({
                   showSelectedOnly={isEditing}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="membershipType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Type Abonnement</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  if (value) handleMembershipTypeChange(value);
+                }}
+                value={field.value || selectedMemberType || undefined}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner le type d'abonnement" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {isLoadingMembershipTypes ? (
+                    <div className="flex items-center justify-center p-2 text-sm text-gray-500">
+                      Chargement des types d'abonnement...
+                    </div>
+                  ) : membershipTypes.length === 0 ? (
+                    <div className="flex items-center justify-center p-2 text-sm text-gray-500">
+                      Aucun type d'abonnement disponible
+                    </div>
+                  ) : (
+                    membershipTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.type}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {type.type.charAt(0).toUpperCase() + type.type.slice(1).replace(/_/g, " ")}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {type.price} MAD - {type.duration} jours
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -255,19 +631,7 @@ const PaymentForm = ({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Input {...field} value={field.value || ""} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
 
         <Button type="submit" className="w-full">
           {isEditing ? "Mettre a jour le Paiement" : "Enregistrer le Paiement"}
@@ -451,6 +815,19 @@ const Payments = () => {
 
       if (error) throw error;
 
+      // If membership type has changed, update the member record
+      if (data.membershipType) {
+        const { error: memberUpdateError } = await supabase
+          .from("members")
+          .update({ membership_type: data.membershipType })
+          .eq("id", data.memberId);
+
+        if (memberUpdateError) {
+          console.error("Error updating member membership type:", memberUpdateError);
+          // Don't throw here, we still want to show success for the payment
+        }
+      }
+
       // Refresh data to include the new payment
       await fetchPayments();
       setIsAddDialogOpen(false);
@@ -490,6 +867,19 @@ const Payments = () => {
         .eq("id", selectedPayment.id);
 
       if (error) throw error;
+
+      // If membership type has changed, update the member record
+      if (data.membershipType) {
+        const { error: memberUpdateError } = await supabase
+          .from("members")
+          .update({ membership_type: data.membershipType })
+          .eq("id", data.memberId);
+
+        if (memberUpdateError) {
+          console.error("Error updating member membership type:", memberUpdateError);
+          // Don't throw here, we still want to show success for the payment update
+        }
+      }
 
       // Refresh all payments to reflect the update
       await fetchPayments();

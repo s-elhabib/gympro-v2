@@ -368,34 +368,11 @@ const MemberProfile = () => {
     }
   };
 
-  // Helper function to map membership types to valid enum values
-  const mapMembershipType = (type: string): string => {
-    // Map custom types to one of the allowed enum values
-    switch (type) {
-      case "monthly":
-      case "quarterly":
-      case "day_pass":
-        return "basic"; // Map to basic
-      case "annual":
-        return "premium"; // Map to premium
-      default:
-        // If it's already a valid enum value, keep it
-        if (["basic", "premium", "platinum"].includes(type)) {
-          return type;
-        }
-        // Default to basic for any other custom type
-        return "basic";
-    }
-  };
-
   const handleUpdateMember = async (data: MemberFormValues) => {
     try {
       if (!id) {
         throw new Error("ID du membre requis");
       }
-
-      // Map the membership type to a valid enum value
-      const mappedMembershipType = mapMembershipType(data.membershipType);
 
       const { error } = await supabase
         .from("members")
@@ -404,7 +381,7 @@ const MemberProfile = () => {
           last_name: data.lastName,
           email: data.email,
           phone: data.phone,
-          membership_type: mappedMembershipType,
+          membership_type: data.membershipType,
           start_date: data.startDate.toISOString(),
           status: data.status,
           notes: data.notes || null,
@@ -549,7 +526,10 @@ const MemberProfile = () => {
             <div>
               <label className="text-sm text-gray-500">Type d'Adhésion</label>
               <p className="text-gray-900 capitalize">
-                {member.membership_type}
+                {member.membership_type === "basic" ? "Mensuel" :
+                 member.membership_type === "premium" ? "Trimestriel" :
+                 member.membership_type === "platinum" ? "Annuel" :
+                 member.membership_type}
               </p>
             </div>
             <div>

@@ -17,6 +17,7 @@ import {
   Database,
   CheckCircle2,
   Download,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -56,6 +57,7 @@ import {
   deleteMembershipType,
   createDefaultMembershipTypes,
 } from "../services/membershipService";
+import { migrateMembershipTypes } from "../utils/migrateMembershipTypes";
 // import { useAuth } from "../context/AuthContext";
 
 const CURRENCY_OPTIONS = [
@@ -325,6 +327,39 @@ const BusinessSettings = ({
   onMembershipTypesChange,
   isLoadingMembershipTypes,
 }: SettingsComponentProps) => {
+  const { addNotification } = useNotifications();
+  const [isMigrating, setIsMigrating] = useState(false);
+
+  const handleMigrateMembershipTypes = async () => {
+    setIsMigrating(true);
+    try {
+      const result = await migrateMembershipTypes();
+
+      if (result.success) {
+        addNotification({
+          title: "Migration réussie",
+          message: result.message,
+          type: "success",
+        });
+      } else {
+        addNotification({
+          title: "Échec de la migration",
+          message: result.message,
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error during migration:", error);
+      addNotification({
+        title: "Erreur",
+        message: "Une erreur s'est produite lors de la migration",
+        type: "error",
+      });
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card className="mb-6">
@@ -409,11 +444,50 @@ const BusinessSettings = ({
 
       {/* Membership Types are now managed in a separate component */}
       {membershipTypes && onMembershipTypesChange && (
-        <MembershipTypesManager
-          membershipTypes={membershipTypes}
-          onMembershipTypesChange={onMembershipTypesChange}
-          isLoading={isLoadingMembershipTypes}
-        />
+        <>
+          <MembershipTypesManager
+            membershipTypes={membershipTypes}
+            onMembershipTypesChange={onMembershipTypesChange}
+            isLoading={isLoadingMembershipTypes}
+          />
+
+          {/** 
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Maintenance des Types d'Abonnement</CardTitle>
+              <CardDescription>
+                Outils pour mettre à jour les types d'abonnement des membres
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Si vous avez des membres avec d'anciens types d'abonnement (basic, premium, platinum),
+                    utilisez cet outil pour les migrer vers les nouveaux types (mensuel, trimestriel, annuel).
+                  </p>
+                  <Button
+                    onClick={handleMigrateMembershipTypes}
+                    disabled={isMigrating}
+                    className="w-full"
+                  >
+                    {isMigrating ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Migration en cours...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Migrer les Anciens Types d'Abonnement
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>*/}
+        </>
       )}
     </div>
   );

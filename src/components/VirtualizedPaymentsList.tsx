@@ -221,6 +221,7 @@ const VirtualizedPaymentsList: React.FC<VirtualizedPaymentsListProps> = ({
                         <PaymentForm
                           defaultValues={{
                             memberId: selectedPayment.member_id,
+                            // membershipType will be fetched by the form when member is loaded
                             amount: selectedPayment.amount,
                             paymentDate: new Date(selectedPayment.payment_date),
                             dueDate: new Date(selectedPayment.due_date),

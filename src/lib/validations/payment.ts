@@ -3,6 +3,7 @@ import { PaymentStatus, PaymentMethod } from "../types";
 
 export const paymentSchema = z.object({
   memberId: z.string().min(1, "Member is required"),
+  membershipType: z.string().optional().nullable(),
   amount: z.number().min(0.01, "Amount must be greater than 0"),
   paymentDate: z.date(),
   dueDate: z.date(),

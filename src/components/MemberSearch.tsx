@@ -33,7 +33,7 @@ const MemberSearch = ({ onSelect, defaultValue, showSelectedOnly = false }: Memb
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(10);
-    
+
     setMembers(data || []);
     setIsLoading(false);
   };
@@ -47,7 +47,7 @@ const MemberSearch = ({ onSelect, defaultValue, showSelectedOnly = false }: Memb
       .eq('status', 'active')
       .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%`)
       .limit(10);
-    
+
     setMembers(data || []);
     setIsLoading(false);
   };
@@ -79,7 +79,7 @@ const MemberSearch = ({ onSelect, defaultValue, showSelectedOnly = false }: Memb
           .select('id, first_name, last_name')
           .eq('id', defaultValue)
           .single();
-        
+
         if (data) {
           setSelectedMember(data);
           setSearchTerm(`${data.first_name} ${data.last_name}`);
@@ -97,7 +97,7 @@ const MemberSearch = ({ onSelect, defaultValue, showSelectedOnly = false }: Memb
     if (showSelectedOnly && selectedMember) {
       return;
     }
-    
+
     setIsFocused(true);
     if (!searchTerm) {
       fetchInitialMembers();
@@ -105,10 +105,12 @@ const MemberSearch = ({ onSelect, defaultValue, showSelectedOnly = false }: Memb
   };
 
   const handleSelect = (member: Member) => {
+    console.log("MemberSearch - handleSelect called with:", member);
     setSelectedMember(member);
     setSearchTerm(`${member.first_name} ${member.last_name}`);
     setIsFocused(false);
     onSelect(member);
+    console.log("MemberSearch - onSelect callback called");
   };
 
   return (
@@ -128,7 +130,7 @@ const MemberSearch = ({ onSelect, defaultValue, showSelectedOnly = false }: Memb
         className="w-full"
         readOnly={showSelectedOnly && !!selectedMember}
       />
-      
+
       {isFocused && (members.length > 0 || isLoading) && (
         <div className="absolute z-50 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200">
           {isLoading ? (
