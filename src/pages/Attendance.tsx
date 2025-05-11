@@ -218,7 +218,15 @@ const AttendanceForm = ({
                 <span className="text-sm">
                   Type d'Adhésion:{" "}
                   <span className="font-medium capitalize">
-                    {memberStatus.membershipType}
+                    {memberStatus.membershipType === "basic" ? "Mensuel" :
+                     memberStatus.membershipType === "premium" ? "Trimestriel" :
+                     memberStatus.membershipType === "platinum" ? "Annuel" :
+                     memberStatus.membershipType === "monthly" ? "Mensuel" :
+                     memberStatus.membershipType === "quarterly" ? "Trimestriel" :
+                     memberStatus.membershipType === "annual" ? "Annuel" :
+                     memberStatus.membershipType === "day_pass" ? "Accès Journalier" :
+                     memberStatus.membershipType}
+
                   </span>
                 </span>
               </div>

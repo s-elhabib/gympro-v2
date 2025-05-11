@@ -215,7 +215,7 @@ const SimpleMembersList: React.FC<SimpleMembersListProps> = ({
                             )}
                           </Dialog>
                           <DropdownMenuItem
-                            className="text-red-600"
+                            className="text-amber-600"
                             onSelect={(e) => {
                               e.preventDefault();
                               setSelectedMember(member);
@@ -223,7 +223,7 @@ const SimpleMembersList: React.FC<SimpleMembersListProps> = ({
                             }}
                           >
                             <Trash className="h-4 w-4 mr-2" />
-                            Supprimer
+                            Archiver
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

@@ -59,6 +59,7 @@ const Members = () => {
       const { data, error } = await supabase
         .from("members")
         .select("*")
+        .is("deleted_at", null) // Only fetch non-deleted members
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -195,9 +196,14 @@ const Members = () => {
     if (!selectedMember) return;
 
     try {
+      // Perform soft delete by setting deleted_at timestamp
       const { error } = await supabase
         .from("members")
-        .delete()
+        .update({
+          deleted_at: new Date().toISOString(),
+          // Set status to inactive as well
+          status: "inactive"
+        })
         .eq("id", selectedMember.id);
 
       if (error) throw error;
@@ -205,10 +211,10 @@ const Members = () => {
       await fetchMembers();
       setIsDeleteDialogOpen(false);
       setSelectedMember(null);
-      toast.success("Membre supprimé avec succès");
+      toast.success("Membre archivé avec succès");
     } catch (error) {
-      console.error("Error deleting member:", error);
-      toast.error("Échec de la suppression du membre");
+      console.error("Error archiving member:", error);
+      toast.error("Échec de l'archivage du membre");
     }
   };
 
@@ -268,10 +274,10 @@ const Members = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+            <AlertDialogTitle>Archiver ce membre ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action ne peut pas être annulée. Cela supprimera
-              définitivement le membre et toutes les données associées.
+              Le membre sera archivé et n'apparaîtra plus dans la liste des membres actifs.
+              Toutes les données associées seront conservées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -285,9 +291,9 @@ const Members = () => {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteMember}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-amber-600 hover:bg-amber-700"
             >
-              Supprimer
+              Archiver
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

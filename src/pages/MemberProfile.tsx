@@ -291,7 +291,7 @@ const MemberProfile = () => {
         throw new Error("ID du membre requis");
       }
 
-      // Fetch member details
+      // Fetch member details (including soft-deleted members)
       const { data: memberData, error: memberError } = await supabase
         .from("members")
         .select("*")
@@ -339,7 +339,11 @@ const MemberProfile = () => {
     }
   }, [timeRange]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, isDeleted: boolean = false) => {
+    if (isDeleted) {
+      return "bg-amber-100 text-amber-800";
+    }
+
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800";
@@ -500,17 +504,27 @@ const MemberProfile = () => {
             </div>
             <div>
               <h1 className="text-2xl font-semibold">{`${member.first_name} ${member.last_name}`}</h1>
-              <span
-                className={`inline-block px-2 py-1 rounded-full text-xs capitalize mt-1 ${getStatusColor(
-                  member.status
-                )}`}
-              >
-                {member.status === "active"
-                  ? "Actif"
-                  : member.status === "inactive"
-                  ? "Inactif"
-                  : "Suspendu"}
-              </span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                <span
+                  className={`inline-block px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(
+                    member.status,
+                    !!member.deleted_at
+                  )}`}
+                >
+                  {member.deleted_at
+                    ? "Archivé"
+                    : member.status === "active"
+                    ? "Actif"
+                    : member.status === "inactive"
+                    ? "Inactif"
+                    : "Suspendu"}
+                </span>
+                {member.deleted_at && (
+                  <span className="inline-block px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                    {format(new Date(member.deleted_at), "dd/MM/yyyy")}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
