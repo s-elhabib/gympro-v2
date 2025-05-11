@@ -485,6 +485,8 @@ const Dashboard = () => {
 
   React.useEffect(() => {
     fetchDashboardData();
+    // Load 30-day revenue data by default
+    handleTimeRangeChange('30d');
   }, []);
 
   React.useEffect(() => {
