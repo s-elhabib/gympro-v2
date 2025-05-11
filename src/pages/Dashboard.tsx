@@ -138,10 +138,36 @@ const Dashboard = () => {
           }
         });
 
+        // Group payments by member_id and find the most recent payment for each member
+        const memberLatestPayments = new Map();
 
+        updatedPayments.forEach(payment => {
+          const memberId = payment.member_id;
+          const paymentDate = new Date(payment.payment_date);
 
-        // Sort payments by days relative to due date
-        const sortedPayments = updatedPayments.sort((a, b) => {
+          if (!memberLatestPayments.has(memberId) ||
+              paymentDate > new Date(memberLatestPayments.get(memberId).payment_date)) {
+            memberLatestPayments.set(memberId, payment);
+          }
+        });
+
+        // Convert the Map to an array of the most recent payments
+        const latestPayments = Array.from(memberLatestPayments.values());
+
+        // Filtrer les paiements pour n'afficher que ceux qui sont proches de l'échéance ou en retard
+        const filteredPayments = latestPayments.filter(payment => {
+          const now = new Date();
+          const dueDate = parseISO(payment.due_date);
+          const daysDiff = Math.floor((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+          // Afficher uniquement les paiements :
+          // - en retard (daysDiff < 0)
+          // - dus dans les 7 prochains jours (0 <= daysDiff <= 7)
+          return daysDiff <= 7;
+        });
+
+        // Trier les paiements filtrés par date d'échéance
+        const sortedPayments = filteredPayments.sort((a, b) => {
           const now = new Date();
           const aDate = parseISO(a.due_date);
           const bDate = parseISO(b.due_date);
@@ -164,6 +190,7 @@ const Dashboard = () => {
           }))
         );
 
+        // Store the filtered and sorted payments
         setAllPayments(sortedPayments);
         setTotalRecords(sortedPayments.length);
 
@@ -172,8 +199,8 @@ const Dashboard = () => {
         const totalRevenue = sortedPayments
           .filter((p) => {
             const paymentDate = new Date(p.payment_date);
-            return p.status === "paid" && 
-                   isAfter(paymentDate, timeRange.start) && 
+            return p.status === "paid" &&
+                   isAfter(paymentDate, timeRange.start) &&
                    isBefore(paymentDate, timeRange.end);
           })
           .reduce((sum, p) => sum + p.amount, 0);
@@ -186,8 +213,8 @@ const Dashboard = () => {
         const previousPeriodRevenue = sortedPayments
           .filter((p) => {
             const paymentDate = new Date(p.payment_date);
-            return p.status === "paid" && 
-                   isAfter(paymentDate, previousPeriodStart) && 
+            return p.status === "paid" &&
+                   isAfter(paymentDate, previousPeriodStart) &&
                    isBefore(paymentDate, previousPeriodEnd);
           })
           .reduce((sum, p) => sum + p.amount, 0);
@@ -202,8 +229,8 @@ const Dashboard = () => {
           .filter((p) => {
             const date = new Date(p.payment_date);
             return (
-              date >= startOfLastMonth && 
-              date <= endOfLastMonth && 
+              date >= startOfLastMonth &&
+              date <= endOfLastMonth &&
               p.status === "paid"
             );
           })
@@ -219,8 +246,8 @@ const Dashboard = () => {
           .filter((p) => {
             const date = new Date(p.payment_date);
             return (
-              date >= startOfTwoMonthsAgo && 
-              date <= endOfTwoMonthsAgo && 
+              date >= startOfTwoMonthsAgo &&
+              date <= endOfTwoMonthsAgo &&
               p.status === "paid"
             );
           })
