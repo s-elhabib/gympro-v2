@@ -2,9 +2,9 @@ import * as z from "zod";
 import { PaymentStatus, PaymentMethod } from "../types";
 
 export const paymentSchema = z.object({
-  memberId: z.string().min(1, "Member is required"),
+  memberId: z.string().min(1, "Le membre est requis"),
   membershipType: z.string().optional().nullable(),
-  amount: z.number().min(0.01, "Amount must be greater than 0"),
+  amount: z.number().min(0.01, "Le montant doit être supérieur à 0"),
   paymentDate: z.date(),
   dueDate: z.date(),
   status: z.enum(["paid", "pending", "overdue", "cancelled"] as const),

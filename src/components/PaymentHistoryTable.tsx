@@ -84,22 +84,22 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
     const dueDate = parseISO(payment.due_date);
     const sevenDaysFromNow = addDays(today, 7);
 
-    // If payment is cancelled or paid, don't change status
+    // If payment is cancelled, don't change status
     if (payment.status === "cancelled") {
       return payment;
     }
 
-    // Check if payment is overdue
+    // 1. If due date has passed, status is overdue
     if (isBefore(dueDate, today)) {
       return { ...payment, status: "overdue" };
     }
 
-    // Check if due date is within next 7 days
+    // 2. If due date is within next 7 days, status is near_overdue
     if (isBefore(dueDate, sevenDaysFromNow)) {
       return { ...payment, status: "near_overdue" };
     }
 
-    // If due date is in the future and not near, status is pending
+    // 3. If due date is more than 7 days away, status is paid
     return { ...payment, status: "paid" };
   };
 
@@ -363,7 +363,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
                       </span>
                       {(updatedPayment.status === "overdue" ||
                         updatedPayment.status === "near_overdue") &&
-                        getDaysDifference(payment.due_date) !== 0 && (
+                        getDaysDifference(payment.due_date) > 0 && (
                           <span
                             className={`
                           inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
@@ -374,13 +374,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
                           }
                         `}
                           >
-                            {updatedPayment.status === "overdue"
-                              ? `${Math.abs(
-                                  getDaysDifference(payment.due_date)
-                                )}j`
-                              : `${Math.abs(
-                                  getDaysDifference(payment.due_date)
-                                )}j`}
+                            {`${getDaysDifference(payment.due_date)}j`}
                           </span>
                         )}
                     </div>

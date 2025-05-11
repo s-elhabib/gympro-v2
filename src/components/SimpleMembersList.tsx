@@ -135,15 +135,24 @@ const SimpleMembersList: React.FC<SimpleMembersListProps> = ({
                   <TableCell>{`${member.first_name} ${member.last_name}`}</TableCell>
                   <TableCell className="hidden md:table-cell">{member.email}</TableCell>
                   <TableCell className="hidden lg:table-cell">{member.phone}</TableCell>
-                  <TableCell className="capitalize">{member.membership_type}</TableCell>
+                  <TableCell className="capitalize">
+                    {member.membership_type === "basic" ? "Mensuel" :
+                     member.membership_type === "premium" ? "Trimestriel" :
+                     member.membership_type === "platinum" ? "Annuel" :
+                     member.membership_type === "monthly" ? "Mensuel" :
+                     member.membership_type === "quarterly" ? "Trimestriel" :
+                     member.membership_type === "annual" ? "Annuel" :
+                     member.membership_type === "day_pass" ? "Accès Journalier" :
+                     member.membership_type}
+                  </TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       member.status === 'active' ? 'bg-green-100 text-green-800' :
                       member.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
                       'bg-red-100 text-red-800'
                     }`}>
-                      {member.status === 'active' ? 'Actif' : 
-                       member.status === 'inactive' ? 'Inactif' : 
+                      {member.status === 'active' ? 'Actif' :
+                       member.status === 'inactive' ? 'Inactif' :
                        'Suspendu'}
                     </span>
                   </TableCell>
@@ -226,17 +235,17 @@ const SimpleMembersList: React.FC<SimpleMembersListProps> = ({
           </Table>
         </div>
       </div>
-      
+
       {hasNextPage && (
-        <div 
-          ref={loaderRef} 
+        <div
+          ref={loaderRef}
           className="flex justify-center items-center p-4"
         >
           {isLoadingMore ? (
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           ) : (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => loadMoreItems()}
             >
               Charger plus

@@ -1,15 +1,15 @@
 import { z } from 'zod';
 
 export const classSchema = z.object({
-  name: z.string().min(2, 'Class name must be at least 2 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  instructor: z.string().min(1, 'Instructor is required'),
-  capacity: z.number().min(1, 'Capacity must be at least 1'),
-  duration: z.number().min(15, 'Duration must be at least 15 minutes'),
+  name: z.string().min(2, 'Le nom du cours doit contenir au moins 2 caractères'),
+  description: z.string().min(10, 'La description doit contenir au moins 10 caractères'),
+  instructor: z.string().min(1, 'L\'instructeur est requis'),
+  capacity: z.number().min(1, 'La capacité doit être d\'au moins 1'),
+  duration: z.number().min(15, 'La durée doit être d\'au moins 15 minutes'),
   day: z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']),
   startTime: z.string(),
   endTime: z.string(),
-  location: z.string().min(1, 'Location is required'),
+  location: z.string().min(1, 'Le lieu est requis'),
   category: z.enum(['strength', 'cardio', 'flexibility', 'mind_body', 'dance', 'specialty']),
   difficulty: z.enum(['beginner', 'intermediate', 'advanced', 'all_levels']),
   isActive: z.boolean().default(true),

@@ -82,3 +82,23 @@ GROUP BY
     membership_type
 ORDER BY
     membership_type;
+
+-- Now let's update the membership_types table to use French names
+UPDATE membership_types
+SET type = 'Mensuel'
+WHERE type = 'monthly';
+
+UPDATE membership_types
+SET type = 'Trimestriel'
+WHERE type = 'quarterly';
+
+UPDATE membership_types
+SET type = 'Annuel'
+WHERE type = 'annual';
+
+UPDATE membership_types
+SET type = 'Accès Journalier'
+WHERE type = 'day_pass';
+
+-- Let's check the membership_types table after the updates
+SELECT * FROM membership_types ORDER BY type;

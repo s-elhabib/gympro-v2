@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsInitializing(true);
         // Get the current session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (sessionError) {
           console.error('Session error:', sessionError);
           setAuthState({ user: null, isAuthenticated: false });
@@ -53,7 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } else {
           setAuthState({ user: null, isAuthenticated: false });
-          
+
           // If not on login/signup page without valid session, redirect to login
           if (!['/login', '/signup'].includes(location.pathname)) {
             navigate('/login');
@@ -109,22 +109,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [navigate, location.pathname]);
 
   const handleAuthError = (error: any) => {
-    let message = 'An error occurred';
-    
+    let message = 'Une erreur est survenue';
+
     if (error.message) {
       // Handle specific error messages
       switch (error.message) {
         case 'Invalid login credentials':
-          message = 'Invalid email or password';
+          message = 'Email ou mot de passe invalide';
           break;
         case 'User already registered':
-          message = 'An account with this email already exists';
+          message = 'Un compte avec cet email existe déjà';
           break;
         case 'Email rate limit exceeded':
-          message = 'Too many attempts. Please try again later';
+          message = 'Trop de tentatives. Veuillez réessayer plus tard';
           break;
         case 'Invalid Refresh Token: Refresh Token Not Found':
-          message = 'Your session has expired. Please sign in again.';
+          message = 'Votre session a expiré. Veuillez vous reconnecter.';
           setAuthState({ user: null, isAuthenticated: false });
           navigate('/login');
           break;
@@ -134,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     addNotification({
-      title: 'Error',
+      title: 'Erreur',
       message,
       type: 'error'
     });
@@ -155,8 +155,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data.session) {
         addNotification({
-          title: 'Welcome back!',
-          message: 'You have successfully signed in.',
+          title: 'Bienvenue !',
+          message: 'Vous vous êtes connecté avec succès.',
           type: 'success'
         });
         // Always navigate to dashboard after explicit login

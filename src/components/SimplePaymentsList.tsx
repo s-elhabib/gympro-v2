@@ -164,7 +164,7 @@ const SimplePaymentsList: React.FC<SimplePaymentsListProps> = ({
                   </span>
                   {(payment.displayStatus === "overdue" ||
                     payment.displayStatus === "near_overdue") &&
-                    getDaysDifference(payment.due_date) !== 0 && (
+                    getDaysDifference(payment.due_date) > 0 && (
                       <span
                         className={`
                       inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
@@ -175,7 +175,7 @@ const SimplePaymentsList: React.FC<SimplePaymentsListProps> = ({
                       }
                     `}
                       >
-                        {`${Math.abs(getDaysDifference(payment.due_date))}j`}
+                        {`${getDaysDifference(payment.due_date)}j`}
                       </span>
                     )}
                 </div>

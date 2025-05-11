@@ -529,6 +529,10 @@ const MemberProfile = () => {
                 {member.membership_type === "basic" ? "Mensuel" :
                  member.membership_type === "premium" ? "Trimestriel" :
                  member.membership_type === "platinum" ? "Annuel" :
+                 member.membership_type === "monthly" ? "Mensuel" :
+                 member.membership_type === "quarterly" ? "Trimestriel" :
+                 member.membership_type === "annual" ? "Annuel" :
+                 member.membership_type === "day_pass" ? "Accès Journalier" :
                  member.membership_type}
               </p>
             </div>

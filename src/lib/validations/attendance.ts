@@ -1,7 +1,7 @@
 import * as z from "zod";
 
 export const attendanceSchema = z.object({
-  memberId: z.string().min(1, "Member is required"),
+  memberId: z.string().min(1, "Le membre est requis"),
   checkInTime: z.date(),
   checkOutTime: z.date().optional(),
   type: z.enum(["gym", "class", "personal_training"]),

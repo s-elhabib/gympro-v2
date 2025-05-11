@@ -30,14 +30,18 @@ const getMembershipTypeLabel = (type: string): string => {
   switch (type) {
     case "monthly":
     case "basic": // Map old enum value to new type
+    case "Mensuel":
       return "Mensuel";
     case "quarterly":
     case "premium": // Map old enum value to new type
+    case "Trimestriel":
       return "Trimestriel";
     case "annual":
     case "platinum": // Map old enum value to new type
+    case "Annuel":
       return "Annuel";
     case "day_pass":
+    case "Accès Journalier":
       return "Accès Journalier";
     default:
       // For custom types, just capitalize the first letter and replace underscores with spaces
@@ -49,11 +53,19 @@ const getMembershipTypeLabel = (type: string): string => {
 const mapOldEnumToNewType = (oldType: string): string => {
   switch (oldType) {
     case "basic":
-      return "monthly";
+      return "Mensuel";
     case "premium":
-      return "quarterly";
+      return "Trimestriel";
     case "platinum":
-      return "annual";
+      return "Annuel";
+    case "monthly":
+      return "Mensuel";
+    case "quarterly":
+      return "Trimestriel";
+    case "annual":
+      return "Annuel";
+    case "day_pass":
+      return "Accès Journalier";
     default:
       return oldType;
   }

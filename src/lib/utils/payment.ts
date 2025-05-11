@@ -8,23 +8,25 @@ import { Payment, PaymentWithDisplayStatus, DisplayPaymentStatus } from '../../t
 export const getDisplayStatus = (payment: Payment): DisplayPaymentStatus => {
   const today = new Date();
   const dueDate = parseISO(payment.due_date);
-  
-  // Database status takes precedence for certain statuses
-  if (payment.status === "paid" || payment.status === "cancelled") {
+
+  // Database status takes precedence only for cancelled status
+  if (payment.status === "cancelled") {
     return payment.status;
   }
-  
-  // Calculated status for display purposes
-  if (payment.status === "pending") {
-    if (isBefore(dueDate, today)) {
-      return "overdue";
-    }
-    if (isBefore(dueDate, addDays(today, 7))) {
-      return "near_overdue";
-    }
+
+  // For all other statuses, calculate based on due date
+  // 1. If due date has passed, status is overdue
+  if (isBefore(dueDate, today)) {
+    return "overdue";
   }
-  
-  return payment.status;
+
+  // 2. If due date is within 7 days, status is near_overdue
+  if (isBefore(dueDate, addDays(today, 7))) {
+    return "near_overdue";
+  }
+
+  // 3. If due date is more than 7 days away, status is paid
+  return "paid";
 };
 
 /**
@@ -55,6 +57,15 @@ export const getStatusColor = (status: DisplayPaymentStatus): string => {
     default:
       return "bg-gray-100 text-gray-800";
   }
+};
+
+/**
+ * Calculates days difference between today and a due date
+ */
+export const getDaysDifference = (dueDate: string): number => {
+  const today = new Date();
+  const due = parseISO(dueDate);
+  return Math.abs(Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)));
 };
 
 /**
