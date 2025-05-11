@@ -36,8 +36,15 @@ const getMembershipTypeLabel = (type: string): string => {
       return "Annuel";
     case "day_pass":
       return "Accès Journalier";
+    case "basic":
+      return "Basique";
+    case "premium":
+      return "Premium";
+    case "platinum":
+      return "Platinum";
     default:
-      return type.charAt(0).toUpperCase() + type.slice(1).replace("_", " ");
+      // For custom types, just capitalize the first letter and replace underscores with spaces
+      return type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, " ");
   }
 };
 
@@ -82,6 +89,22 @@ const MemberForm = ({
 
           return acc;
         }, [] as MembershipType[]);
+
+        // Ensure we have the basic, premium, platinum types for backward compatibility
+        const defaultTypes = ['basic', 'premium', 'platinum'];
+        const existingTypeValues = uniqueTypes.map(t => t.type);
+
+        // Add any missing default types
+        defaultTypes.forEach(defaultType => {
+          if (!existingTypeValues.includes(defaultType)) {
+            uniqueTypes.push({
+              id: -Date.now() - Math.floor(Math.random() * 1000), // Generate a unique negative ID
+              type: defaultType,
+              price: 0,
+              duration: defaultType === 'basic' ? 30 : defaultType === 'premium' ? 90 : 365
+            });
+          }
+        });
 
         setMembershipTypes(uniqueTypes);
       } catch (error) {
