@@ -13,23 +13,27 @@ interface StatCardProps {
   onTimeRangeChange?: (range: TimeRange) => void;
   isLocked?: boolean;
   isLoading?: boolean;
+  onClick?: () => void;
+  clickable?: boolean;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ 
-  icon: Icon, 
-  label, 
-  value, 
-  trend, 
+const StatCard: React.FC<StatCardProps> = ({
+  icon: Icon,
+  label,
+  value,
+  trend,
   isPositive,
   format = 'number',
   showTimeRangeFilter = false,
   onTimeRangeChange,
   isLocked = false,
-  isLoading = false
+  isLoading = false,
+  onClick,
+  clickable = false
 }) => {
   const [timeRange, setTimeRange] = React.useState<TimeRange>('7d');
 
-  const formattedValue = format === 'currency' 
+  const formattedValue = format === 'currency'
     ? `${new Intl.NumberFormat('fr-FR').format(value)} MAD`
     : new Intl.NumberFormat('fr-FR').format(value);
 
@@ -50,7 +54,10 @@ const StatCard: React.FC<StatCardProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow relative">
+    <div
+      className={`bg-white rounded-lg p-6 shadow-sm ${clickable ? 'cursor-pointer hover:shadow-md hover:bg-gray-50' : 'hover:shadow-md'} transition-all relative`}
+      onClick={clickable ? onClick : undefined}
+    >
       {isLoading && (
         <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg z-10">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -65,10 +72,10 @@ const StatCard: React.FC<StatCardProps> = ({
         ) : (
           <div className={`flex items-center text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
             {isPositive ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-            <span>{new Intl.NumberFormat('fr-FR', { 
-              style: 'percent', 
+            <span>{new Intl.NumberFormat('fr-FR', {
+              style: 'percent',
               minimumFractionDigits: 1,
-              maximumFractionDigits: 1 
+              maximumFractionDigits: 1
             }).format(trend / 100)}</span>
           </div>
         )}
@@ -79,10 +86,10 @@ const StatCard: React.FC<StatCardProps> = ({
         {showTimeRangeFilter && (
           <div className={`flex items-center text-sm mt-2 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
             {isPositive ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-            <span>{new Intl.NumberFormat('fr-FR', { 
-              style: 'percent', 
+            <span>{new Intl.NumberFormat('fr-FR', {
+              style: 'percent',
               minimumFractionDigits: 1,
-              maximumFractionDigits: 1 
+              maximumFractionDigits: 1
             }).format(trend / 100)}</span>
           </div>
         )}

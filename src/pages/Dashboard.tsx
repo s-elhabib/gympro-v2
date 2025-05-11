@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Users,
   TrendingUp,
@@ -63,6 +64,7 @@ const getTimeRangeDate = (range: TimeRange): { start: Date; end: Date } => {
 const Dashboard = () => {
   const { user } = useAuth();
   const { addNotification } = useNotifications();
+  const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
   const [revenueLoading, setRevenueLoading] = React.useState(false);
   const [stats, setStats] = React.useState({
@@ -619,6 +621,8 @@ const Dashboard = () => {
           value={stats.activeMembers.value}
           trend={stats.activeMembers.trend}
           isPositive={stats.activeMembers.isPositive}
+          clickable={true}
+          onClick={() => navigate('/members')}
         />
         <StatCard
           icon={Activity}
@@ -626,6 +630,8 @@ const Dashboard = () => {
           value={stats.attendance.value}
           trend={stats.attendance.trend}
           isPositive={stats.attendance.isPositive}
+          clickable={true}
+          onClick={() => navigate('/attendance')}
         />
         <StatCard
           icon={TrendingUp}
