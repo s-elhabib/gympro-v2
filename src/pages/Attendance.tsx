@@ -64,7 +64,7 @@ import {
 import { supabase } from "../lib/supabase";
 import MemberSearch from "../components/MemberSearch";
 import { useNotifications } from "../context/NotificationContext";
-import { searchByFullName } from "../lib/utils";
+import { searchByFullName, checkMemberPaymentStatus } from "../lib/utils";
 import { AttendanceEditForm } from "../components/AttendanceEditForm";
 
 const ITEMS_PER_PAGE = 10;
@@ -105,39 +105,14 @@ const AttendanceForm = ({
 
   const checkMemberStatus = async (memberId: string) => {
     try {
-      // Get member status and membership type
-      const { data: member } = await supabase
-        .from("members")
-        .select("status, membership_type")
-        .eq("id", memberId)
-        .single();
+      // Use the utility function to check member payment status
+      const status = await checkMemberPaymentStatus(memberId);
 
-      if (!member) {
-        throw new Error("Membre non trouvé");
-      }
-
-      // Check for valid payments
-      const { data: payments } = await supabase
-        .from("payments")
-        .select("*")
-        .eq("member_id", memberId)
-        .eq("status", "paid")
-        .order("due_date", { ascending: false })
-        .limit(1);
-
-      const hasValidPayment =
-        payments &&
-        payments.length > 0 &&
-        new Date(payments[0].due_date) > new Date();
-
-      setMemberStatus({
-        isActive: member.status === "active",
-        hasValidPayment: hasValidPayment,
-        membershipType: member.membership_type,
-      });
+      // Update the state with the result
+      setMemberStatus(status);
 
       // Show warnings if there are issues
-      if (member.status !== "active") {
+      if (!status.isActive) {
         addNotification({
           title: "Adhésion Inactive",
           message: "L'adhésion de ce membre n'est pas active.",
@@ -145,7 +120,7 @@ const AttendanceForm = ({
         });
       }
 
-      if (!hasValidPayment) {
+      if (!status.hasValidPayment) {
         addNotification({
           title: "Paiement Requis",
           message: "Ce membre n'a pas de paiement valide enregistré.",

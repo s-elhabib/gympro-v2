@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  AlertCircle,
   ArrowLeft,
   CheckCircle,
   Clock,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { checkMemberPaymentStatus } from "@/lib/utils";
 
 const QRAttendance = () => {
   const navigate = useNavigate();
@@ -72,6 +74,27 @@ const QRAttendance = () => {
           title: "Déjà Enregistré",
           message: `${memberName} a déjà une entrée active. Veuillez utiliser la sortie à la place.`,
           type: "warning",
+        });
+
+        return;
+      }
+
+      // Check if member has a valid payment
+      const memberStatus = await checkMemberPaymentStatus(memberId);
+
+      if (!memberStatus.hasValidPayment) {
+        setLastScannedMember({
+          id: memberId,
+          name: memberName,
+          timestamp: new Date(),
+          success: false,
+          message: "Impossible d'enregistrer la présence. Le membre doit avoir un paiement valide pour enregistrer la présence.",
+        });
+
+        addNotification({
+          title: "Impossible d'Enregistrer la Présence",
+          message: "Le membre doit avoir un paiement valide pour enregistrer la présence.",
+          type: "error",
         });
 
         return;
