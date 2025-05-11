@@ -1,5 +1,4 @@
 import * as z from "zod";
-import { PaymentStatus, PaymentMethod } from "../types";
 
 export const paymentSchema = z.object({
   memberId: z.string().min(1, "Le membre est requis"),

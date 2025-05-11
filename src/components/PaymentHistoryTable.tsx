@@ -19,7 +19,7 @@ import {
 } from "./ui/table";
 import { Button } from "./ui/button";
 
-interface Payment {
+export interface Payment {
   id: string;
   member_id: string;
   amount: number;
@@ -39,9 +39,11 @@ interface PaymentHistoryTableProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   isLoading: boolean;
+  sortConfig?: SortConfig;
+  onRequestSort?: (key: keyof Payment | "member") => void;
 }
 
-type SortConfig = {
+export type SortConfig = {
   key: keyof Payment | "member";
   direction: "asc" | "desc";
 } | null;
@@ -52,9 +54,14 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
   totalPages,
   onPageChange,
   isLoading,
+  sortConfig: externalSortConfig,
+  onRequestSort: externalRequestSort,
 }) => {
   const navigate = useNavigate();
-  const [sortConfig, setSortConfig] = React.useState<SortConfig>(null);
+  const [internalSortConfig, setInternalSortConfig] = React.useState<SortConfig>(null);
+
+  // Use external sort config if provided, otherwise use internal
+  const sortConfig = externalSortConfig !== undefined ? externalSortConfig : internalSortConfig;
 
   const requestSort = (key: keyof Payment | "member") => {
     let direction: "asc" | "desc" = "asc";
@@ -65,7 +72,14 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
     ) {
       direction = "desc";
     }
-    setSortConfig({ key, direction });
+
+    // If external request sort handler is provided, use it
+    if (externalRequestSort) {
+      externalRequestSort(key);
+    } else {
+      // Otherwise use internal state
+      setInternalSortConfig({ key, direction });
+    }
   };
 
   const getSortIcon = (columnKey: string) => {
@@ -106,95 +120,44 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
   const getDaysDifference = (dueDate: string) => {
     const today = new Date();
     const due = parseISO(dueDate);
-    const diffInDays = differenceInDays(today, due);
-    return diffInDays;
+    return Math.abs(Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)));
   };
 
   const sortedPayments = React.useMemo(() => {
     if (!sortConfig) {
-      // Default sort by status priority and due date
+      // Default sort by days relative to due date
       return [...payments].sort((a, b) => {
+        const now = new Date();
         const aDate = new Date(a.due_date);
         const bDate = new Date(b.due_date);
-        const now = new Date();
 
-        // Determine status based on payment status and due date
-        const getEffectiveStatus = (status: string, dueDate: Date) => {
-          if (status === "paid") return "paid";
-          if (status === "cancelled") return "cancelled";
-          return isAfter(now, dueDate) ? "overdue" : "pending";
-        };
+        // Calculate days to/from due date (negative for overdue, positive for upcoming)
+        const aDaysDiff = Math.floor((aDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const bDaysDiff = Math.floor((bDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-        const aStatus = getEffectiveStatus(a.status, aDate);
-        const bStatus = getEffectiveStatus(b.status, bDate);
-
-        // Sort by status priority
-        const statusPriority = {
-          overdue: 1,
-          pending: 2,
-          paid: 3,
-          cancelled: 4,
-        };
-
-        const aPriority =
-          statusPriority[aStatus as keyof typeof statusPriority];
-        const bPriority =
-          statusPriority[bStatus as keyof typeof statusPriority];
-
-        // First sort by status priority
-        if (aPriority !== bPriority) {
-          return aPriority - bPriority;
-        }
-
-        // If both are overdue, sort by due date (oldest/most late first)
-        if (aStatus === "overdue" && bStatus === "overdue") {
-          return aDate.getTime() - bDate.getTime();
-        }
-
-        // For other statuses with same priority, sort by due date
-        return aDate.getTime() - bDate.getTime();
+        // Sort by days difference (overdue payments first, sorted by most days overdue)
+        return aDaysDiff - bDaysDiff;
       });
     }
 
     return [...payments].sort((a, b) => {
-      // Special case for status sorting to maintain overdue payments at the top
+      // Special case for status sorting - sort primarily by days relative to due date
       if (sortConfig.key === "status") {
         const now = new Date();
         const aDate = new Date(a.due_date);
         const bDate = new Date(b.due_date);
 
-        // Determine effective status
-        const getEffectiveStatus = (status: string, dueDate: Date) => {
-          if (status === "paid") return "paid";
-          if (status === "cancelled") return "cancelled";
-          return isAfter(now, dueDate) ? "overdue" : "pending";
-        };
+        // Calculate days to/from due date (negative for overdue, positive for upcoming)
+        const aDaysDiff = Math.floor((aDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const bDaysDiff = Math.floor((bDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-        const aStatus = getEffectiveStatus(a.status, aDate);
-        const bStatus = getEffectiveStatus(b.status, bDate);
-
-        // Status priority (lower number = higher priority)
-        const statusPriority = {
-          overdue: 1,
-          pending: 2,
-          paid: 3,
-          cancelled: 4,
-        };
-
-        const aPriority =
-          statusPriority[aStatus as keyof typeof statusPriority];
-        const bPriority =
-          statusPriority[bStatus as keyof typeof statusPriority];
-
-        // Compare by priority
-        if (aPriority !== bPriority) {
-          // For status, we always want overdue at the top regardless of asc/desc
-          return aPriority - bPriority;
-        }
-
-        // If both are overdue, sort by due date (oldest first)
-        if (aStatus === "overdue" && bStatus === "overdue") {
-          return aDate.getTime() - bDate.getTime();
+        // For ascending sort: overdue payments first (sorted by most days overdue),
+        // then upcoming payments (sorted by closest due date)
+        // For descending sort: reverse the order
+        if (sortConfig.direction === "asc") {
+          return aDaysDiff - bDaysDiff;
+        } else {
+          return bDaysDiff - aDaysDiff;
         }
       }
 
@@ -208,8 +171,53 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
         bValue = `${b.member.first_name} ${b.member.last_name}`;
       }
 
-      // Handle date sorting
-      if (sortConfig.key === "due_date" || sortConfig.key === "payment_date") {
+      // Special case for due_date sorting to maintain overdue payments sorted by days overdue
+      if (sortConfig.key === "due_date") {
+        const now = new Date();
+        const aDate = new Date(a.due_date);
+        const bDate = new Date(b.due_date);
+
+        // Determine effective status
+        const getEffectiveStatus = (status: string, dueDate: Date) => {
+          if (status === "paid") return "paid";
+          if (status === "cancelled") return "cancelled";
+
+          // If due date has passed, status is overdue
+          if (isAfter(now, dueDate)) {
+            return "overdue";
+          }
+
+          // If due date is within 7 days, status is near_overdue
+          const nearFutureDate = addDays(now, 7);
+          if (isBefore(dueDate, nearFutureDate)) {
+            return "near_overdue";
+          }
+
+          // Otherwise, status is pending
+          return "pending";
+        };
+
+        const aStatus = getEffectiveStatus(a.status, aDate);
+        const bStatus = getEffectiveStatus(b.status, bDate);
+
+        // If both are overdue, sort by days overdue (greatest first)
+        if (aStatus === "overdue" && bStatus === "overdue") {
+          const aDays = getDaysDifference(a.due_date);
+          const bDays = getDaysDifference(b.due_date);
+
+          // If sorting ascending, smaller days overdue first
+          // If sorting descending, greater days overdue first
+          return sortConfig.direction === "asc"
+            ? aDays - bDays
+            : bDays - aDays;
+        }
+
+        // For non-overdue payments, use standard date sorting
+        aValue = aDate.getTime();
+        bValue = bDate.getTime();
+      }
+      // Handle other date sorting
+      else if (sortConfig.key === "payment_date") {
         aValue = new Date(aValue).getTime();
         bValue = new Date(bValue).getTime();
       }

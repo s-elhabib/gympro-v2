@@ -709,7 +709,14 @@ const Payments = () => {
         enhancePaymentWithDisplayStatus(payment as Payment)
       );
 
-      // Sort payments by status priority: overdue first, then near_overdue, then others
+      // Helper function to calculate days difference for overdue payments
+      const getDaysDifference = (dueDate: string): number => {
+        const today = new Date();
+        const due = parseISO(dueDate);
+        return Math.abs(Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)));
+      };
+
+      // Sort payments by status priority: overdue first (sorted by days overdue), then near_overdue, then others
       const sortedPayments = [...enhancedPayments].sort((a, b) => {
         // Define status priority (lower number = higher priority)
         const getPriority = (status: string): number => {
@@ -729,8 +736,28 @@ const Payments = () => {
           }
         };
 
-        // Compare by priority
-        return getPriority(a.displayStatus) - getPriority(b.displayStatus);
+        // First compare by status priority
+        const priorityDiff = getPriority(a.displayStatus) - getPriority(b.displayStatus);
+        if (priorityDiff !== 0) {
+          return priorityDiff;
+        }
+
+        // If both are overdue, sort by days overdue (greatest first)
+        if (a.displayStatus === "overdue" && b.displayStatus === "overdue") {
+          const aDays = getDaysDifference(a.due_date);
+          const bDays = getDaysDifference(b.due_date);
+          return bDays - aDays; // Descending order (greatest first)
+        }
+
+        // If both are near_overdue, sort by days until due (smallest first)
+        if (a.displayStatus === "near_overdue" && b.displayStatus === "near_overdue") {
+          const aDays = getDaysDifference(a.due_date);
+          const bDays = getDaysDifference(b.due_date);
+          return aDays - bDays; // Ascending order (smallest first)
+        }
+
+        // For other statuses, sort by due date
+        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
       });
 
       // Store all sorted payments for virtual scrolling
