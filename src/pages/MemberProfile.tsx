@@ -20,6 +20,7 @@ import {
   Dumbbell,
   AlertCircle,
   QrCode,
+  MoreVertical,
 } from "lucide-react";
 import {
   Table,
@@ -32,12 +33,12 @@ import {
 import { Button } from "../components/ui/button";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
+import { ScrollableDialogContent } from "../components/ui/scrollable-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,7 +50,9 @@ import { useNotifications } from "../context/NotificationContext";
 import { toast } from "sonner";
 import MemberForm from "../components/MemberForm";
 import { MemberFormValues } from "../lib/validations/member";
+import { PaymentFormValues } from "../lib/validations/payment";
 import QRCodeGenerator from "../components/QRCodeGenerator";
+import { PaymentForm } from "../components/PaymentForm";
 
 type TimeRange = "week" | "month" | "year";
 
@@ -67,6 +70,8 @@ const MemberProfile = () => {
   const [error, setError] = React.useState<string | null>(null);
   const [timeRange, setTimeRange] = React.useState<TimeRange>("week");
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [isEditPaymentDialogOpen, setIsEditPaymentDialogOpen] = React.useState(false);
+  const [selectedPayment, setSelectedPayment] = React.useState<any>(null);
   const [attendanceStats, setAttendanceStats] = React.useState({
     totalVisits: 0,
     avgDuration: 0,
@@ -407,6 +412,49 @@ const MemberProfile = () => {
     } catch (error: any) {
       console.error("Error updating member:", error);
       toast.error(error.message || "Échec de la mise à jour du membre");
+    }
+  };
+
+  const handleUpdatePayment = async (data: PaymentFormValues) => {
+    if (!selectedPayment) return;
+
+    try {
+      const updatedPayment = {
+        member_id: data.memberId,
+        amount: data.amount,
+        payment_date: data.paymentDate.toISOString(),
+        due_date: data.dueDate.toISOString(),
+        status: data.status,
+        payment_method: data.paymentMethod,
+        notes: data.notes || null,
+      };
+
+      const { error } = await supabase
+        .from("payments")
+        .update(updatedPayment)
+        .eq("id", selectedPayment.id);
+
+      if (error) throw error;
+
+      // Close the dialog and reset selected payment
+      setIsEditPaymentDialogOpen(false);
+      setSelectedPayment(null);
+
+      // Refresh payment data
+      await fetchMemberData();
+
+      addNotification({
+        title: "Succès",
+        message: "Paiement mis à jour avec succès",
+        type: "success",
+      });
+    } catch (error: any) {
+      console.error("Error updating payment:", error);
+      addNotification({
+        title: "Erreur",
+        message: "Impossible de mettre à jour le paiement",
+        type: "error",
+      });
     }
   };
 
@@ -803,6 +851,7 @@ const MemberProfile = () => {
               <TableHead>Statut</TableHead>
               <TableHead>Mode de Paiement</TableHead>
               <TableHead>Notes</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -827,19 +876,84 @@ const MemberProfile = () => {
                         ? "Payé"
                         : payment.status === "pending"
                         ? "En attente"
+                        : payment.status === "overdue"
+                        ? "En retard"
                         : "Annulé"}
                     </span>
                   </TableCell>
                   <TableCell className="capitalize">
-                    {payment.payment_method.replace("_", " ")}
+                    {payment.payment_method === "cash"
+                      ? "Espèces"
+                      : payment.payment_method === "credit_card"
+                      ? "Carte de crédit"
+                      : payment.payment_method === "debit_card"
+                      ? "Carte de débit"
+                      : payment.payment_method === "bank_transfer"
+                      ? "Virement bancaire"
+                      : payment.payment_method.replace("_", " ")}
                   </TableCell>
                   <TableCell>{payment.notes || "-"}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <Dialog
+                            open={isEditPaymentDialogOpen && selectedPayment?.id === payment.id}
+                            onOpenChange={(open) => {
+                              if (!open) setSelectedPayment(null);
+                              setIsEditPaymentDialogOpen(open);
+                            }}
+                          >
+                            <DialogTrigger asChild>
+                              <DropdownMenuItem
+                                onSelect={(e) => {
+                                  e.preventDefault();
+                                  setSelectedPayment(payment);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Modifier
+                              </DropdownMenuItem>
+                            </DialogTrigger>
+                            {selectedPayment && selectedPayment.id === payment.id && (
+                              <ScrollableDialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Modifier le Paiement</DialogTitle>
+                                  <DialogDescription>
+                                    Mettez à jour les détails du paiement ci-dessous.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <PaymentForm
+                                  defaultValues={{
+                                    memberId: selectedPayment.member_id,
+                                    amount: selectedPayment.amount,
+                                    paymentDate: new Date(selectedPayment.payment_date),
+                                    dueDate: new Date(selectedPayment.due_date),
+                                    status: selectedPayment.status,
+                                    paymentMethod: selectedPayment.payment_method,
+                                    notes: selectedPayment.notes || "",
+                                  }}
+                                  onSubmit={handleUpdatePayment}
+                                  isEditing={true}
+                                />
+                              </ScrollableDialogContent>
+                            )}
+                          </Dialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center py-8 text-gray-500"
                 >
                   Aucun historique de paiement trouvé

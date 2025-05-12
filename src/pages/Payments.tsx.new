@@ -14,12 +14,12 @@ import {
 } from "../components/ui/table";
 import {
   Dialog,
+  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
-import { ScrollableDialogContent } from "../components/ui/scrollable-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,26 +76,7 @@ const Payments = () => {
       setPayments([]);
       setDisplayedPayments([]);
 
-      // First, fetch all membership types to get their durations
-      const { data: membershipTypes, error: membershipTypesError } = await supabase
-        .from("membership_types")
-        .select("*");
-
-      if (membershipTypesError) {
-        console.error("Error fetching membership types:", membershipTypesError);
-        throw new Error(`Error fetching membership types: ${membershipTypesError.message}`);
-      }
-
-      // Create a map of membership type to duration for quick lookup
-      const membershipDurations = new Map();
-      membershipTypes.forEach(type => {
-        membershipDurations.set(type.type, type.duration);
-      });
-
-      // Default duration if membership type not found
-      const DEFAULT_DURATION = 30; // 30 days
-
-      // Fetch all payments with member details including membership_type
+      // Fetch all payments with member details
       let { data, error } = await supabase.from("payments").select(
         `
           *,
@@ -108,29 +89,11 @@ const Payments = () => {
         throw new Error(`Error fetching payments: ${error.message}`);
       }
 
-      // Group payments by member_id and find the most recent payment for each member
-      const memberLatestPayments = new Map();
-
-      if (data) {
-        data.forEach(payment => {
-          const memberId = payment.member_id;
-          const paymentDate = new Date(payment.payment_date);
-
-          if (!memberLatestPayments.has(memberId) ||
-              paymentDate > new Date(memberLatestPayments.get(memberId).payment_date)) {
-            memberLatestPayments.set(memberId, payment);
-          }
-        });
-      }
-
-      // Convert the Map to an array of the most recent payments
-      const latestPayments = Array.from(memberLatestPayments.values());
-
       // Filter by search term if needed
-      let filteredBySearch = latestPayments;
+      let filteredPayments = data || [];
       if (searchTerm) {
         const searchTermLower = searchTerm.toLowerCase();
-        filteredBySearch = latestPayments.filter((payment) => {
+        filteredPayments = filteredPayments.filter((payment) => {
           const firstName = payment.member?.first_name?.toLowerCase() || "";
           const lastName = payment.member?.last_name?.toLowerCase() || "";
           const fullName = `${firstName} ${lastName}`;
@@ -142,31 +105,6 @@ const Payments = () => {
           );
         });
       }
-
-      // Filter payments to only show those that are near due date or overdue
-      // based on the membership type duration
-      const now = new Date();
-      const filteredPayments = filteredBySearch.filter(payment => {
-        // Skip cancelled payments
-        if (payment.status === "cancelled") return false;
-
-        const dueDate = parseISO(payment.due_date);
-
-        // Get the membership type duration
-        const membershipType = payment.member?.membership_type || "monthly";
-        const duration = membershipDurations.get(membershipType) || DEFAULT_DURATION;
-
-        // Calculate days until due date (negative if overdue)
-        const daysDiff = Math.floor((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-        // Define "near due date" as within 15% of the membership duration
-        const nearDueDateThreshold = Math.max(7, Math.floor(duration * 0.15)); // At least 7 days or 15% of duration
-
-        // Show if:
-        // 1. Payment is overdue (daysDiff < 0)
-        // 2. Payment is near due date (0 <= daysDiff <= nearDueDateThreshold)
-        return daysDiff <= nearDueDateThreshold;
-      });
 
       // Enhance payments with display status
       const enhancedPayments = filteredPayments.map((payment) =>
@@ -441,7 +379,7 @@ const Payments = () => {
               Enregistrer un Paiement
             </Button>
           </DialogTrigger>
-          <ScrollableDialogContent>
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Enregistrer un Paiement</DialogTitle>
               <DialogDescription>
@@ -449,7 +387,7 @@ const Payments = () => {
               </DialogDescription>
             </DialogHeader>
             <PaymentForm onSubmit={handleCreatePayment} />
-          </ScrollableDialogContent>
+          </DialogContent>
         </Dialog>
       </div>
 

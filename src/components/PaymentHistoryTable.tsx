@@ -20,12 +20,12 @@ import {
 import { Button } from "./ui/button";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+import { ScrollableDialogContent } from "./ui/scrollable-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -481,7 +481,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
                                 </DropdownMenuItem>
                               </DialogTrigger>
                               {selectedPayment && selectedPayment.id === payment.id && (
-                                <DialogContent>
+                                <ScrollableDialogContent>
                                   <DialogHeader>
                                     <DialogTitle>
                                       Modifier le Paiement
@@ -508,7 +508,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
                                     onSubmit={handleUpdatePayment}
                                     isEditing
                                   />
-                                </DialogContent>
+                                </ScrollableDialogContent>
                               )}
                             </Dialog>
                             <DropdownMenuItem
