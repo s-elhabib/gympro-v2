@@ -7,6 +7,7 @@ interface Notification {
   type: 'info' | 'success' | 'warning' | 'error';
   read: boolean;
   createdAt: Date;
+  duration?: number;
 }
 
 interface NotificationContextType {

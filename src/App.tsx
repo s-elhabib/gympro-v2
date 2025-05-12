@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import Sidebar from "./components/layout/Sidebar";
 import Navbar from "./components/layout/Navbar";
+import ToastContainer from "./components/ui/toast-container";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 
@@ -102,6 +103,7 @@ function App() {
       <NotificationProvider>
         <AuthProvider>
           <Toaster richColors />
+          <ToastContainer position="bottom-right" maxToasts={3} />
           <AppRoutes />
         </AuthProvider>
       </NotificationProvider>

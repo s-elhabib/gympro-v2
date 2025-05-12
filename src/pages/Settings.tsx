@@ -889,6 +889,7 @@ const SecuritySettings = ({
               className="rounded"
               checked={settings.autoCheckoutEnabled}
               onChange={(e) => {
+                console.log("Checkbox changed to:", e.target.checked);
                 updateSettings.updateValue({
                   ...settings,
                   autoCheckoutEnabled: e.target.checked,
@@ -1310,8 +1311,9 @@ const Settings = () => {
 
       if (fetchError) throw fetchError;
 
-      // Log the error to help debug
+      // Log the settings data to help debug
       console.log("Fetching gym settings data:", gymSettingsData);
+      console.log("Current settings state:", settings);
 
       // Prepare the settings data to save - only include fields that exist in the database
       // First, let's check which fields actually exist in the database
@@ -1324,6 +1326,9 @@ const Settings = () => {
         console.error("Error fetching database columns:", columnsError);
         throw columnsError;
       }
+
+      // Log the current database state
+      console.log("Current database state:", dbColumns && dbColumns.length > 0 ? dbColumns[0] : "No data");
 
       // Get the column names from the first row
       const columnNames =
@@ -1375,20 +1380,119 @@ const Settings = () => {
       // Only include fields that exist in the database
       Object.values(fieldMappings).forEach((mapping) => {
         if (columnNames.includes(mapping.column)) {
-          settingsData[mapping.column] = mapping.value;
+          // Special handling for boolean values to ensure they're properly saved
+          if (mapping.column === 'auto_checkout_enabled') {
+            // Explicitly convert to boolean to avoid any type issues
+            settingsData[mapping.column] = mapping.value === true;
+            console.log(`Setting ${mapping.column} to explicit boolean:`, settingsData[mapping.column]);
+          } else {
+            settingsData[mapping.column] = mapping.value;
+          }
         }
       });
 
       console.log("Settings data to save:", settingsData);
+      console.log("Auto-checkout enabled value:", settingsData.auto_checkout_enabled);
 
       if (gymSettingsData && gymSettingsData.length > 0) {
-        // Update existing settings
-        const { error: updateError } = await supabase
-          .from("gym_settings")
-          .update(settingsData)
-          .eq("id", gymSettingsData[0].id);
+        console.log("About to update settings with:", settingsData);
+        console.log("Auto-checkout enabled value before update:", settingsData.auto_checkout_enabled);
 
-        if (updateError) throw updateError;
+        // Create a new object with explicit boolean value for auto_checkout_enabled
+        const dataToUpdate = {
+          ...settingsData,
+          auto_checkout_enabled: settingsData.auto_checkout_enabled === true
+        };
+
+        console.log("Final data to update:", dataToUpdate);
+
+        // Try a direct REST API call to update the settings
+        try {
+          // First, check if the user is an admin
+          const { data: staffData, error: staffError } = await supabase
+            .from("staff")
+            .select("role")
+            .eq("id", supabase.auth.getUser().then(res => res.data.user?.id));
+
+          if (staffError) {
+            console.error("Error checking staff role:", staffError);
+          }
+
+          console.log("Staff data:", staffData);
+
+          // Update existing settings
+          const { error: updateError } = await supabase
+            .from("gym_settings")
+            .update(dataToUpdate)
+            .eq("id", gymSettingsData[0].id);
+
+          if (updateError) {
+            console.error("Error updating settings:", updateError);
+            throw updateError;
+          }
+
+          // Use a direct SQL query to update just the auto_checkout_enabled field
+          // This is a workaround for the RLS policy issue
+          const { data: directData, error: directError } = await supabase
+            .rpc('update_auto_checkout_enabled', {
+              enabled: settings.autoCheckoutEnabled === true,
+              settings_id: gymSettingsData[0].id
+            });
+
+          // Force the local state to match what we're trying to save
+          setSettings(prevSettings => ({
+            ...prevSettings,
+            autoCheckoutEnabled: settings.autoCheckoutEnabled === true
+          }));
+
+          if (directError) {
+            console.error("Error with direct update:", directError);
+          } else {
+            console.log("Direct update result:", directData);
+          }
+        } catch (error) {
+          console.error("Error in update process:", error);
+          throw error;
+        }
+
+        console.log("Update completed successfully");
+
+        // Explicitly fetch the updated settings to ensure we have the latest values
+        const { data: updatedSettings, error: fetchSettingsError } = await supabase
+          .from("gym_settings")
+          .select("*")
+          .eq("id", gymSettingsData[0].id)
+          .limit(1);
+
+        if (fetchSettingsError) {
+          console.error("Error fetching updated settings:", fetchSettingsError);
+          throw fetchSettingsError;
+        }
+
+        // Log the fetched data from the database
+        console.log("Fetched settings after update:", updatedSettings);
+        console.log("Auto-checkout enabled value after update:", updatedSettings && updatedSettings.length > 0 ? updatedSettings[0].auto_checkout_enabled : "Unknown");
+
+        // Update the local settings state with the values from the database
+        if (updatedSettings && updatedSettings.length > 0) {
+          const dbSettings = updatedSettings[0];
+          console.log("Setting autoCheckoutEnabled to:", dbSettings.auto_checkout_enabled);
+
+          // Force the settings update to match what's in the database
+          // Use strict equality check for boolean values
+          const isEnabled = dbSettings.auto_checkout_enabled === true;
+          console.log("Setting autoCheckoutEnabled state to:", isEnabled);
+
+          setSettings(prevSettings => {
+            const newSettings = {
+              ...prevSettings,
+              autoCheckoutEnabled: isEnabled,
+              autoCheckoutMinutes: dbSettings.auto_checkout_minutes || 240
+            };
+            console.log("New settings state:", newSettings);
+            return newSettings;
+          });
+        }
       } else {
         // Insert new settings if none exist
         const { error: insertError } = await supabase
@@ -1396,6 +1500,38 @@ const Settings = () => {
           .insert([settingsData]);
 
         if (insertError) throw insertError;
+
+        // Explicitly fetch the inserted settings
+        const { data: insertedSettings, error: fetchInsertError } = await supabase
+          .from("gym_settings")
+          .select("*")
+          .limit(1);
+
+        if (fetchInsertError) throw fetchInsertError;
+
+        // Log the fetched data from the database
+        console.log("Fetched settings after insert:", insertedSettings);
+
+        // Update the local settings state with the values from the database
+        if (insertedSettings && insertedSettings.length > 0) {
+          const dbSettings = insertedSettings[0];
+          console.log("Setting autoCheckoutEnabled to:", dbSettings.auto_checkout_enabled);
+
+          // Force the settings update to match what's in the database
+          // Use strict equality check for boolean values
+          const isEnabled = dbSettings.auto_checkout_enabled === true;
+          console.log("Setting autoCheckoutEnabled state to:", isEnabled);
+
+          setSettings(prevSettings => {
+            const newSettings = {
+              ...prevSettings,
+              autoCheckoutEnabled: isEnabled,
+              autoCheckoutMinutes: dbSettings.auto_checkout_minutes || 240
+            };
+            console.log("New settings state:", newSettings);
+            return newSettings;
+          });
+        }
       }
 
       // Save membership types
@@ -1460,10 +1596,12 @@ const Settings = () => {
         }
       }
 
+      // Show success notification
       addNotification({
         title: "Paramètres Enregistrés",
         message: "Vos paramètres ont été enregistrés avec succès.",
         type: "success",
+        duration: 5000, // Show for 5 seconds
       });
 
       setIsChangesSaved(true);
@@ -1522,7 +1660,7 @@ const Settings = () => {
           setSettings((prevSettings) => ({
             ...prevSettings,
             autoCheckoutMinutes: dbSettings.auto_checkout_minutes || 240,
-            autoCheckoutEnabled: dbSettings.auto_checkout_enabled !== undefined ? dbSettings.auto_checkout_enabled : true,
+            autoCheckoutEnabled: dbSettings.auto_checkout_enabled === true,
             gymName: dbSettings.gym_name || "",
             phone: dbSettings.phone || "",
             email: dbSettings.email || "",
