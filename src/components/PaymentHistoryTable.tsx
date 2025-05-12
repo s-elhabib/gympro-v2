@@ -8,7 +8,7 @@ import {
   differenceInDays,
 } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowUpDown, ChevronUp, ChevronDown, Edit, MoreVertical, Trash, Calendar } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -18,6 +18,22 @@ import {
   TableRow,
 } from "./ui/table";
 import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { PaymentFormValues } from "../lib/validations/payment";
+import { PaymentWithDisplayStatus } from "../types";
 
 export interface Payment {
   id: string;
@@ -27,6 +43,7 @@ export interface Payment {
   payment_date: string;
   status: string;
   payment_method: string;
+  notes?: string | null;
   member: {
     first_name: string;
     last_name: string;
@@ -34,13 +51,27 @@ export interface Payment {
 }
 
 interface PaymentHistoryTableProps {
-  payments: Payment[];
+  payments: Payment[] | PaymentWithDisplayStatus[];
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
   isLoading: boolean;
   sortConfig?: SortConfig;
   onRequestSort?: (key: keyof Payment | "member") => void;
+  // Action handlers for edit/delete functionality
+  isEditDialogOpen?: boolean;
+  setIsEditDialogOpen?: (open: boolean) => void;
+  selectedPayment?: Payment | null;
+  setSelectedPayment?: (payment: Payment | null) => void;
+  handleUpdatePayment?: (data: PaymentFormValues) => Promise<void>;
+  handleDeletePayment?: (id: string) => Promise<void>;
+  PaymentForm?: React.ComponentType<{
+    defaultValues?: Partial<PaymentFormValues>;
+    onSubmit: (data: PaymentFormValues) => void;
+    isEditing?: boolean;
+  }>;
+  // Flag to show/hide actions column
+  showActions?: boolean;
 }
 
 export type SortConfig = {
@@ -56,6 +87,15 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
   isLoading,
   sortConfig: externalSortConfig,
   onRequestSort: externalRequestSort,
+  // Action handlers
+  isEditDialogOpen = false,
+  setIsEditDialogOpen = () => {},
+  selectedPayment = null,
+  setSelectedPayment = () => {},
+  handleUpdatePayment = async () => {},
+  handleDeletePayment = async () => {},
+  PaymentForm,
+  showActions = false,
 }) => {
   const navigate = useNavigate();
   const [internalSortConfig, setInternalSortConfig] = React.useState<SortConfig>(null);
@@ -325,12 +365,15 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
                 {getSortIcon("payment_method")}
               </div>
             </TableHead>
+            {showActions && (
+              <TableHead className="w-[100px]">Actions</TableHead>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={showActions ? 7 : 6} className="text-center py-8">
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
@@ -338,13 +381,18 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
             </TableRow>
           ) : sortedPayments.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={showActions ? 7 : 6} className="text-center py-8">
                 Aucun paiement trouvé
               </TableCell>
             </TableRow>
           ) : (
             sortedPayments.map((payment) => {
-              const updatedPayment = updatePaymentStatus(payment);
+              // Handle both Payment and PaymentWithDisplayStatus types
+              const hasDisplayStatus = 'displayStatus' in payment;
+              const status = hasDisplayStatus
+                ? (payment as PaymentWithDisplayStatus).displayStatus
+                : updatePaymentStatus(payment as Payment).status;
+
               return (
                 <TableRow key={payment.id}>
                   <TableCell
@@ -355,28 +403,34 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
                   </TableCell>
                   <TableCell>{payment.amount.toFixed(2)} MAD</TableCell>
                   <TableCell>
-                    {format(new Date(payment.payment_date), "MMM d, yyyy")}
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <span>{format(new Date(payment.payment_date), "MMM d, yyyy")}</span>
+                    </div>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(payment.due_date), "MMM d, yyyy")}
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <span>{format(new Date(payment.due_date), "MMM d, yyyy")}</span>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-1">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          updatedPayment.status
+                          status
                         )}`}
                       >
-                        {getStatusText(updatedPayment.status)}
+                        {getStatusText(status)}
                       </span>
-                      {(updatedPayment.status === "overdue" ||
-                        updatedPayment.status === "near_overdue") &&
+                      {(status === "overdue" ||
+                        status === "near_overdue") &&
                         getDaysDifference(payment.due_date) > 0 && (
                           <span
                             className={`
                           inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
                           ${
-                            updatedPayment.status === "overdue"
+                            status === "overdue"
                               ? "bg-red-50 text-red-700 border border-red-200"
                               : "bg-orange-50 text-orange-700 border border-orange-200"
                           }
@@ -392,10 +446,83 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({
                       ? "Espèces"
                       : payment.payment_method === "credit_card"
                       ? "Carte bancaire"
+                      : payment.payment_method === "debit_card"
+                      ? "Carte de débit"
                       : payment.payment_method === "bank_transfer"
                       ? "Virement bancaire"
                       : payment.payment_method.replace("_", " ")}
                   </TableCell>
+                  {showActions && PaymentForm && (
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <Dialog
+                              open={isEditDialogOpen && selectedPayment?.id === payment.id}
+                              onOpenChange={(open) => {
+                                if (!open) setSelectedPayment(null);
+                                setIsEditDialogOpen(open);
+                              }}
+                            >
+                              <DialogTrigger asChild>
+                                <DropdownMenuItem
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                    setSelectedPayment(payment as Payment);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Modifier
+                                </DropdownMenuItem>
+                              </DialogTrigger>
+                              {selectedPayment && selectedPayment.id === payment.id && (
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>
+                                      Modifier le Paiement
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                      Mettez a jour les details du paiement
+                                      ci-dessous.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <PaymentForm
+                                    defaultValues={{
+                                      memberId: selectedPayment.member_id,
+                                      // membershipType will be fetched by the form when member is loaded
+                                      amount: selectedPayment.amount,
+                                      paymentDate: new Date(
+                                        selectedPayment.payment_date
+                                      ),
+                                      dueDate: new Date(selectedPayment.due_date),
+                                      status: selectedPayment.status,
+                                      paymentMethod:
+                                        selectedPayment.payment_method,
+                                      notes: selectedPayment.notes || "",
+                                    }}
+                                    onSubmit={handleUpdatePayment}
+                                    isEditing
+                                  />
+                                </DialogContent>
+                              )}
+                            </Dialog>
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onSelect={() => handleDeletePayment(payment.id)}
+                            >
+                              <Trash className="h-4 w-4 mr-2" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               );
             })

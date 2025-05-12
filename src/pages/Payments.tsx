@@ -6,7 +6,7 @@ import { format, parseISO, addMonths, isValid } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { Payment, PaymentWithDisplayStatus } from "../types";
 import { enhancePaymentWithDisplayStatus } from "../lib/utils/payment";
-import SimplePaymentsList from "../components/SimplePaymentsList";
+import PaymentHistoryTable, { SortConfig } from "../components/PaymentHistoryTable";
 import {
   Table,
   TableBody,
@@ -662,21 +662,46 @@ const Payments = () => {
     PaymentWithDisplayStatus[]
   >([]);
 
-  // Track the current page for loading more items
-  const [currentPage, setCurrentPage] = React.useState(0);
+  // Pagination state for PaymentHistoryTable
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
+  const [totalRecords, setTotalRecords] = React.useState(0);
+  const [displayedPayments, setDisplayedPayments] = React.useState<PaymentWithDisplayStatus[]>([]);
+
+  // Sorting state
+  const [sortConfig, setSortConfig] = React.useState<SortConfig>(null);
 
   // Initial fetch to get all payments and sort them
   const fetchPayments = async () => {
     try {
       setIsLoading(true);
-      setCurrentPage(0);
       setPayments([]);
+      setDisplayedPayments([]);
 
-      // Fetch all payments to determine status and sort them properly
+      // First, fetch all membership types to get their durations
+      const { data: membershipTypes, error: membershipTypesError } = await supabase
+        .from("membership_types")
+        .select("*");
+
+      if (membershipTypesError) {
+        console.error("Error fetching membership types:", membershipTypesError);
+        throw new Error(`Error fetching membership types: ${membershipTypesError.message}`);
+      }
+
+      // Create a map of membership type to duration for quick lookup
+      const membershipDurations = new Map();
+      membershipTypes.forEach(type => {
+        membershipDurations.set(type.type, type.duration);
+      });
+
+      // Default duration if membership type not found
+      const DEFAULT_DURATION = 30; // 30 days
+
+      // Fetch all payments with member details including membership_type
       let { data, error } = await supabase.from("payments").select(
         `
           *,
-          member:members!payments_member_id_fkey(first_name, last_name)
+          member:members!payments_member_id_fkey(first_name, last_name, membership_type)
         `
       );
 
@@ -685,11 +710,29 @@ const Payments = () => {
         throw new Error(`Error fetching payments: ${error.message}`);
       }
 
-      // Filter by search term on the client side if needed
-      // This is more reliable than using the Supabase filter for nested objects
-      if (searchTerm && data) {
+      // Group payments by member_id and find the most recent payment for each member
+      const memberLatestPayments = new Map();
+
+      if (data) {
+        data.forEach(payment => {
+          const memberId = payment.member_id;
+          const paymentDate = new Date(payment.payment_date);
+
+          if (!memberLatestPayments.has(memberId) ||
+              paymentDate > new Date(memberLatestPayments.get(memberId).payment_date)) {
+            memberLatestPayments.set(memberId, payment);
+          }
+        });
+      }
+
+      // Convert the Map to an array of the most recent payments
+      const latestPayments = Array.from(memberLatestPayments.values());
+
+      // Filter by search term if needed
+      let filteredBySearch = latestPayments;
+      if (searchTerm) {
         const searchTermLower = searchTerm.toLowerCase();
-        data = data.filter((payment) => {
+        filteredBySearch = latestPayments.filter((payment) => {
           const firstName = payment.member?.first_name?.toLowerCase() || "";
           const lastName = payment.member?.last_name?.toLowerCase() || "";
           const fullName = `${firstName} ${lastName}`;
@@ -702,10 +745,33 @@ const Payments = () => {
         });
       }
 
-      // No need to execute the query again as we already have the data
+      // Filter payments to only show those that are near due date or overdue
+      // based on the membership type duration
+      const now = new Date();
+      const filteredPayments = filteredBySearch.filter(payment => {
+        // Skip cancelled payments
+        if (payment.status === "cancelled") return false;
+
+        const dueDate = parseISO(payment.due_date);
+
+        // Get the membership type duration
+        const membershipType = payment.member?.membership_type || "monthly";
+        const duration = membershipDurations.get(membershipType) || DEFAULT_DURATION;
+
+        // Calculate days until due date (negative if overdue)
+        const daysDiff = Math.floor((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+        // Define "near due date" as within 15% of the membership duration
+        const nearDueDateThreshold = Math.max(7, Math.floor(duration * 0.15)); // At least 7 days or 15% of duration
+
+        // Show if:
+        // 1. Payment is overdue (daysDiff < 0)
+        // 2. Payment is near due date (0 <= daysDiff <= nearDueDateThreshold)
+        return daysDiff <= nearDueDateThreshold;
+      });
 
       // Enhance payments with display status
-      const enhancedPayments = (data || []).map((payment) =>
+      const enhancedPayments = filteredPayments.map((payment) =>
         enhancePaymentWithDisplayStatus(payment as Payment)
       );
 
@@ -717,58 +783,72 @@ const Payments = () => {
       };
 
       // Sort payments by status priority: overdue first (sorted by days overdue), then near_overdue, then others
-      const sortedPayments = [...enhancedPayments].sort((a, b) => {
-        // Define status priority (lower number = higher priority)
-        const getPriority = (status: string): number => {
-          switch (status) {
-            case "overdue":
-              return 1;
-            case "near_overdue":
-              return 2;
-            case "pending":
-              return 3;
-            case "paid":
-              return 4;
-            case "cancelled":
-              return 5;
-            default:
-              return 6;
+      let sortedPayments = [...enhancedPayments];
+
+      // Apply sort config if available
+      if (sortConfig) {
+        sortedPayments = sortPaymentsByConfig(sortedPayments, sortConfig);
+      } else {
+        // Default sort by status priority
+        sortedPayments.sort((a, b) => {
+          // Define status priority (lower number = higher priority)
+          const getPriority = (status: string): number => {
+            switch (status) {
+              case "overdue":
+                return 1;
+              case "near_overdue":
+                return 2;
+              case "pending":
+                return 3;
+              case "paid":
+                return 4;
+              case "cancelled":
+                return 5;
+              default:
+                return 6;
+            }
+          };
+
+          // First compare by status priority
+          const priorityDiff = getPriority(a.displayStatus) - getPriority(b.displayStatus);
+          if (priorityDiff !== 0) {
+            return priorityDiff;
           }
-        };
 
-        // First compare by status priority
-        const priorityDiff = getPriority(a.displayStatus) - getPriority(b.displayStatus);
-        if (priorityDiff !== 0) {
-          return priorityDiff;
-        }
+          // If both are overdue, sort by days overdue (greatest first)
+          if (a.displayStatus === "overdue" && b.displayStatus === "overdue") {
+            const aDays = getDaysDifference(a.due_date);
+            const bDays = getDaysDifference(b.due_date);
+            return bDays - aDays; // Descending order (greatest first)
+          }
 
-        // If both are overdue, sort by days overdue (greatest first)
-        if (a.displayStatus === "overdue" && b.displayStatus === "overdue") {
-          const aDays = getDaysDifference(a.due_date);
-          const bDays = getDaysDifference(b.due_date);
-          return bDays - aDays; // Descending order (greatest first)
-        }
+          // If both are near_overdue, sort by days until due (smallest first)
+          if (a.displayStatus === "near_overdue" && b.displayStatus === "near_overdue") {
+            const aDays = getDaysDifference(a.due_date);
+            const bDays = getDaysDifference(b.due_date);
+            return aDays - bDays; // Ascending order (smallest first)
+          }
 
-        // If both are near_overdue, sort by days until due (smallest first)
-        if (a.displayStatus === "near_overdue" && b.displayStatus === "near_overdue") {
-          const aDays = getDaysDifference(a.due_date);
-          const bDays = getDaysDifference(b.due_date);
-          return aDays - bDays; // Ascending order (smallest first)
-        }
+          // For other statuses, sort by due date
+          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+        });
+      }
 
-        // For other statuses, sort by due date
-        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-      });
-
-      // Store all sorted payments for virtual scrolling
+      // Store all sorted payments
       setAllPayments(sortedPayments);
       setAllPaymentsLoaded(true);
 
-      // Load initial batch
+      // Calculate pagination
+      const total = sortedPayments.length;
+      setTotalRecords(total);
+      setTotalPages(Math.ceil(total / ITEMS_PER_PAGE));
+
+      // Update displayed payments based on current page
+      updateDisplayedPayments(sortedPayments, currentPage);
+
+      // For backward compatibility with infinite scroll
       const initialItems = sortedPayments.slice(0, ITEMS_PER_PAGE);
       setPayments(initialItems);
-
-      // Set hasNextPage based on whether there are more items to load
       setHasNextPage(sortedPayments.length > ITEMS_PER_PAGE);
     } catch (error: any) {
       console.error("Error fetching payments:", error);
@@ -789,6 +869,58 @@ const Payments = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Helper function to update displayed payments based on current page
+  const updateDisplayedPayments = (allPayments: PaymentWithDisplayStatus[], page: number) => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    setDisplayedPayments(allPayments.slice(start, end));
+  };
+
+  // Helper function to sort payments by config
+  const sortPaymentsByConfig = (payments: PaymentWithDisplayStatus[], config: SortConfig) => {
+    if (!config) return payments;
+
+    return [...payments].sort((a, b) => {
+      let aValue: any = a[config.key as keyof Payment];
+      let bValue: any = b[config.key as keyof Payment];
+
+      // Handle member name sorting
+      if (config.key === "member") {
+        aValue = `${a.member.first_name} ${a.member.last_name}`;
+        bValue = `${b.member.first_name} ${b.member.last_name}`;
+      }
+
+      // Handle date sorting
+      if (config.key === "due_date" || config.key === "payment_date") {
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
+      }
+
+      if (aValue < bValue) {
+        return config.direction === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return config.direction === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+  };
+
+  // Handle sort request
+  const handleRequestSort = (key: keyof Payment | "member") => {
+    let direction: "asc" | "desc" = "asc";
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+
+    const newConfig = { key, direction };
+    setSortConfig(newConfig);
+
+    // Re-sort all payments with the new config
+    const sortedPayments = sortPaymentsByConfig(allPayments, newConfig);
+    updateDisplayedPayments(sortedPayments, currentPage);
   };
 
   // Load more items for infinite scrolling
@@ -825,6 +957,20 @@ const Payments = () => {
   React.useEffect(() => {
     fetchPayments();
   }, [searchTerm]);
+
+  // Update displayed payments when current page changes
+  React.useEffect(() => {
+    if (allPaymentsLoaded) {
+      let paymentsToDisplay = [...allPayments];
+
+      // Apply sort config if available
+      if (sortConfig) {
+        paymentsToDisplay = sortPaymentsByConfig(paymentsToDisplay, sortConfig);
+      }
+
+      updateDisplayedPayments(paymentsToDisplay, currentPage);
+    }
+  }, [currentPage, allPaymentsLoaded]);
 
   const handleCreatePayment = async (data: PaymentFormValues) => {
     try {
@@ -1006,11 +1152,14 @@ const Payments = () => {
         />
       </div>
 
-      <SimplePaymentsList
-        payments={payments}
+      <PaymentHistoryTable
+        payments={displayedPayments}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
         isLoading={isLoading}
-        hasNextPage={hasNextPage}
-        loadMoreItems={loadMoreItems}
+        sortConfig={sortConfig}
+        onRequestSort={handleRequestSort}
         isEditDialogOpen={isEditDialogOpen}
         setIsEditDialogOpen={setIsEditDialogOpen}
         selectedPayment={selectedPayment}
@@ -1018,6 +1167,7 @@ const Payments = () => {
         handleUpdatePayment={handleUpdatePayment}
         handleDeletePayment={handleDeletePayment}
         PaymentForm={PaymentForm}
+        showActions={true}
       />
     </div>
   );
