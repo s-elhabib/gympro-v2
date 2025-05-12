@@ -133,18 +133,21 @@ export interface Database {
         Row: {
           id: string
           auto_checkout_minutes: number
+          auto_checkout_enabled: boolean
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           auto_checkout_minutes: number
+          auto_checkout_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           auto_checkout_minutes?: number
+          auto_checkout_enabled?: boolean
           created_at?: string
           updated_at?: string
         }

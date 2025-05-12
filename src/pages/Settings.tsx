@@ -451,7 +451,7 @@ const BusinessSettings = ({
             isLoading={isLoadingMembershipTypes}
           />
 
-          {/** 
+          {/**
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Maintenance des Types d'Abonnement</CardTitle>
@@ -849,6 +849,7 @@ interface SettingsData {
   twoFactorAuth: boolean;
   sessionTimeout: number;
   autoCheckoutMinutes: number;
+  autoCheckoutEnabled: boolean;
   backupFrequency?: string; // Made optional since it doesn't exist in the database
 }
 
@@ -874,34 +875,56 @@ const SecuritySettings = ({
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Sécurité & Sauvegarde</CardTitle>
+        <CardTitle>Présence & Sauvegarde</CardTitle>
         <CardDescription>
-          Gérer les paramètres de sécurité et la sauvegarde des données
+          Gérer les paramètres de présence et la sauvegarde des données
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="autoCheckoutMinutes">
-            Départ Automatique (minutes)
-          </Label>
-          <Input
-            id="autoCheckoutMinutes"
-            type="number"
-            min="5"
-            max="1440"
-            value={settings.autoCheckoutMinutes}
-            onChange={(e) => {
-              const value = parseInt(e.target.value);
-              updateSettings.updateValue({
-                ...settings,
-                autoCheckoutMinutes: isNaN(value) ? 240 : value,
-              });
-            }}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Temps après lequel un membre est automatiquement enregistré comme
-            parti (minimum: 5 minutes, par défaut: 240 minutes = 4 heures)
-          </p>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="autoCheckoutEnabled"
+              className="rounded"
+              checked={settings.autoCheckoutEnabled}
+              onChange={(e) => {
+                updateSettings.updateValue({
+                  ...settings,
+                  autoCheckoutEnabled: e.target.checked,
+                });
+              }}
+            />
+            <Label htmlFor="autoCheckoutEnabled" className="font-medium">
+              Activer le départ automatique
+            </Label>
+          </div>
+
+          <div>
+            <Label htmlFor="autoCheckoutMinutes">
+              Départ Automatique (minutes)
+            </Label>
+            <Input
+              id="autoCheckoutMinutes"
+              type="number"
+              min="5"
+              max="1440"
+              value={settings.autoCheckoutMinutes}
+              disabled={!settings.autoCheckoutEnabled}
+              className={!settings.autoCheckoutEnabled ? "bg-gray-100 text-gray-500" : ""}
+              onChange={(e) => {
+                const value = parseInt(e.target.value);
+                updateSettings.updateValue({
+                  ...settings,
+                  autoCheckoutMinutes: isNaN(value) ? 240 : value,
+                });
+              }}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Temps après lequel un membre est automatiquement enregistré comme
+              parti (minimum: 5 minutes, par défaut: 240 minutes = 4 heures)
+            </p>
+          </div>
         </div>
 
         {/* Backup frequency section removed as it doesn't exist in the database */}
@@ -1150,6 +1173,7 @@ const Settings = () => {
     twoFactorAuth: false,
     sessionTimeout: 30,
     autoCheckoutMinutes: 240, // 4 hours in minutes
+    autoCheckoutEnabled: true, // Auto-checkout enabled by default
     backupFrequency: "daily",
   });
 
@@ -1316,6 +1340,10 @@ const Settings = () => {
           autoCheckoutMinutes: {
             column: "auto_checkout_minutes",
             value: settings.autoCheckoutMinutes,
+          },
+          autoCheckoutEnabled: {
+            column: "auto_checkout_enabled",
+            value: settings.autoCheckoutEnabled,
           },
           gymName: { column: "gym_name", value: settings.gymName },
           phone: { column: "phone", value: settings.phone },
@@ -1494,6 +1522,7 @@ const Settings = () => {
           setSettings((prevSettings) => ({
             ...prevSettings,
             autoCheckoutMinutes: dbSettings.auto_checkout_minutes || 240,
+            autoCheckoutEnabled: dbSettings.auto_checkout_enabled !== undefined ? dbSettings.auto_checkout_enabled : true,
             gymName: dbSettings.gym_name || "",
             phone: dbSettings.phone || "",
             email: dbSettings.email || "",
@@ -1575,7 +1604,7 @@ const Settings = () => {
     { id: "notifications", label: "Notifications", icon: Bell },
     // Appearance section commented out for future implementation
     // { id: "appearance", label: "Apparence", icon: Sun },
-    { id: "security", label: "Sécurité", icon: Shield },
+    { id: "security", label: "Présence", icon: Clock },
   ];
 
   return (

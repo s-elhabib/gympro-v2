@@ -351,13 +351,24 @@ const Attendance = () => {
   // Function to perform automatic checkout
   const performAutoCheckout = useCallback(async () => {
     try {
-      // Fetch the auto-checkout setting
+      // Fetch the auto-checkout settings
       const { data: settingsData, error: settingsError } = await supabase
         .from("gym_settings")
-        .select("auto_checkout_minutes")
+        .select("auto_checkout_minutes, auto_checkout_enabled")
         .limit(1);
 
       if (settingsError) throw settingsError;
+
+      // Check if auto-checkout is enabled
+      const autoCheckoutEnabled =
+        settingsData && settingsData.length > 0
+          ? settingsData[0].auto_checkout_enabled !== false // Default to true if undefined
+          : true;
+
+      // If auto-checkout is disabled, don't proceed
+      if (!autoCheckoutEnabled) {
+        return;
+      }
 
       // Default to 4 hours (240 minutes) if no setting is found
       const autoCheckoutMinutes =
