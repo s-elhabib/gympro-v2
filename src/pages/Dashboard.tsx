@@ -546,10 +546,12 @@ const Dashboard = () => {
   React.useEffect(() => {
     if (user) {
       fetchDashboardData();
-      // Load 30-day revenue data by default
-      handleTimeRangeChange('30d');
+      // Only load revenue data when component mounts, not on selectedTimeRange changes
+      if (selectedTimeRange === "7d") {
+        handleTimeRangeChange('30d');
+      }
     }
-  }, [user, selectedTimeRange]);
+  }, [user]);
 
   React.useEffect(() => {
     // If sort config changes, re-sort all payments
@@ -565,6 +567,7 @@ const Dashboard = () => {
     try {
       setRevenueLoading(true);
       setError(null);
+      setSelectedTimeRange(range);
       const { start, end } = getTimeRangeDate(range);
 
       // Calculate the same period length for the previous period
@@ -572,7 +575,7 @@ const Dashboard = () => {
       const previousStart = subDays(start, periodLength);
       const previousEnd = subDays(end, periodLength);
 
-      // Fetch current period revenue
+      // Fetch current period revenue - get all payments, not just filtered ones
       const { data: currentPeriodData, error: currentError } = await supabase
         .from("payments")
         .select("amount")
