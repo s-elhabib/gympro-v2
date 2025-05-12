@@ -67,7 +67,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
   const [revenueLoading, setRevenueLoading] = React.useState(false);
-  const [selectedTimeRange, setSelectedTimeRange] = React.useState<TimeRange>("7d");
+  const [selectedTimeRange, setSelectedTimeRange] = React.useState<TimeRange>("30d");
   const [stats, setStats] = React.useState({
     totalRevenue: { value: 0, trend: 0, isPositive: true },
     activeMembers: { value: 0, trend: 0, isPositive: true },
@@ -196,28 +196,35 @@ const Dashboard = () => {
 
         // Calculate total revenue based on selected time range
         const timeRange = getTimeRangeDate(selectedTimeRange);
-        const totalRevenue = sortedPayments
-          .filter((p) => {
-            const paymentDate = new Date(p.payment_date);
-            return p.status === "paid" &&
-                   isAfter(paymentDate, timeRange.start) &&
-                   isBefore(paymentDate, timeRange.end);
-          })
-          .reduce((sum, p) => sum + p.amount, 0);
+
+        // Fetch current period revenue directly from the database to ensure accuracy
+        const { data: currentPeriodData, error: currentPeriodError } = await supabase
+          .from("payments")
+          .select("amount")
+          .eq("status", "paid")
+          .gte("payment_date", timeRange.start.toISOString())
+          .lte("payment_date", timeRange.end.toISOString());
+
+        if (currentPeriodError) throw currentPeriodError;
+
+        const totalRevenue = currentPeriodData?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
 
         // Calculate last period revenue for trend
         const periodLength = differenceInDays(timeRange.end, timeRange.start);
         const previousPeriodStart = subDays(timeRange.start, periodLength);
         const previousPeriodEnd = timeRange.start;
 
-        const previousPeriodRevenue = sortedPayments
-          .filter((p) => {
-            const paymentDate = new Date(p.payment_date);
-            return p.status === "paid" &&
-                   isAfter(paymentDate, previousPeriodStart) &&
-                   isBefore(paymentDate, previousPeriodEnd);
-          })
-          .reduce((sum, p) => sum + p.amount, 0);
+        // Fetch previous period revenue directly from the database
+        const { data: previousPeriodData, error: previousPeriodError } = await supabase
+          .from("payments")
+          .select("amount")
+          .eq("status", "paid")
+          .gte("payment_date", previousPeriodStart.toISOString())
+          .lte("payment_date", previousPeriodEnd.toISOString());
+
+        if (previousPeriodError) throw previousPeriodError;
+
+        const previousPeriodRevenue = previousPeriodData?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
 
         // Calculer le revenu du mois dernier
         const lastMonth = new Date();
@@ -546,10 +553,7 @@ const Dashboard = () => {
   React.useEffect(() => {
     if (user) {
       fetchDashboardData();
-      // Only load revenue data when component mounts, not on selectedTimeRange changes
-      if (selectedTimeRange === "7d") {
-        handleTimeRangeChange('30d');
-      }
+      // No need to call handleTimeRangeChange here since we're already using 30d as default
     }
   }, [user]);
 
@@ -573,7 +577,7 @@ const Dashboard = () => {
       // Calculate the same period length for the previous period
       const periodLength = differenceInDays(end, start);
       const previousStart = subDays(start, periodLength);
-      const previousEnd = subDays(end, periodLength);
+      const previousEnd = start;
 
       // Fetch current period revenue - get all payments, not just filtered ones
       const { data: currentPeriodData, error: currentError } = await supabase
@@ -618,6 +622,9 @@ const Dashboard = () => {
           isPositive: revenueTrend >= 0,
         },
       }));
+
+      // Log for debugging
+      console.log(`Revenue for ${range}: ${currentRevenue} MAD (previous period: ${previousRevenue} MAD)`);
     } catch (error: any) {
       console.error("Error updating revenue:", error);
       addNotification({

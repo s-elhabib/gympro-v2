@@ -31,7 +31,7 @@ const StatCard: React.FC<StatCardProps> = ({
   onClick,
   clickable = false
 }) => {
-  const [timeRange, setTimeRange] = React.useState<TimeRange>(showTimeRangeFilter && onTimeRangeChange ? '30d' : '7d');
+  const [timeRange, setTimeRange] = React.useState<TimeRange>('30d');
 
   const formattedValue = format === 'currency'
     ? `${new Intl.NumberFormat('fr-FR').format(value)} MAD`
