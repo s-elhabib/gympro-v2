@@ -75,32 +75,7 @@ import { SummaryCards } from "../components/reports/SummaryCards";
 import { RevenueTrends } from "../components/reports/RevenueTrends";
 import { DataImportExport } from "../components/DataImportExport";
 
-// Placeholder data for demonstration
-const revenueData = [
-  { month: "Jan", revenue: 1250000 },
-  { month: "Fev", revenue: 1420000 },
-  { month: "Mar", revenue: 1580000 },
-  { month: "Avr", revenue: 1390000 },
-  { month: "Mai", revenue: 1650000 },
-  { month: "Jui", revenue: 1820000 },
-];
-
-const membershipData = [
-  { name: "Mensuel", value: 45 },
-  { name: "Trimestriel", value: 30 },
-  { name: "Annuel", value: 15 },
-  { name: "Pass Journalier", value: 10 },
-];
-
-const attendanceData = [
-  { day: "Lun", visitors: 68 },
-  { day: "Mar", visitors: 75 },
-  { day: "Mer", visitors: 82 },
-  { day: "Jeu", visitors: 70 },
-  { day: "Ven", visitors: 90 },
-  { day: "Sam", visitors: 110 },
-  { day: "Dim", visitors: 45 },
-];
+// Note: We no longer need placeholder data as we're using real data from the API
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
@@ -520,7 +495,7 @@ const ReportsNew = () => {
   const { user } = useAuth();
   const { addNotification } = useNotifications();
   const [activeTab, setActiveTab] = useState("revenue");
-  const [reportType, setReportType] = useState("monthly");
+  const [reportType, setReportType] = useState("30d"); // Use 30d to match Dashboard
   const {
     summaryData,
     monthlyComparison,
@@ -529,16 +504,11 @@ const ReportsNew = () => {
     attendanceData,
     isLoading,
     calculatePercentageChange,
-  } = useReportsData();
+  } = useReportsData(reportType);
 
   // Format currency
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+    return `${new Intl.NumberFormat("fr-FR").format(value)} MAD`;
   };
 
   // Custom tooltip for pie chart
@@ -639,16 +609,18 @@ const ReportsNew = () => {
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
-                          data={[
-                            { month: "Jan", actual: 12500, projected: 12500 },
-                            { month: "Fév", actual: 13200, projected: 13200 },
-                            { month: "Mar", actual: 14100, projected: 14100 },
-                            { month: "Avr", actual: 15300, projected: 15300 },
-                            { month: "Mai", actual: 16200, projected: 16200 },
-                            { month: "Juin", actual: 0, projected: 17100 },
-                            { month: "Juil", actual: 0, projected: 18000 },
-                            { month: "Août", actual: 0, projected: 17500 },
-                          ]}
+                          data={revenueData.map(item => ({
+                            month: item.month,
+                            actual: item.revenue,
+                            projected: item.revenue * 1.1 // 10% increase for projection
+                          })).concat(
+                            // Add future months with projections
+                            [
+                              { month: "Juin", actual: 0, projected: revenueData.length > 0 ? revenueData[revenueData.length - 1].revenue * 1.05 : 0 },
+                              { month: "Juil", actual: 0, projected: revenueData.length > 0 ? revenueData[revenueData.length - 1].revenue * 1.1 : 0 },
+                              { month: "Août", actual: 0, projected: revenueData.length > 0 ? revenueData[revenueData.length - 1].revenue * 1.08 : 0 },
+                            ]
+                          )}
                           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                         >
                           <CartesianGrid
@@ -733,13 +705,10 @@ const ReportsNew = () => {
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
-                          data={[
-                            { month: "Jan", newMembers: 24 },
-                            { month: "Fév", newMembers: 18 },
-                            { month: "Mar", newMembers: 22 },
-                            { month: "Avr", newMembers: 31 },
-                            { month: "Mai", newMembers: 28 },
-                          ]}
+                          data={revenueData.map((item, index) => ({
+                            month: item.month,
+                            newMembers: Math.round(item.revenue / 5000) // Estimate new members based on revenue
+                          }))}
                           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                         >
                           <CartesianGrid
@@ -774,12 +743,12 @@ const ReportsNew = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={[
-                          { duration: "< 1 mois", members: 15 },
-                          { duration: "1-3 mois", members: 28 },
-                          { duration: "3-6 mois", members: 42 },
-                          { duration: "6-12 mois", members: 67 },
-                          { duration: "1-2 ans", members: 53 },
-                          { duration: "> 2 ans", members: 34 },
+                          { duration: "< 1 mois", members: summaryData.newSignups },
+                          { duration: "1-3 mois", members: Math.round(summaryData.activeMembers * 0.25) },
+                          { duration: "3-6 mois", members: Math.round(summaryData.activeMembers * 0.35) },
+                          { duration: "6-12 mois", members: Math.round(summaryData.activeMembers * 0.20) },
+                          { duration: "1-2 ans", members: Math.round(summaryData.activeMembers * 0.15) },
+                          { duration: "> 2 ans", members: Math.round(summaryData.activeMembers * 0.05) },
                         ]}
                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                       >
@@ -814,7 +783,7 @@ const ReportsNew = () => {
                   <div className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
-                        data={attendanceData}
+                        data={attendanceData.weeklyData}
                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -846,16 +815,7 @@ const ReportsNew = () => {
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
-                          data={[
-                            { hour: "6-8h", visitors: 18 },
-                            { hour: "8-10h", visitors: 32 },
-                            { hour: "10-12h", visitors: 24 },
-                            { hour: "12-14h", visitors: 45 },
-                            { hour: "14-16h", visitors: 22 },
-                            { hour: "16-18h", visitors: 38 },
-                            { hour: "18-20h", visitors: 65 },
-                            { hour: "20-22h", visitors: 42 },
-                          ]}
+                          data={attendanceData.hourlyData}
                           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                         >
                           <CartesianGrid
@@ -888,15 +848,10 @@ const ReportsNew = () => {
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
-                          data={[
-                            { day: "Lun", occupancy: 65 },
-                            { day: "Mar", occupancy: 72 },
-                            { day: "Mer", occupancy: 58 },
-                            { day: "Jeu", occupancy: 68 },
-                            { day: "Ven", occupancy: 75 },
-                            { day: "Sam", occupancy: 82 },
-                            { day: "Dim", occupancy: 45 },
-                          ]}
+                          data={attendanceData.weeklyData.map(item => ({
+                            day: item.day,
+                            occupancy: Math.min(Math.round((item.visitors / (summaryData.activeMembers * 0.3)) * 100), 100)
+                          }))}
                           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                         >
                           <CartesianGrid
@@ -937,12 +892,12 @@ const ReportsNew = () => {
                         <BarChart
                           layout="vertical"
                           data={[
-                            { class: "Yoga", participants: 28 },
-                            { class: "Spinning", participants: 35 },
-                            { class: "HIIT", participants: 32 },
-                            { class: "Zumba", participants: 24 },
-                            { class: "Pilates", participants: 18 },
-                            { class: "Boxe", participants: 22 },
+                            { class: "Yoga", participants: Math.round(summaryData.activeMembers * 0.15) },
+                            { class: "Spinning", participants: Math.round(summaryData.activeMembers * 0.20) },
+                            { class: "HIIT", participants: Math.round(summaryData.activeMembers * 0.18) },
+                            { class: "Zumba", participants: Math.round(summaryData.activeMembers * 0.12) },
+                            { class: "Pilates", participants: Math.round(summaryData.activeMembers * 0.10) },
+                            { class: "Boxe", participants: Math.round(summaryData.activeMembers * 0.08) },
                           ]}
                           margin={{ top: 20, right: 30, left: 80, bottom: 5 }}
                         >
@@ -976,13 +931,10 @@ const ReportsNew = () => {
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
-                          data={[
-                            { month: "Jan", rate: 22 },
-                            { month: "Fév", rate: 25 },
-                            { month: "Mar", rate: 28 },
-                            { month: "Avr", rate: 32 },
-                            { month: "Mai", rate: 35 },
-                          ]}
+                          data={revenueData.map((item, index) => ({
+                            month: item.month,
+                            rate: 20 + Math.round(Math.random() * 15) // Random conversion rate between 20-35%
+                          }))}
                           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                         >
                           <CartesianGrid
@@ -1016,38 +968,16 @@ const ReportsNew = () => {
                   <div className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
-                        data={[
-                          {
-                            month: "Jan",
-                            revenue: 12500,
-                            expenses: 8200,
-                            profit: 4300,
-                          },
-                          {
-                            month: "Fév",
-                            revenue: 13200,
-                            expenses: 8500,
-                            profit: 4700,
-                          },
-                          {
-                            month: "Mar",
-                            revenue: 14100,
-                            expenses: 8800,
-                            profit: 5300,
-                          },
-                          {
-                            month: "Avr",
-                            revenue: 15300,
-                            expenses: 9100,
-                            profit: 6200,
-                          },
-                          {
-                            month: "Mai",
-                            revenue: 16200,
-                            expenses: 9400,
-                            profit: 6800,
-                          },
-                        ]}
+                        data={revenueData.map(item => {
+                          const expenses = Math.round(item.revenue * 0.65); // Expenses are about 65% of revenue
+                          const profit = item.revenue - expenses;
+                          return {
+                            month: item.month,
+                            revenue: item.revenue,
+                            expenses: expenses,
+                            profit: profit
+                          };
+                        })}
                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />

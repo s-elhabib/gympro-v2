@@ -42,11 +42,11 @@ import { Progress } from "./ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import {
   Dialog,
+  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import { ScrollableDialogContent } from "./ui/scrollable-dialog";
 
 export const DataImportExport: React.FC = () => {
   // Export state
@@ -755,7 +755,7 @@ HIIT,Jean Martin,15,wednesday,19:30,20:30,Entraînement par intervalles de haute
 
         {/* Import Result Dialog */}
         <Dialog open={showImportResult} onOpenChange={setShowImportResult}>
-          <ScrollableDialogContent>
+          <DialogContent className="max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center">
                 {importResult?.success ? (
@@ -852,7 +852,7 @@ HIIT,Jean Martin,15,wednesday,19:30,20:30,Entraînement par intervalles de haute
                 </Button>
               </div>
             </div>
-          </ScrollableDialogContent>
+          </DialogContent>
         </Dialog>
       </CardContent>
     </Card>

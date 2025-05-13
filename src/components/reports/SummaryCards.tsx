@@ -27,12 +27,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
 }) => {
   // Format currency
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
+    return `${new Intl.NumberFormat('fr-FR').format(amount)} MAD`;
   };
 
   return (
@@ -53,7 +48,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
               <DollarSign className="h-6 w-6 text-blue-600" />
             </div>
           </div>
-          
+
           {isLoading ? (
             <div className="h-5 w-32 bg-gray-200 animate-pulse rounded mt-2"></div>
           ) : (
@@ -104,7 +99,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
               <Users className="h-6 w-6 text-green-600" />
             </div>
           </div>
-          
+
           {isLoading ? (
             <div className="h-5 w-32 bg-gray-200 animate-pulse rounded mt-2"></div>
           ) : (
@@ -155,7 +150,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
               <UserPlus className="h-6 w-6 text-purple-600" />
             </div>
           </div>
-          
+
           {isLoading ? (
             <div className="h-5 w-32 bg-gray-200 animate-pulse rounded mt-2"></div>
           ) : (
@@ -206,7 +201,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
               <TrendingUp className="h-6 w-6 text-amber-600" />
             </div>
           </div>
-          
+
           {isLoading ? (
             <div className="h-5 w-32 bg-gray-200 animate-pulse rounded mt-2"></div>
           ) : (
