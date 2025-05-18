@@ -181,14 +181,13 @@ const Dashboard = () => {
         });
 
         // Log the sorted payments for debugging
-        console.log(
-          "Sorted payments:",
+      
           sortedPayments.map((p) => ({
             member: `${p.member.first_name} ${p.member.last_name}`,
             status: p.status,
             due_date: p.due_date,
           }))
-        );
+      
 
         // Store the filtered and sorted payments
         setAllPayments(sortedPayments);
