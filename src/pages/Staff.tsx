@@ -1,16 +1,19 @@
 import React from 'react';
-import { 
-  Plus, 
-  Search, 
-  MoreVertical, 
-  Edit, 
+import { useNavigate } from 'react-router-dom';
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  Edit,
   Trash,
   SlidersHorizontal,
   Download,
   CheckCircle,
   XCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  User,
+  Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -56,6 +59,7 @@ import * as XLSX from 'xlsx';
 const ITEMS_PER_PAGE = 10;
 
 const Staff = () => {
+  const navigate = useNavigate();
   const { addNotification } = useNotifications();
   const [staff, setStaff] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -70,7 +74,7 @@ const Staff = () => {
   const fetchStaff = async () => {
     try {
       setIsLoading(true);
-      
+
       const { data, error } = await supabase
         .from('staff')
         .select('*')
@@ -79,7 +83,7 @@ const Staff = () => {
       if (error) throw error;
 
       // Filter based on search term
-      const filteredData = data?.filter(member => 
+      const filteredData = data?.filter(member =>
         `${member.first_name} ${member.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.role.toLowerCase().includes(searchTerm.toLowerCase())
@@ -121,10 +125,10 @@ const Staff = () => {
         }]);
 
       if (error) throw error;
-      
+
       setIsAddDialogOpen(false);
       fetchStaff();
-      
+
       addNotification({
         title: 'Succes',
         message: 'Membre du personnel ajoute avec succes',
@@ -143,7 +147,7 @@ const Staff = () => {
   const handleEditStaff = async (data: StaffFormValues) => {
     try {
       if (!currentStaff) return;
-      
+
       const { error } = await supabase
         .from('staff')
         .update({
@@ -159,11 +163,11 @@ const Staff = () => {
         .eq('id', currentStaff.id);
 
       if (error) throw error;
-      
+
       setIsEditDialogOpen(false);
       setCurrentStaff(null);
       fetchStaff();
-      
+
       addNotification({
         title: 'Succes',
         message: 'Membre du personnel mis a jour avec succes',
@@ -182,18 +186,18 @@ const Staff = () => {
   const handleDeleteStaff = async () => {
     try {
       if (!currentStaff) return;
-      
+
       const { error } = await supabase
         .from('staff')
         .delete()
         .eq('id', currentStaff.id);
 
       if (error) throw error;
-      
+
       setIsDeleteDialogOpen(false);
       setCurrentStaff(null);
       fetchStaff();
-      
+
       addNotification({
         title: 'Succes',
         message: 'Membre du personnel supprime avec succes',
@@ -233,7 +237,7 @@ const Staff = () => {
 
       // Create worksheet
       const ws = XLSX.utils.json_to_sheet(exportData);
-      
+
       // Create workbook
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Personnel");
@@ -287,7 +291,7 @@ const Staff = () => {
         return status;
     }
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -310,7 +314,7 @@ const Staff = () => {
           </DialogContent>
         </Dialog>
       </div>
-      
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="relative flex items-center max-w-md">
           <Search className="absolute left-3 h-5 w-5 text-gray-400" />
@@ -325,10 +329,10 @@ const Staff = () => {
           />
         </div>
         <div className="flex items-center space-x-3">
-         
-          <Button 
-            variant="outline" 
-            size="sm" 
+
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center"
             onClick={handleExport}
           >
@@ -337,7 +341,7 @@ const Staff = () => {
           </Button>
         </div>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow-sm">
         <Table>
           <TableHeader>
@@ -368,9 +372,18 @@ const Staff = () => {
               </TableRow>
             ) : (
               staff.map((member) => (
-                <TableRow key={member.id}>
+                <TableRow
+                  key={member.id}
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={() => navigate(`/staff/${member.id}`)}
+                >
                   <TableCell className="font-medium">
-                    {`${member.first_name} ${member.last_name}`}
+                    <div className="flex items-center space-x-2">
+                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                        <User className="h-4 w-4 text-gray-600" />
+                      </div>
+                      <span>{`${member.first_name} ${member.last_name}`}</span>
+                    </div>
                   </TableCell>
                   <TableCell className="capitalize">{member.role.replace('_', ' ')}</TableCell>
                   <TableCell>{member.email}</TableCell>
@@ -382,7 +395,7 @@ const Staff = () => {
                       <span className="capitalize">{getStatusText(member.status)}</span>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center space-x-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -391,7 +404,13 @@ const Staff = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
+                            onClick={() => navigate(`/staff/${member.id}`)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Voir Profil
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             onClick={() => {
                               setCurrentStaff(member);
                               setIsEditDialogOpen(true);
@@ -400,7 +419,7 @@ const Staff = () => {
                             <Edit className="h-4 w-4 mr-2" />
                             Modifier
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             className="text-red-600"
                             onClick={() => {
                               setCurrentStaff(member);
@@ -457,7 +476,7 @@ const Staff = () => {
             </DialogDescription>
           </DialogHeader>
           {currentStaff && (
-            <StaffForm 
+            <StaffForm
               defaultValues={{
                 firstName: currentStaff.first_name,
                 lastName: currentStaff.last_name,

@@ -22,6 +22,7 @@ const Payments = React.lazy(() => import("./pages/Payments"));
 const Attendance = React.lazy(() => import("./pages/Attendance"));
 const QRAttendance = React.lazy(() => import("./pages/QRAttendance"));
 const Staff = React.lazy(() => import("./pages/Staff"));
+const StaffProfile = React.lazy(() => import("./pages/StaffProfile"));
 const Reports = React.lazy(() => import("./pages/Reportsold"));
 const ReportsNew = React.lazy(() => import("./pages/ReportsNew"));
 const Settings = React.lazy(() => import("./pages/Settings"));
@@ -84,7 +85,8 @@ const AppRoutes = () => {
                 <Route path="/attendance/*" element={<Attendance />} />
                 <Route path="/qr-attendance" element={<QRAttendance />} />
                 <Route path="/classes/*" element={<Classes />} />
-                <Route path="/staff/*" element={<Staff />} />
+                <Route path="/staff" element={<Staff />} />
+                <Route path="/staff/:id" element={<StaffProfile />} />
                 <Route path="/reports/*" element={<ReportsNew />} />
                 <Route path="/reports-old/*" element={<Reports />} />
                 <Route path="/settings/*" element={<Settings />} />
