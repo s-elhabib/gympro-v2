@@ -1,13 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import type { User, AuthState, AuthError } from '../types/auth';
+import type { User, AuthState, AuthError, UserRole } from '../types/auth';
 import { useNotifications } from './NotificationContext';
+import { RBACProvider } from './RBACContext';
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, role?: UserRole) => Promise<void>;
   signOut: () => Promise<void>;
+  updateUserRole: (userId: string, role: UserRole) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,13 +38,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (session) {
+          // Get role from user metadata or default to 'staff'
+          const userRole = (session.user.user_metadata.role as UserRole) || 'staff';
+          const userPermissions = session.user.user_metadata.permissions || [];
+
           setAuthState({
             user: {
               id: session.user.id,
               email: session.user.email!,
               name: session.user.user_metadata.name || session.user.email!.split('@')[0],
-              role: 'admin',
-              permissions: ['all']
+              role: userRole,
+              permissions: userPermissions
             },
             isAuthenticated: true
           });
@@ -72,13 +78,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
+        // Get role from user metadata or default to 'staff'
+        const userRole = (session.user.user_metadata.role as UserRole) || 'staff';
+        const userPermissions = session.user.user_metadata.permissions || [];
+
         setAuthState({
           user: {
             id: session.user.id,
             email: session.user.email!,
             name: session.user.user_metadata.name || session.user.email!.split('@')[0],
-            role: 'admin',
-            permissions: ['all']
+            role: userRole,
+            permissions: userPermissions
           },
           isAuthenticated: true
         });
@@ -90,13 +100,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAuthState({ user: null, isAuthenticated: false });
         navigate('/login');
       } else if (event === 'TOKEN_REFRESHED' && session) {
+        // Get role from user metadata or default to 'staff'
+        const userRole = (session.user.user_metadata.role as UserRole) || 'staff';
+        const userPermissions = session.user.user_metadata.permissions || [];
+
         setAuthState({
           user: {
             id: session.user.id,
             email: session.user.email!,
             name: session.user.user_metadata.name || session.user.email!.split('@')[0],
-            role: 'admin',
-            permissions: ['all']
+            role: userRole,
+            permissions: userPermissions
           },
           isAuthenticated: true
         });
@@ -167,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, role: UserRole = 'staff') => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -175,8 +189,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           data: {
             name: email.split('@')[0],
-            role: 'admin',
-            permissions: ['all']
+            role: role,
+            permissions: [] // Permissions will be determined by role
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
@@ -212,6 +226,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Method to update a user's role
+  const updateUserRole = async (userId: string, role: UserRole) => {
+    try {
+      const { data, error } = await supabase.auth.admin.updateUserById(
+        userId,
+        { user_metadata: { role } }
+      );
+
+      if (error) {
+        handleAuthError(error);
+      }
+
+      // If updating the current user, update the auth state
+      if (authState.user && authState.user.id === userId) {
+        setAuthState({
+          ...authState,
+          user: {
+            ...authState.user,
+            role
+          }
+        });
+      }
+
+      addNotification({
+        title: 'Succès',
+        message: 'Rôle utilisateur mis à jour avec succès',
+        type: 'success'
+      });
+
+      return data;
+    } catch (error) {
+      handleAuthError(error);
+    }
+  };
+
   // Show loading state while initializing auth
   if (isInitializing) {
     return (
@@ -225,12 +274,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     ...authState,
     signIn,
     signUp,
-    signOut
+    signOut,
+    updateUserRole
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      <RBACProvider
+        userRole={authState.user?.role || null}
+        userPermissions={authState.user?.permissions}
+      >
+        {children}
+      </RBACProvider>
     </AuthContext.Provider>
   );
 };

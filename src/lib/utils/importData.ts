@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import XLSX from '../xlsx-shim';
 import { supabase } from '../supabase';
 import { parseISO, isValid as isValidDate } from 'date-fns';
 

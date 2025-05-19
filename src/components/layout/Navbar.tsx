@@ -1,7 +1,8 @@
 import React from 'react';
-import { Bell, User } from 'lucide-react';
+import { Bell, User, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
+import { UserRole } from '../../types/auth';
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
@@ -12,6 +13,24 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { format } from 'date-fns';
+
+// Function to get a user-friendly role label
+const getRoleLabel = (role: UserRole): string => {
+  switch (role) {
+    case 'admin':
+      return 'Administrateur';
+    case 'manager':
+      return 'Manager';
+    case 'trainer':
+      return 'Entraîneur';
+    case 'receptionist':
+      return 'Réceptionniste';
+    case 'staff':
+      return 'Personnel';
+    default:
+      return role.charAt(0).toUpperCase() + role.slice(1);
+  }
+};
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
@@ -24,11 +43,14 @@ const Navbar = () => {
           <span className="text-lg font-semibold truncate max-w-[200px]">
             Welcome, {user?.name || 'Guest'}
           </span>
-          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hidden sm:inline-block">
-            {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Guest'}
-          </span>
+          <div className="flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hidden sm:inline-flex">
+            <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+            <span>
+              {user?.role ? getRoleLabel(user.role) : 'Guest'}
+            </span>
+          </div>
         </div>
-        
+
         <div className="flex items-center space-x-2 md:space-x-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -82,7 +104,7 @@ const Navbar = () => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -90,10 +112,20 @@ const Navbar = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>Mon Compte</DropdownMenuLabel>
+              <div className="px-2 py-1.5 text-sm">
+                <div className="font-medium">{user?.name}</div>
+                <div className="text-xs text-gray-500">{user?.email}</div>
+              </div>
+              <div className="px-2 py-1.5 text-xs flex items-center">
+                <ShieldCheck className="h-3.5 w-3.5 mr-1 text-blue-600" />
+                <span className="text-gray-600">
+                  Rôle: {user?.role ? getRoleLabel(user.role) : 'Guest'}
+                </span>
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => signOut()}>
-                Sign out
+                Se déconnecter
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

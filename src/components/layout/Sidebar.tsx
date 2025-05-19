@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   Users,
   CreditCard,
@@ -13,12 +13,15 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useRBAC, Permission } from "../../context/RBACContext";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { supabase } from "../../lib/supabase";
 
 const Sidebar = () => {
   const { user } = useAuth();
+  const { hasPermission } = useRBAC();
+  const location = useLocation();
   const [collapsed, setCollapsed] = React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [checkoutCount, setCheckoutCount] = useState(0);
@@ -28,55 +31,55 @@ const Sidebar = () => {
       icon: LayoutDashboard,
       label: "Dashboard",
       path: "/dashboard",
-      roles: ["admin", "staff", "manager"],
+      permission: "dashboard:view" as Permission,
     },
     {
       icon: Users,
       label: "Membres",
       path: "/members",
-      roles: ["admin", "staff", "manager"],
+      permission: "members:view" as Permission,
     },
     {
       icon: CreditCard,
       label: "Paiements",
       path: "/payments",
-      roles: ["admin", "staff", "manager"],
+      permission: "payments:view" as Permission,
     },
     {
       icon: Calendar,
       label: "Presence",
       path: "/attendance",
-      roles: ["admin", "staff", "trainer"],
+      permission: "attendance:view" as Permission,
       notificationCount: checkoutCount, // Using the real count from state
     },
     {
       icon: Dumbbell,
       label: "Cours",
       path: "/classes",
-      roles: ["admin", "trainer", "manager"],
+      permission: "classes:view" as Permission,
     },
     {
       icon: UserCog,
       label: "Personnel",
       path: "/staff",
-      roles: ["admin", "manager"],
+      permission: "staff:view" as Permission,
     },
     {
       icon: BarChart3,
       label: "Rapports & Analyses",
       path: "/reports",
-      roles: ["admin", "manager"],
+      permission: "reports:view" as Permission,
     },
     {
       icon: Settings,
       label: "Parametres",
       path: "/settings",
-      roles: ["admin"],
+      permission: "settings:view" as Permission,
     },
   ];
 
   const filteredMenuItems = menuItems.filter((item) =>
-    item.roles.includes(user?.role || "")
+    hasPermission(item.permission)
   );
 
   useEffect(() => {
@@ -118,7 +121,7 @@ const Sidebar = () => {
     <>
       {/* Mobile Menu Button */}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-gray-900 text-white"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-gray-900 text-gray-300 hover:text-white transition-colors duration-200"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
         {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -146,49 +149,54 @@ const Sidebar = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="text-white hover:bg-gray-800 hidden md:flex"
+            className="text-gray-300 hover:text-white hidden md:flex"
             onClick={() => setCollapsed(!collapsed)}
           >
             <Menu size={20} />
           </Button>
         </div>
         <nav className="space-y-1 px-2">
-          {filteredMenuItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors relative",
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-300 hover:bg-gray-800",
+          {filteredMenuItems.map((item) => {
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={handleNavClick}
+                className={cn(
+                  "flex items-center space-x-3 px-4 py-3 rounded-lg relative",
+                  "transition-all duration-200 ease-in-out",
+                  "text-gray-300 hover:text-white", // Subtle hover effect without background change
                   collapsed && "justify-center"
-                )
-              }
-            >
-              <div className="relative">
-                <item.icon size={20} />
-                {item.notificationCount > 0 && (
-                  <span
-                    className={cn(
-                      "absolute -top-2 -right-2 min-w-[20px] h-5 px-1",
-                      "flex items-center justify-center",
-                      "rounded-full text-xs font-medium",
-                      "bg-red-500 text-white",
-                      "border-2 border-gray-900",
-
-                      collapsed ? "-right-1" : "-right-2"
-                    )}
-                  >
-                    {item.notificationCount}
-                  </span>
                 )}
-              </div>
-              {!collapsed && <span className="flex-1">{item.label}</span>}
-            </NavLink>
-          ))}
+                style={{
+                  transform: 'translateZ(0)', // Force hardware acceleration
+                  willChange: 'color', // Hint to browser for optimization (only color changes now)
+                  backfaceVisibility: 'hidden' // Prevent flickering in some browsers
+                }}
+                preventScrollReset={true} // Prevent scroll reset on navigation
+                replace={true} // Use replace instead of push to avoid browser history buildup
+              >
+                <div className="relative">
+                  <item.icon size={20} />
+                  {item.notificationCount > 0 && (
+                    <span
+                      className={cn(
+                        "absolute -top-2 -right-2 min-w-[20px] h-5 px-1",
+                        "flex items-center justify-center",
+                        "rounded-full text-xs font-medium",
+                        "bg-red-500 text-white",
+                        "border-2 border-gray-900",
+                        collapsed ? "-right-1" : "-right-2"
+                      )}
+                    >
+                      {item.notificationCount}
+                    </span>
+                  )}
+                </div>
+                {!collapsed && <span className="flex-1">{item.label}</span>}
+              </NavLink>
+            );
+          })}
         </nav>
       </div>
     </>

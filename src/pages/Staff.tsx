@@ -13,7 +13,8 @@ import {
   Clock,
   AlertCircle,
   User,
-  Eye
+  Eye,
+  ShieldCheck
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -51,16 +52,21 @@ import {
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
+import { useRBAC } from '../context/RBACContext';
 import { useNotifications } from '../context/NotificationContext';
 import { StaffFormValues } from '../lib/validations/staff';
 import StaffForm from '../components/StaffForm';
-import * as XLSX from 'xlsx';
+import RoleManagement from '../components/RoleManagement';
+// Import XLSX with a relative path to ensure proper resolution
+import XLSX from '../lib/xlsx-shim';
 
 const ITEMS_PER_PAGE = 10;
 
 const Staff = () => {
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
+  const { hasPermission } = useRBAC();
   const [staff, setStaff] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -296,23 +302,25 @@ const Staff = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Gestion du Personnel</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter un Personnel
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Ajouter un Nouveau Personnel</DialogTitle>
-              <DialogDescription>
-                Entrez les details du nouveau membre du personnel ci-dessous.
-              </DialogDescription>
-            </DialogHeader>
-            <StaffForm onSubmit={handleAddStaff} />
-          </DialogContent>
-        </Dialog>
+        {hasPermission('staff:create') && (
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter un Personnel
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Ajouter un Nouveau Personnel</DialogTitle>
+                <DialogDescription>
+                  Entrez les details du nouveau membre du personnel ci-dessous.
+                </DialogDescription>
+              </DialogHeader>
+              <StaffForm onSubmit={handleAddStaff} />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -410,25 +418,50 @@ const Staff = () => {
                             <Eye className="h-4 w-4 mr-2" />
                             Voir Profil
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setCurrentStaff(member);
-                              setIsEditDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Modifier
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => {
-                              setCurrentStaff(member);
-                              setIsDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash className="h-4 w-4 mr-2" />
-                            Supprimer
-                          </DropdownMenuItem>
+                          {hasPermission('staff:edit') && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setCurrentStaff(member);
+                                  setIsEditDialogOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  // The RoleManagement component will handle the dialog
+                                }}
+                              >
+                                <RoleManagement
+                                  userId={member.id}
+                                  currentRole={member.role}
+                                  userName={`${member.first_name} ${member.last_name}`}
+                                  trigger={
+                                    <div className="flex items-center w-full">
+                                      <ShieldCheck className="h-4 w-4 mr-2" />
+                                      Gérer le Rôle
+                                    </div>
+                                  }
+                                />
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {hasPermission('staff:delete') && (
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => {
+                                setCurrentStaff(member);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash className="h-4 w-4 mr-2" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
-import * as XLSX from "xlsx";
+import XLSX from "../lib/xlsx-shim";
 
 interface MemberData {
   firstName: string;

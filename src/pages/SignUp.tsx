@@ -2,24 +2,34 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Dumbbell, Eye, EyeOff } from 'lucide-react';
+import { Dumbbell, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { UserRole } from '../types/auth';
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from '../components/ui/form';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import { useNotifications } from '../context/NotificationContext';
 
 const signUpSchema = z.object({
   email: z.string().email('Adresse e-mail invalide'),
   password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caracteres'),
   confirmPassword: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caracteres'),
+  role: z.enum(['admin', 'manager', 'trainer', 'receptionist', 'staff'] as const),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
@@ -42,6 +52,7 @@ const SignUp = () => {
       email: '',
       password: '',
       confirmPassword: '',
+      role: 'staff',
     },
   });
 
@@ -49,7 +60,7 @@ const SignUp = () => {
     try {
       setIsLoading(true);
       setError(null);
-      await signUp(data.email, data.password);
+      await signUp(data.email, data.password, data.role);
       addNotification({
         title: 'Compte cree',
         message: 'Votre compte a ete cree avec succes. Veuillez vous connecter.',
@@ -160,6 +171,34 @@ const SignUp = () => {
                       </button>
                     </div>
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-400 text-sm">Rôle</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="bg-[#24242C] border-[#34343E] h-12 px-4">
+                        <SelectValue placeholder="Sélectionner un rôle" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-[#24242C] border-[#34343E] text-white">
+                      <SelectItem value="admin">Administrateur</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="trainer">Entraîneur</SelectItem>
+                      <SelectItem value="receptionist">Réceptionniste</SelectItem>
+                      <SelectItem value="staff">Personnel</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
