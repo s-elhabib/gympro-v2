@@ -362,7 +362,7 @@ const BusinessSettings = ({
 
   return (
     <div className="space-y-6">
-      <Card className="mb-6">
+      {/* <Card className="mb-6">
         <CardHeader>
           <CardTitle> Paiements</CardTitle>
           <CardDescription>
@@ -440,7 +440,7 @@ const BusinessSettings = ({
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Membership Types are now managed in a separate component */}
       {membershipTypes && onMembershipTypesChange && (
@@ -928,18 +928,7 @@ const SecuritySettings = ({
           </div>
         </div>
 
-        {/* Backup frequency section removed as it doesn't exist in the database */}
-
-        <div className="flex justify-between pt-2">
-          <Button variant="outline" onClick={() => setShowExportDialog(true)}>
-            <Database className="h-4 w-4 mr-2" />
-            Exporter les Données
-          </Button>
-          <Button variant="outline" onClick={() => setShowImportDialog(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Importer des Données
-          </Button>
-        </div>
+      
       </CardContent>
 
       {/* Export Data Dialog */}
@@ -1739,7 +1728,7 @@ const Settings = () => {
   const sections = [
     { id: "general", label: "Général", icon: Building },
     { id: "business", label: "Abonnements", icon: CreditCard },
-    { id: "notifications", label: "Notifications", icon: Bell },
+    // { id: "notifications", label: "Notifications", icon: Bell },
     // Appearance section commented out for future implementation
     // { id: "appearance", label: "Apparence", icon: Sun },
     { id: "security", label: "Présence", icon: Clock },
