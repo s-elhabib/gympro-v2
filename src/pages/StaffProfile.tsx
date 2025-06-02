@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { supabase } from '../lib/supabase';
 import { useNotifications } from '../context/NotificationContext';
+import { clearUserRoleCache, refreshCurrentUserData } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import StaffForm from '../components/StaffForm';
 import StaffSchedule from '../components/StaffSchedule';
 import StaffQualifications from '../components/StaffQualifications';
@@ -16,6 +18,7 @@ const StaffProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
+  const { user } = useAuth();
   const [staff, setStaff] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -228,15 +231,31 @@ const StaffProfile = () => {
                     .eq('id', staff.id);
 
                   if (error) throw error;
-                  
+
+                  // Clear cache and refresh auth state if current user's role changed
+                  if (staff.email) {
+                    clearUserRoleCache(staff.email);
+
+                    // If this is the current user and role changed, refresh their auth state
+                    if (user?.email === staff.email && data.role !== staff.role) {
+                      console.log('🔄 Current user role changed, refreshing auth state...');
+                      await refreshCurrentUserData();
+                      addNotification({
+                        title: 'Succès',
+                        message: 'Votre rôle a été mis à jour. Les nouvelles permissions sont maintenant actives.',
+                        type: 'success'
+                      });
+                    } else {
+                      addNotification({
+                        title: 'Succès',
+                        message: 'Membre du personnel mis à jour avec succès',
+                        type: 'success'
+                      });
+                    }
+                  }
+
                   setIsEditDialogOpen(false);
                   fetchStaffData();
-                  
-                  addNotification({
-                    title: 'Succès',
-                    message: 'Membre du personnel mis à jour avec succès',
-                    type: 'success'
-                  });
                 } catch (error) {
                   console.error('Error updating staff:', error);
                   addNotification({

@@ -319,6 +319,7 @@ const GeneralSettings = ({
 };
 
 import MembershipTypesManager from "../components/settings/MembershipTypesManager";
+import StaffPermissionsManager from "../components/settings/StaffPermissionsManager";
 
 const BusinessSettings = ({
   settings,
@@ -1728,6 +1729,7 @@ const Settings = () => {
   const sections = [
     { id: "general", label: "Général", icon: Building },
     { id: "business", label: "Abonnements", icon: CreditCard },
+    { id: "staff", label: "Permissions Personnel", icon: Shield },
     // { id: "notifications", label: "Notifications", icon: Bell },
     // Appearance section commented out for future implementation
     // { id: "appearance", label: "Apparence", icon: Sun },
@@ -1814,6 +1816,9 @@ const Settings = () => {
               onMembershipTypesChange={setMembershipTypes}
               isLoadingMembershipTypes={isLoadingMembershipTypes}
             />
+          )}
+          {activeSection === "staff" && (
+            <StaffPermissionsManager />
           )}
           {activeSection === "notifications" && (
             <NotificationSettings

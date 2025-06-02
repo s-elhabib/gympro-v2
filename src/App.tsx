@@ -14,21 +14,21 @@ import ToastContainer from "./components/ui/toast-container";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 
-// Lazy load pages
-const Dashboard = React.lazy(() => import("./pages/Dashboard"));
-const Members = React.lazy(() => import("./pages/Members"));
-const MemberProfile = React.lazy(() => import("./pages/MemberProfile"));
-const Payments = React.lazy(() => import("./pages/Payments"));
-const Attendance = React.lazy(() => import("./pages/Attendance"));
-const QRAttendance = React.lazy(() => import("./pages/QRAttendance"));
-const Staff = React.lazy(() => import("./pages/Staff"));
-const StaffProfile = React.lazy(() => import("./pages/StaffProfile"));
-const Reports = React.lazy(() => import("./pages/Reportsold"));
-const ReportsNew = React.lazy(() => import("./pages/ReportsNew"));
-const Settings = React.lazy(() => import("./pages/Settings"));
-const Classes = React.lazy(() => import("./pages/Classes"));
+// Direct imports for smooth SPA experience
+import Dashboard from "./pages/Dashboard";
+import Members from "./pages/Members";
+import MemberProfile from "./pages/MemberProfile";
+import Payments from "./pages/Payments";
+import Attendance from "./pages/Attendance";
+import QRAttendance from "./pages/QRAttendance";
+import Staff from "./pages/Staff";
+import StaffProfile from "./pages/StaffProfile";
+import Reports from "./pages/Reportsold";
+import ReportsNew from "./pages/ReportsNew";
+import Settings from "./pages/Settings";
+import Classes from "./pages/Classes";
 
-const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
+const ProtectedLayout = React.memo(({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
@@ -38,7 +38,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-gray-100">
         <Navbar />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
           {children}
@@ -46,7 +46,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
       </div>
     </div>
   );
-};
+});
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
@@ -69,29 +69,21 @@ const AppRoutes = () => {
         path="/*"
         element={
           <ProtectedLayout>
-            <React.Suspense
-              fallback={
-                <div className="flex items-center justify-center h-full">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                </div>
-              }
-            >
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/members" element={<Members />} />
-                <Route path="/members/:id" element={<MemberProfile />} />
-                <Route path="/payments/*" element={<Payments />} />
-                <Route path="/attendance/*" element={<Attendance />} />
-                <Route path="/qr-attendance" element={<QRAttendance />} />
-                <Route path="/classes/*" element={<Classes />} />
-                <Route path="/staff" element={<Staff />} />
-                <Route path="/staff/:id" element={<StaffProfile />} />
-                <Route path="/reports/*" element={<ReportsNew />} />
-                <Route path="/reports-old/*" element={<Reports />} />
-                <Route path="/settings/*" element={<Settings />} />
-              </Routes>
-            </React.Suspense>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/members" element={<Members />} />
+              <Route path="/members/:id" element={<MemberProfile />} />
+              <Route path="/payments/*" element={<Payments />} />
+              <Route path="/attendance/*" element={<Attendance />} />
+              <Route path="/qr-attendance" element={<QRAttendance />} />
+              <Route path="/classes/*" element={<Classes />} />
+              <Route path="/staff" element={<Staff />} />
+              <Route path="/staff/:id" element={<StaffProfile />} />
+              <Route path="/reports/*" element={<ReportsNew />} />
+              <Route path="/reports-old/*" element={<Reports />} />
+              <Route path="/settings/*" element={<Settings />} />
+            </Routes>
           </ProtectedLayout>
         }
       />

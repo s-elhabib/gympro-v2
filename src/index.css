@@ -53,8 +53,32 @@
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
+  html, body {
+    @apply bg-gray-100 text-foreground;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Prevent white flashes during navigation */
+  #root {
+    @apply bg-gray-100;
+    min-height: 100vh;
+  }
+
+  /* Smooth page transitions */
+  .page-transition {
+    transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+  }
+
+  .page-enter {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .page-enter-active {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

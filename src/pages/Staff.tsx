@@ -52,6 +52,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { supabase } from '../lib/supabase';
 import { useNotifications } from '../context/NotificationContext';
+import { clearUserRoleCache, refreshCurrentUserData } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { StaffFormValues } from '../lib/validations/staff';
 import StaffForm from '../components/StaffForm';
 import * as XLSX from 'xlsx';
@@ -61,6 +63,7 @@ const ITEMS_PER_PAGE = 10;
 const Staff = () => {
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
+  const { user } = useAuth();
   const [staff, setStaff] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -164,15 +167,31 @@ const Staff = () => {
 
       if (error) throw error;
 
+      // Clear cache and refresh auth state if current user's role changed
+      if (currentStaff.email) {
+        clearUserRoleCache(currentStaff.email);
+
+        // If this is the current user and role changed, refresh their auth state
+        if (user?.email === currentStaff.email && data.role !== currentStaff.role) {
+          console.log('🔄 Current user role changed, refreshing auth state...');
+          await refreshCurrentUserData();
+          addNotification({
+            title: 'Succès',
+            message: 'Votre rôle a été mis à jour. Les nouvelles permissions sont maintenant actives.',
+            type: 'success'
+          });
+        } else {
+          addNotification({
+            title: 'Succes',
+            message: 'Membre du personnel mis a jour avec succes',
+            type: 'success'
+          });
+        }
+      }
+
       setIsEditDialogOpen(false);
       setCurrentStaff(null);
       fetchStaff();
-
-      addNotification({
-        title: 'Succes',
-        message: 'Membre du personnel mis a jour avec succes',
-        type: 'success'
-      });
     } catch (error) {
       console.error('Error updating staff:', error);
       addNotification({

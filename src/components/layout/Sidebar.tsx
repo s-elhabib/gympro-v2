@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { hasPermission } from "../../types/auth";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { supabase } from "../../lib/supabase";
@@ -28,55 +29,55 @@ const Sidebar = () => {
       icon: LayoutDashboard,
       label: "Dashboard",
       path: "/dashboard",
-      roles: ["admin", "staff", "manager"],
+      permission: "dashboard",
     },
     {
       icon: Users,
       label: "Membres",
       path: "/members",
-      roles: ["admin", "staff", "manager"],
+      permission: "members",
     },
     {
       icon: CreditCard,
       label: "Paiements",
       path: "/payments",
-      roles: ["admin", "staff", "manager"],
+      permission: "payments",
     },
     {
       icon: Calendar,
       label: "Presence",
       path: "/attendance",
-      roles: ["admin", "staff", "trainer"],
+      permission: "attendance",
       notificationCount: checkoutCount, // Using the real count from state
     },
     {
       icon: Dumbbell,
       label: "Cours",
       path: "/classes",
-      roles: ["admin", "trainer", "manager"],
+      permission: "classes",
     },
     {
       icon: UserCog,
       label: "Personnel",
       path: "/staff",
-      roles: ["admin", "manager"],
+      permission: "staff",
     },
     {
       icon: BarChart3,
       label: "Rapports & Analyses",
       path: "/reports",
-      roles: ["admin", "manager"],
+      permission: "reports",
     },
     {
       icon: Settings,
       label: "Parametres",
       path: "/settings",
-      roles: ["admin"],
+      permission: "settings",
     },
   ];
 
   const filteredMenuItems = menuItems.filter((item) =>
-    item.roles.includes(user?.role || "")
+    hasPermission(user?.role, item.permission)
   );
 
   useEffect(() => {
